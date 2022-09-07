@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/github/watchers/zhang-wangz/LeetCodeRating?style=flat-square"/>
   <img src="https://img.shields.io/github/issues-closed/zhang-wangz/LeetCodeRating?style=flat-square"/>
   <br>
-  LeetCodeRating，一款显示周赛难度分数的浏览器插件。
+  LeetCodeRating，一款显示题目对应周赛难度分的浏览器插件。
   <br>
   目前只支持力扣中文
 </p>
@@ -20,7 +20,7 @@
 
 ### :iphone: 兼容性
 
-LeetCodeRating 一款显示周赛难度分数的脚本。  
+LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。  
 在使用脚本之前，你需要为浏览器安装脚本管理器插件。  
 经过测试，我们确定兼容以下浏览器和插件用于安装此脚本。
 
