@@ -39,9 +39,9 @@ LeetCodeRating 一款显示周赛难度分数的脚本。
 
 #### 💡 脚本效果
 
-![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220907114848833_min.png)
+![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1_min.png)
 
-![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220907114911865_min.png)
+![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/2_min.png)
 
 ### :page_facing_up: 安装脚本
 
