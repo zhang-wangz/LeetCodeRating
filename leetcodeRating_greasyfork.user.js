@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.2
+// @version      1.1.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面和题库页面
 // @author       小东在刷题
@@ -19,6 +19,7 @@
 // @note         2022-09-07 1.1.0 分数数据出自零神项目
 // @note         2022-09-07 1.1.1 修改一些小bug
 // @note         2022-09-07 1.1.2 合并难度和周赛分，有周赛分的地方显示分数，没有则显示难度
+// @note         2022-09-07 1.1.3 处理报错信息，净化浏览器console面板
 // ==/UserScript==
 
 (function () {
@@ -64,19 +65,23 @@
             if (t != undefined && t == arr.lastChild.innerHTML) {
                 return
             }
-            let childs = arr.childNodes
-            for (let idx = 0; idx < childs.length; idx++) {
-                let v = childs[idx]
-                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                let data = t.split(".")
-                let title = data[data.length - 1].trim()
-                let nd = v.childNodes[4].childNodes[0].innerHTML
-                if (t2rate[title] != undefined) {
-                    nd = t2rate[title]
-                    v.childNodes[4].childNodes[0].innerHTML = nd
+            try {
+                let childs = arr.childNodes
+                for (let idx = 0; idx < childs.length; idx++) {
+                    let v = childs[idx]
+                    let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                    let data = t.split(".")
+                    let title = data[data.length - 1].trim()
+                    let nd = v.childNodes[4].childNodes[0].innerHTML
+                    if (t2rate[title] != undefined) {
+                        nd = t2rate[title]
+                        v.childNodes[4].childNodes[0].innerHTML = nd
+                    }
                 }
+                t = deepclone(arr.lastChild.innerHTML)
+            }catch (e) {
+                return
             }
-            t = deepclone(arr.lastChild.innerHTML)
         }
         setTimeout(getData, 2000)
         id1 = setInterval(getData, 1000)
@@ -91,19 +96,23 @@
             if (t != undefined && t == arr.lastChild.innerHTML) {
                 return
             }
-            let childs = arr.childNodes
-            for (let idx = 0; idx < childs.length; idx++) {
-                let v = childs[idx]
-                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                let data = t.split(".")
-                let title = data[data.length - 1].trim()
-                let nd = v.childNodes[3].childNodes[0].innerHTML
-                if (t2rate[title] != undefined) {
-                    nd = t2rate[title]
-                    v.childNodes[3].childNodes[0].innerHTML = nd
+            try {
+                let childs = arr.childNodes
+                for (let idx = 0; idx < childs.length; idx++) {
+                    let v = childs[idx]
+                    let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                    let data = t.split(".")
+                    let title = data[data.length - 1].trim()
+                    let nd = v.childNodes[3].childNodes[0].innerHTML
+                    if (t2rate[title] != undefined) {
+                        nd = t2rate[title]
+                        v.childNodes[3].childNodes[0].innerHTML = nd
+                    }
                 }
+                t = deepclone(arr.lastChild.innerHTML)
+            }catch (e) {
+                return
             }
-            t = deepclone(arr.lastChild.innerHTML)
         }
         setTimeout(getTagData, 2200)
         id2 = setInterval(getTagData, 1200)
