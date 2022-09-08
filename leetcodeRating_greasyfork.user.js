@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.4
+// @version      1.1.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面和题库页面
 // @author       小东是个阳光蛋(力扣名
@@ -22,6 +22,7 @@
 // @note         2022-09-07 1.1.2 合并难度和周赛分，有周赛分的地方显示分数，没有则显示难度
 // @note         2022-09-07 1.1.3 处理报错信息，净化浏览器console面板
 // @note         2022-09-08 1.1.4 problems页面增加难度分显示
+// @note         2022-09-08 1.1.5 修复tag页面跳转problems页面bug
 // ==/UserScript==
 
 (function () {
@@ -55,21 +56,25 @@
             console.log(err)
         }
     });
+
     function deepclone(obj) {
         let str = JSON.stringify(obj)
         return JSON.parse(str)
     }
+
     if (window.location.href.startsWith(allUrl)) {
         let tag = GM_getValue("tag", -2)
         clearInterval(tag)
         let t
+
         function getData() {
-            let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
-            // 防止过多的无效操作
-            if (t != undefined && t == arr.lastChild.innerHTML) {
-                return
-            }
             try {
+                let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
+                // 防止过多的无效操作
+                if (t != undefined && t == arr.lastChild.innerHTML) {
+                    return
+                }
+
                 let childs = arr.childNodes
                 for (let idx = 0; idx < childs.length; idx++) {
                     let v = childs[idx]
@@ -83,10 +88,11 @@
                     }
                 }
                 t = deepclone(arr.lastChild.innerHTML)
-            }catch (e) {
+            } catch (e) {
                 return
             }
         }
+
         setTimeout(getData, 2000)
         id1 = setInterval(getData, 1000)
         GM_setValue("all", id1)
@@ -95,12 +101,16 @@
         clearInterval(all)
 
         let t
+        let url
         function getTagData() {
-            let arr = document.querySelector("#lc-content > div > div.css-207dbg-TableContainer.ermji1u1 > div > section > div > div.css-ibx34q-antdPaginationOverride-layer1-dropdown-layer1-hoverOverlayBg-layer1-card-layer1-layer0 > div > div > div > div > div > div > table > tbody")
-            if (t != undefined && t == arr.lastChild.innerHTML) {
-                return
+            if (url != undefined && url != window.location.href) {
+                location.reload()
             }
             try {
+                let arr = document.querySelector("#lc-content > div > div.css-207dbg-TableContainer.ermji1u1 > div > section > div > div.css-ibx34q-antdPaginationOverride-layer1-dropdown-layer1-hoverOverlayBg-layer1-card-layer1-layer0 > div > div > div > div > div > div > table > tbody")
+                if (t != undefined && t == arr.lastChild.innerHTML) {
+                    return
+                }
                 let childs = arr.childNodes
                 for (let idx = 0; idx < childs.length; idx++) {
                     let v = childs[idx]
@@ -114,22 +124,27 @@
                     }
                 }
                 t = deepclone(arr.lastChild.innerHTML)
-            }catch (e) {
+                url = window.location.href
+            } catch (e) {
                 return
             }
         }
         setTimeout(getTagData, 2200)
         id2 = setInterval(getTagData, 1200)
         GM_setValue("tag", id2)
-    }else if (window.location.href.startsWith(pbUrl)) {
+    } else if (window.location.href.startsWith(pbUrl)) {
         let all = GM_getValue("all", -1)
         let tag = GM_getValue("tag", -2)
         clearInterval(all)
         clearInterval(tag)
         let tmp
+        let lurl
         function getpb() {
+            if (lurl != undefined && lurl != window.location.href) {
+                location.reload()
+            }
             let url = window.location.href.split("/")
-            if (url[url.length-3] != "problems") {
+            if (url[url.length - 3] != "problems") {
                 return
             }
             try {
@@ -151,14 +166,15 @@
                 let pa = colorSpan.parentNode
                 pa.insertBefore(span, pa.childNodes[2])
                 tmp = deepclone(pa.childNodes.length)
-            }catch (e) {
+                lurl = window.location.href
+            } catch (e) {
                 return
             }
         }
         setTimeout(getpb, 2000)
         id3 = setInterval(getpb, 1000)
         GM_setValue("pb", id3)
-    }else {
+    } else {
         let all = GM_getValue("all", -1)
         let tag = GM_getValue("tag", -2)
         let pb = GM_getValue("pb", -3)
