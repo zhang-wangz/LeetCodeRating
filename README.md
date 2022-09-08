@@ -37,13 +37,21 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 * Windows、MacOS、Linux 等支持 Chrome 或 Firefox 浏览器的所有操作系统 <sup>*移动平台如 iOS、Android 除外</sup>
 
-#### 💡 脚本效果
-#### 🐒tips: 特别说明**有周赛分数据的地方才会显示分数，没有则显示难度**
+#### 💡 脚本效果 (求star ヾ(≧▽≦*)o)
+#### 🐒 有周赛分数据的地方才会显示分数，没有则显示原有的难度
 
-- 所有没有改变的话只是**对应的数据没有收录**导致的，因为有很多小伙伴有这个疑惑，特别在这里说明一下
-- 1.1.3 目前支持**tag页面和题库页面**显示难度分
-- 1.1.4 支持**题目界面problems**显示难度分
-![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1_min.png)
+- 所有没有改变的话只是**对应的数据没有收录**导致的
+
+- 当前所有的数据都出自项目: https://zerotrac.github.io/leetcode_problem_rating/
+  项目设计初衷来自灵佬的视频: https://www.bilibili.com/video/BV1rS4y1s721/ | 训练技巧，上分技巧 部分
+
+- **ps: 只描述了重要更新内容～**
+
+  💡1.1.3 目前支持**tag页面和题库页面**显示难度分
+
+  💡1.1.4 支持**题目界面problems**显示难度分
+
+  💡1.1.7 更新: 经反馈每次都重新获取数据过于影响性能，现已修改为**一天获取一次**![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1_min.png)
 
 ![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/2_min.png)
 
