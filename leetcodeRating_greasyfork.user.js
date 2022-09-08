@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.6
+// @version      1.1.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -22,6 +22,7 @@
 // @note         2022-09-08 1.1.4 problems页面增加难度分显示
 // @note         2022-09-08 1.1.5 修复tag页面跳转problems页面bug
 // @note         2022-09-08 1.1.6 增加描述，更新插件范围为全体界面，在其他界面时删除功能优化性能
+// @note         2022-09-08 1.1.7 增强数据管理，每天只获取一遍分数数据，优化效率
 // ==/UserScript==
 
 (function () {
@@ -30,40 +31,85 @@
     var id1 = ""
     var id2 = ""
     var id3 = ""
+    var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
     var pbUrl = "https://leetcode.cn/problems"
-    GM_xmlhttpRequest({
-        method: "get",
-        url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
-        },
-        onload: function (res) {
-            if (res.status === 200) {
-                var data = jQuery.parseHTML(res.response)
-                let dataStr = data[0].data
-                let json = jQuery.parseJSON(dataStr)
-                for (let i = 0; i < json.length; i++) {
-                    t2rate[json[i].TitleZH] = Number.parseInt(json[i].Rating)
-                }
-            }
-        },
-        onerror: function (err) {
-            console.log('error')
-            console.log(err)
-        }
-    });
 
+    // 深拷贝
     function deepclone(obj) {
         let str = JSON.stringify(obj)
         return JSON.parse(str)
     }
 
+    // 获取时间
+    function getCurrentDate(format) {
+        var now = new Date();
+        var year = now.getFullYear(); //得到年份
+        var month = now.getMonth(); //得到月份
+        var date = now.getDate(); //得到日期
+        var day = now.getDay(); //得到周几
+        var hour = now.getHours(); //得到小时
+        var minu = now.getMinutes(); //得到分钟
+        var sec = now.getSeconds(); //得到秒
+        month = month + 1;
+        if (month < 10) month = "0" + month;
+        if (date < 10) date = "0" + date;
+        if (hour < 10) hour = "0" + hour;
+        if (minu < 10) minu = "0" + minu;
+        if (sec < 10) sec = "0" + sec;
+        var time = "";
+        //精确到天
+        if (format == 1) {
+            time = year + "年" + month + "月" + date + "日";
+        }
+        //精确到分
+        else if (format == 2) {
+            time = year + "-" + month + "-" + date + " " + hour + ":" + minu + ":" + sec;
+        }
+        return time;
+    }
+
+    t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+    preDate = GM_getValue("preDate", "")
+    let now = getCurrentDate(1)
+    if (t2rate["idx"] == undefined || (preDate == "" ||  preDate != now)) {
+        GM_xmlhttpRequest({
+            method: "get",
+            url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
+            },
+            onload: function (res) {
+                if (res.status === 200) {
+                    // 保留唯一标识
+                    var data = jQuery.parseHTML(res.response)
+                    let dataStr = data[0].data
+                    let json = jQuery.parseJSON(dataStr)
+                    for (let i = 0; i < json.length; i++) {
+                        t2rate[json[i].TitleZH] = Number.parseInt(json[i].Rating)
+                    }
+                    t2rate["idx"] = -4
+                    console.log("everyday getdate once...")
+
+                    preDate = now
+                    GM_setValue("preDate", preDate)
+                    GM_setValue("t2ratedb", JSON.stringify(t2rate))
+                }
+            },
+            onerror: function (err) {
+                console.log('error')
+                console.log(err)
+            }
+        })
+    }
+
     if (window.location.href.startsWith(allUrl)) {
         let tag = GM_getValue("tag", -2)
         clearInterval(tag)
+        let pb = GM_getValue("pb", -3)
+        clearInterval(pb)
         let t
 
         function getData() {
@@ -98,6 +144,8 @@
     } else if (window.location.href.startsWith(tagUrl)) {
         let all = GM_getValue("all", -1)
         clearInterval(all)
+        let pb = GM_getValue("pb", -3)
+        clearInterval(pb)
 
         let t
 
