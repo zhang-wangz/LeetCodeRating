@@ -64,15 +64,15 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 ### :page_facing_up: 安装脚本 (求star ヾ(≧▽≦*)o)
 
 * 从 GreasyFork 安装
-  通过 GreasyFork 安装脚本: **[点我](https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86)**
+通过 GreasyFork 安装脚本: **[点我](https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86)**
 
 
 ### :rocket: 贡献
 欢迎对本项目提交“Issues”帮助我完善脚本；  
 如果你对JS有所了解，可以直接提交**Pull Requests**，要求如下： <br/>
 > 修改三处版本信息:
-> 如果第三位<10，将第三位+1，如果第三位=10，将第二位+1，第三位=0
-> 例：1.1.9 => 1.2.0; 1.1.3 => 1.1.4;
+- 如果第三位<10，将第三位+1，如果第三位=10，将第二位+1，第三位=0
+- 例：1.1.9 => 1.2.0; 1.1.3 => 1.1.4;
 ```
 // @version      1.1.9
 ```
