@@ -1,15 +1,16 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.3
+// @version      1.1.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面和题库页面
-// @author       小东在刷题
+// @author       小东是个阳光蛋(力扣名
 // @require      https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js
 // @homepageURL  https://github.com/zhang-wangz/LeetCodeRating
 // @contributionURL https://www.showdoc.com.cn/2069209189620830
 // @match        *://*leetcode.cn/problemset/*
 // @match        *://*leetcode.cn/tag/*
+// @match        *://*leetcode.cn/problems/*/
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -20,6 +21,7 @@
 // @note         2022-09-07 1.1.1 修改一些小bug
 // @note         2022-09-07 1.1.2 合并难度和周赛分，有周赛分的地方显示分数，没有则显示难度
 // @note         2022-09-07 1.1.3 处理报错信息，净化浏览器console面板
+// @note         2022-09-08 1.1.4 problems页面增加难度分显示
 // ==/UserScript==
 
 (function () {
@@ -27,8 +29,10 @@
     var t2rate = {}
     var id1 = ""
     var id2 = ""
-    var allUrl = "https://leetcode.cn/problemset/"
+    var id3 = ""
+    var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
+    var pbUrl = "https://leetcode.cn/problems"
     GM_xmlhttpRequest({
         method: "get",
         url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
@@ -117,8 +121,51 @@
         setTimeout(getTagData, 2200)
         id2 = setInterval(getTagData, 1200)
         GM_setValue("tag", id2)
+    }else if (window.location.href.startsWith(pbUrl)) {
+        let all = GM_getValue("all", -1)
+        let tag = GM_getValue("tag", -2)
+        clearInterval(all)
+        clearInterval(tag)
+        let tmp
+        function getpb() {
+            let url = window.location.href.split("/")
+            if (url[url.length-3] != "problems") {
+                return
+            }
+            try {
+                let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
+                let data = t.innerText.split(".")
+                let title = data[data.length - 1].trim()
+                let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
+                if (tmp != undefined && tmp === colorSpan.parentNode.childNodes.length) {
+                    return
+                }
+                let span = document.createElement("span")
+                span.setAttribute("class", colorSpan.getAttribute("class"))
+                span.setAttribute("data-degree", colorSpan.getAttribute("data-degree"))
+                if (t2rate[title] != undefined) {
+                    span.innerHTML = "难度分: " + t2rate[title]
+                } else {
+                    span.innerHTML = "难度分未知"
+                }
+                let pa = colorSpan.parentNode
+                pa.insertBefore(span, pa.childNodes[2])
+                tmp = deepclone(pa.childNodes.length)
+            }catch (e) {
+                return
+            }
+        }
+        setTimeout(getpb, 2000)
+        id3 = setInterval(getpb, 1000)
+        GM_setValue("pb", id3)
+    }else {
+        let all = GM_getValue("all", -1)
+        let tag = GM_getValue("tag", -2)
+        let pb = GM_getValue("pb", -3)
+        clearInterval(all)
+        clearInterval(tag)
+        clearInterval(pb)
     }
 })();
-
 
 
