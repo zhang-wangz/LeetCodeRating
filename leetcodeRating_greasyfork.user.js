@@ -100,6 +100,7 @@
         clearInterval(all)
 
         let t
+
         function getTagData() {
             if (!window.location.href.startsWith(tagUrl)) {
                 location.reload()
@@ -126,6 +127,7 @@
                 return
             }
         }
+
         setTimeout(getTagData, 2200)
         id2 = setInterval(getTagData, 1200)
         GM_setValue("tag", id2)
@@ -137,6 +139,7 @@
 
         let tmp
         let t
+
         function getpb() {
             if (!window.location.href.startsWith(pbUrl)) {
                 location.reload()
@@ -172,6 +175,7 @@
                 return
             }
         }
+
         setTimeout(getpb, 2000)
         id3 = setInterval(getpb, 1000)
         GM_setValue("pb", id3)
