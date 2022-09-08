@@ -42,7 +42,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 - 界面没有改变的话只是因为**对应的数据没有收录**导致的
 
-- 当前所有的数据都出自项目: https://zerotrac.github.io/leetcode_problem_rating/
+- 当前所有的数据都出自项目: https://zerotrac.github.io/leetcode_problem_rating/    <br/>
   项目设计初衷来自灵佬的视频: https://www.bilibili.com/video/BV1rS4y1s721/ | 训练技巧，上分技巧 部分
 
 - **ps: 只描述了重要更新内容～**
