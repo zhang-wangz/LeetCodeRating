@@ -3,14 +3,12 @@
 // @namespace    https://github.com/zhang-wangz
 // @version      1.1.5
 // @license      MIT
-// @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面和题库页面
+// @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
 // @require      https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js
 // @homepageURL  https://github.com/zhang-wangz/LeetCodeRating
 // @contributionURL https://www.showdoc.com.cn/2069209189620830
-// @match        *://*leetcode.cn/problemset/*
-// @match        *://*leetcode.cn/tag/*
-// @match        *://*leetcode.cn/problems/*/
+// @match        *://*leetcode.cn/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -23,6 +21,7 @@
 // @note         2022-09-07 1.1.3 处理报错信息，净化浏览器console面板
 // @note         2022-09-08 1.1.4 problems页面增加难度分显示
 // @note         2022-09-08 1.1.5 修复tag页面跳转problems页面bug
+// @note         2022-09-08 1.1.6 增加描述，更新插件范围为全体界面，在其他界面时删除功能优化性能
 // ==/UserScript==
 
 (function () {
@@ -135,7 +134,9 @@
         let tag = GM_getValue("tag", -2)
         clearInterval(all)
         clearInterval(tag)
+
         let tmp
+        let t
         function getpb() {
             if (!window.location.href.startsWith(pbUrl)) {
                 location.reload()
@@ -148,6 +149,9 @@
                 let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
                 let data = t.innerText.split(".")
                 let title = data[data.length - 1].trim()
+                if (t != undefined && t == title) {
+                    return
+                }
                 let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
                 if (tmp != undefined && tmp === colorSpan.parentNode.childNodes.length) {
                     return
@@ -163,6 +167,7 @@
                 let pa = colorSpan.parentNode
                 pa.insertBefore(span, pa.childNodes[2])
                 tmp = deepclone(pa.childNodes.length)
+                t = deepclone(title)
             } catch (e) {
                 return
             }
