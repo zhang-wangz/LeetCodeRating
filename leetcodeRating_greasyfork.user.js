@@ -101,9 +101,8 @@
         clearInterval(all)
 
         let t
-        let url
         function getTagData() {
-            if (url != undefined && url != window.location.href) {
+            if (!window.location.href.startsWith(tagUrl)) {
                 location.reload()
             }
             try {
@@ -124,7 +123,6 @@
                     }
                 }
                 t = deepclone(arr.lastChild.innerHTML)
-                url = window.location.href
             } catch (e) {
                 return
             }
@@ -138,9 +136,8 @@
         clearInterval(all)
         clearInterval(tag)
         let tmp
-        let lurl
         function getpb() {
-            if (lurl != undefined && lurl != window.location.href) {
+            if (!window.location.href.startsWith(pbUrl)) {
                 location.reload()
             }
             let url = window.location.href.split("/")
@@ -166,7 +163,6 @@
                 let pa = colorSpan.parentNode
                 pa.insertBefore(span, pa.childNodes[2])
                 tmp = deepclone(pa.childNodes.length)
-                lurl = window.location.href
             } catch (e) {
                 return
             }
