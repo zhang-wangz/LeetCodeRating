@@ -40,10 +40,14 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 #### 💡 脚本效果
 #### 🐒tips: 特别说明**有周赛分数据的地方才会显示分数，没有则显示难度**
 
-所有没有改变的话只是**对应的数据没有收录**导致的，因为有很多小伙伴有这个疑惑，特别在这里说明一下
+- 所有没有改变的话只是**对应的数据没有收录**导致的，因为有很多小伙伴有这个疑惑，特别在这里说明一下
+- 1.1.3 目前支持**tag页面和题库页面**显示难度分
+- 1.1.4 支持**题目界面problems**显示难度分
 ![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1_min.png)
 
 ![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/2_min.png)
+
+ ![image-20220908124014690](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220908124014690_min.png)
 
 ### :page_facing_up: 安装脚本
 
