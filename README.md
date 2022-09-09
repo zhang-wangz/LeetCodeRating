@@ -68,7 +68,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 
 ### :rocket: 贡献
-非常欢迎你的加入！[提一个 Issue](https://github.com/zhang-wangz/LeetCodeRating/issues/new?assignees=athony.w&labels=help+wanted&template=ISSUE_TEMPLATE.md&title=) 或者提交一个 Pull Request。
+非常欢迎你的加入！[提一个 Issue](https://github.com/zhang-wangz/LeetCodeRating/issues/new?assignees=athony.w&labels=help+wanted&template=ISSUE_TEMPLATE.md&title=) 或者提交一个 Pull Request。<br/>
 要求如下： <br/>
 
 1. 修改版本号信息:
