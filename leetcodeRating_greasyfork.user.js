@@ -28,6 +28,7 @@
 // @note         2022-09-09 1.1.10 修复pb页面点击评论/题解再点回题目描述，难度分消失的bug
 // @note         2022-09-09 1.2.0 修改pb UI，和题库页面保持一致，有难度分直接替换原本的难度标识
 // @note         2022-09-09 1.2.1 增加对应周赛链接
+// @note         2022-09-09 1.2.2 在具体问题页面，翻译成英文后，数据消失，是因为只保存了中文，增加英文对应数据
 // ==/UserScript==
 
 (function () {
@@ -97,6 +98,11 @@
                         t2rate[json[i].TitleZH]["rating"] = Number.parseInt(json[i].Rating)
                         t2rate[json[i].TitleZH]["ContestID_zh"] = json[i].ContestID_zh
                         t2rate[json[i].TitleZH]["ContestSlug"] = json[i].ContestSlug
+
+                        t2rate[json[i].Title] = {}
+                        t2rate[json[i].Title]["rating"] = Number.parseInt(json[i].Rating)
+                        t2rate[json[i].Title]["ContestID_zh"] = json[i].ContestID_zh
+                        t2rate[json[i].Title]["ContestSlug"] = json[i].ContestSlug
                     }
                     t2rate["idx"] = -4
                     console.log("everyday getdate once...")
