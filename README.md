@@ -68,19 +68,21 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 
 ### :rocket: 贡献
-欢迎对本项目提交“Issues”帮助我完善脚本；  
-如果你对JS有所了解，可以直接提交**Pull Requests**，要求如下： <br/>
+非常欢迎你的加入！[提一个 Issue](https://github.com/zhang-wangz/LeetCodeRating/issues/new?assignees=athony.w&labels=help+wanted&template=ISSUE_TEMPLATE.md&title=) 或者提交一个 Pull Request。
+要求如下： <br/>
 
-* 修改版本号信息:
+1. 修改版本号信息:
 - 如果第三位<10，将第三位+1，如果第三位=10，将第二位+1，第三位=0
 - 例：1.1.9 => 1.2.0; 1.1.3 => 1.1.4;
 ```
 // @version      1.1.9
 ```
-* 将更新描述在最上方加上一行，修改版本号（要求同上），并修改更新描述：
+2. 将更新描述在最上方加上一行，修改版本号（要求同上），并修改更新描述：
 ```
 // @note    2022-09-07 1.1.9 (更新描述)
 ```
+LeetCodeRating遵循 [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) 行为规范。
+
 ### :heart: [捐助](https://www.showdoc.com.cn/2069209189620830)特别鸣谢
 | 捐助者 | 渠道 | 时间                 | 作者寄语           |
 |-----| -- | -------------------- | ------------------ |
