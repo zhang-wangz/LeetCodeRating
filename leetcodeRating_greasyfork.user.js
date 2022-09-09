@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.9
+// @version      1.2.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -25,6 +25,9 @@
 // @note         2022-09-08 1.1.7 增强数据管理，每天只获取一遍分数数据，优化效率
 // @note         2022-09-09 1.1.8 修复pb页面点击下一页难度分没有变化的bug
 // @note         2022-09-09 1.1.9 修复pb页面当出现会员题，点击上下页出现的bug
+// @note         2022-09-09 1.1.10 修复pb页面点击评论/题解再点回题目描述，难度分消失的bug
+// @note         2022-09-09 1.2.0 修改pb UI，和题库页面保持一致，有难度分直接替换原本的难度标识
+// @note         2022-09-09 1.2.1 增加对应周赛链接
 // ==/UserScript==
 
 (function () {
@@ -90,7 +93,10 @@
                     let dataStr = data[0].data
                     let json = jQuery.parseJSON(dataStr)
                     for (let i = 0; i < json.length; i++) {
-                        t2rate[json[i].TitleZH] = Number.parseInt(json[i].Rating)
+                        t2rate[json[i].TitleZH] = {}
+                        t2rate[json[i].TitleZH]["rating"] = Number.parseInt(json[i].Rating)
+                        t2rate[json[i].TitleZH]["ContestID_zh"] = json[i].ContestID_zh
+                        t2rate[json[i].TitleZH]["ContestSlug"] = json[i].ContestSlug
                     }
                     t2rate["idx"] = -4
                     console.log("everyday getdate once...")
@@ -130,7 +136,7 @@
                     let title = data[data.length - 1].trim()
                     let nd = v.childNodes[4].childNodes[0].innerHTML
                     if (t2rate[title] != undefined) {
-                        nd = t2rate[title]
+                        nd = t2rate[title]["rating"]
                         v.childNodes[4].childNodes[0].innerHTML = nd
                     }
                 }
@@ -168,7 +174,7 @@
                     let title = data[data.length - 1].trim()
                     let nd = v.childNodes[3].childNodes[0].innerHTML
                     if (t2rate[title] != undefined) {
-                        nd = t2rate[title]
+                        nd = t2rate[title]["rating"]
                         v.childNodes[3].childNodes[0].innerHTML = nd
                     }
                 }
@@ -187,16 +193,12 @@
         clearInterval(all)
         clearInterval(tag)
 
-        let le
         let t1
+        let le
 
         function getpb() {
             if (!window.location.href.startsWith(pbUrl)) {
                 location.reload()
-            }
-            let url = window.location.href.split("/")
-            if (url[url.length - 3] != "problems") {
-                return
             }
             try {
                 let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
@@ -209,29 +211,47 @@
                 if (t1 != undefined && t1 == title) {
                     return
                 }
-
+                // 统计难度分数
                 let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
                 let pa = colorSpan.parentNode
-                if (le != undefined && le === colorSpan.parentNode.childNodes.length) {
-                    if (t2rate[title] != undefined) {
-                        pa.childNodes[2].innerHTML = "难度分: " + t2rate[title]
-                    } else {
-                        pa.childNodes[2].innerHTML = "难度分未知"
-                    }
-                    pa.childNodes[2].setAttribute("class", colorSpan.getAttribute("class"))
-                    pa.childNodes[2].setAttribute("data-degree", colorSpan.getAttribute("data-degree"))
+                let nd = colorSpan.getAttribute("data-degree")
+                let nd2ch = {"easy": "简单", "medium": "中等", "hard": "困难"}
+                if (t2rate[title] != undefined) {
+                    colorSpan.innerHTML = t2rate[title]["rating"]
                 } else {
-                    let span = document.createElement("span")
-                    span.setAttribute("class", colorSpan.getAttribute("class"))
-                    span.setAttribute("data-degree", colorSpan.getAttribute("data-degree"))
-                    if (t2rate[title] != undefined) {
-                        span.innerHTML = "难度分: " + t2rate[title]
-                    } else {
-                        span.innerHTML = "难度分未知"
-                    }
-                    pa.insertBefore(span, pa.childNodes[2])
+                    colorSpan.innerHTML = nd2ch[nd]
                 }
-                le = deepclone(pa.childNodes.length)
+                // 准备做周赛链接,如果已经不存在组件就执行操作
+                let url = "https://leetcode.cn/contest/"
+                if (le == undefined || le != pa.childNodes.length) {
+                    let abody = document.createElement("a")
+                    abody.setAttribute("data-small-spacing", "true")
+                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
+                    let span = document.createElement("span")
+                    // ContestID_zh  ContestSlug
+                    if (t2rate[title] != undefined) {
+                        span.innerText = t2rate[title]["ContestID_zh"]
+                        abody.setAttribute("href", url + t2rate[title]["ContestSlug"])
+                        abody.setAttribute("target", "_blank")
+                    } else {
+                        span.innerText = "对应周赛未知"
+                        abody.setAttribute("href", "")
+                        abody.setAttribute("target", "_self")
+                    }
+                    abody.appendChild(span)
+                    pa.appendChild(abody)
+                } else if (le == pa.childNodes.length) {  // 存在就直接替换
+                    if (t2rate[title] != undefined) {
+                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[title]["ContestID_zh"]
+                        pa.childNodes[le - 1].setAttribute("href", url + t2rate[title]["ContestSlug"])
+                        pa.childNodes[le - 1].setAttribute("target", "_blank")
+                    } else {
+                        pa.childNodes[le - 1].childNodes[0].innerText = "对应周赛未知"
+                        pa.childNodes[le - 1].setAttribute("href", "")
+                        pa.childNodes[le - 1].setAttribute("target", "_self")
+                    }
+                }
+                le = pa.childNodes.length
                 t1 = deepclone(title)
             } catch (e) {
                 return
