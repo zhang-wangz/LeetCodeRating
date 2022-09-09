@@ -79,7 +79,7 @@
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["idx5"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
@@ -104,7 +104,7 @@
                         t2rate[json[i].Title]["ContestID_zh"] = json[i].ContestID_zh
                         t2rate[json[i].Title]["ContestSlug"] = json[i].ContestSlug
                     }
-                    t2rate["idx"] = -4
+                    t2rate["idx5"] = -5
                     console.log("everyday getdate once...")
 
                     preDate = now
