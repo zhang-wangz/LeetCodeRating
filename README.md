@@ -45,21 +45,27 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 - 当前所有的数据都出自项目: https://zerotrac.github.io/leetcode_problem_rating/    <br/>
   项目设计初衷来自灵佬的视频: https://www.bilibili.com/video/BV1rS4y1s721/ | 训练技巧，上分技巧 部分
 
-- **ps: 只描述了重要更新内容～**
+  - **ps: 只描述了重要更新内容～**
 
-  💡1.1.3 更新:目前支持**tag页面和题库页面**显示难度分
+    💡1.1.3 更新:目前支持**tag页面和题库页面**显示难度分
 
-  💡1.1.4 更新:支持**题目界面problems**显示难度分
+    💡1.1.4 更新:支持**题目界面problems**显示难度分
 
-  💡1.1.7 更新: 经反馈每次都重新获取数据过于影响性能，现已修改为**一天获取一次**
+    💡1.1.7 更新: 经反馈每次都重新获取数据过于影响性能，现已修改为**一天获取一次**
+  
+    💡1.2.0 修改具体问题页面UI，和题库页面保持一致，有难度分直接替换原本的难度标识
+  
+    💡1.2.1 增加对应周赛链接
 
 #### 💡 脚本效果 (求star ヾ(≧▽≦*)o)
 
-![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1_min.png)
+![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1.png)
 
-![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/2_min.png)
+![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/2.png)
 
-![image-20220908124014690](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220908124014690_min.png)
+![image-20220909230424363](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/3.png)
+
+<br/>
 
 ### :page_facing_up: 安装脚本 (求star ヾ(≧▽≦*)o)
 
