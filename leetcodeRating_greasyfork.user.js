@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.7
+// @version      1.1.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -23,6 +23,7 @@
 // @note         2022-09-08 1.1.5 修复tag页面跳转problems页面bug
 // @note         2022-09-08 1.1.6 增加描述，更新插件范围为全体界面，在其他界面时删除功能优化性能
 // @note         2022-09-08 1.1.7 增强数据管理，每天只获取一遍分数数据，优化效率
+// @note         2022-09-09 1.1.8 修复pb页面点击下一页难度分没有变化的bug
 // ==/UserScript==
 
 (function () {
@@ -73,7 +74,7 @@
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx"] == undefined || (preDate == "" ||  preDate != now)) {
+    if (t2rate["idx"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
@@ -185,8 +186,8 @@
         clearInterval(all)
         clearInterval(tag)
 
-        let tmp
-        let t
+        let le
+        let t1
 
         function getpb() {
             if (!window.location.href.startsWith(pbUrl)) {
@@ -200,25 +201,34 @@
                 let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
                 let data = t.innerText.split(".")
                 let title = data[data.length - 1].trim()
-                if (t != undefined && t == title) {
+                if (t1 != undefined && t1 == title) {
                     return
                 }
+
                 let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
-                if (tmp != undefined && tmp === colorSpan.parentNode.childNodes.length) {
-                    return
-                }
-                let span = document.createElement("span")
-                span.setAttribute("class", colorSpan.getAttribute("class"))
-                span.setAttribute("data-degree", colorSpan.getAttribute("data-degree"))
-                if (t2rate[title] != undefined) {
-                    span.innerHTML = "难度分: " + t2rate[title]
-                } else {
-                    span.innerHTML = "难度分未知"
-                }
                 let pa = colorSpan.parentNode
-                pa.insertBefore(span, pa.childNodes[2])
-                tmp = deepclone(pa.childNodes.length)
-                t = deepclone(title)
+                console.log("le:  " + le)
+                if (le != undefined && le === colorSpan.parentNode.childNodes.length) {
+                    if (t2rate[title] != undefined) {
+                        pa.childNodes[2].innerHTML = "难度分: " + t2rate[title]
+                    } else {
+                        pa.childNodes[2].innerHTML = "难度分未知"
+                    }
+                    pa.childNodes[2].setAttribute("class", colorSpan.getAttribute("class"))
+                    pa.childNodes[2].setAttribute("data-degree", colorSpan.getAttribute("data-degree"))
+                } else {
+                    let span = document.createElement("span")
+                    span.setAttribute("class", colorSpan.getAttribute("class"))
+                    span.setAttribute("data-degree", colorSpan.getAttribute("data-degree"))
+                    if (t2rate[title] != undefined) {
+                        span.innerHTML = "难度分: " + t2rate[title]
+                    } else {
+                        span.innerHTML = "难度分未知"
+                    }
+                    pa.insertBefore(span, pa.childNodes[2])
+                }
+                le = deepclone(pa.childNodes.length)
+                t1 = deepclone(title)
             } catch (e) {
                 return
             }
