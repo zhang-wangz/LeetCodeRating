@@ -1,5 +1,5 @@
 <p align=center>
-<img src="https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220907114135476_min.png"/>
+<img src="https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/logo.png"/>
   <br>
   <a title="Hits" target="_blank" href="https://github.com/zhang-wangz/LeetCodeRating"><img src="https://hits.b3log.org/zhang-wangz/LeetCodeRating.svg"></a>
   <img src="https://img.shields.io/github/stars/zhang-wangz/LeetCodeRating?style=flat-square"/>
