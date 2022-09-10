@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.2.2
+// @version      1.2.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -29,6 +29,7 @@
 // @note         2022-09-09 1.2.0 修改pb UI，和题库页面保持一致，有难度分直接替换原本的难度标识
 // @note         2022-09-09 1.2.1 增加对应周赛链接
 // @note         2022-09-09 1.2.2 在具体问题页面，翻译成英文后，数据消失，是因为只保存了中文，增加英文对应数据
+// @note         2022-09-10 1.2.3 修复在具体问题页面，快速切换导致的数据缺失问题
 // ==/UserScript==
 
 (function () {
@@ -214,12 +215,12 @@
                 }
                 let data = t.innerText.split(".")
                 let title = data[data.length - 1].trim()
-                if (t1 != undefined && t1 == title) {
+                let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
+                let pa = colorSpan.parentNode
+                if ((t1 != undefined && t1 == title) && (le != undefined && le == pa.childNodes.length)){
                     return
                 }
                 // 统计难度分数
-                let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
-                let pa = colorSpan.parentNode
                 let nd = colorSpan.getAttribute("data-degree")
                 let nd2ch = {"easy": "简单", "medium": "中等", "hard": "困难"}
                 if (t2rate[title] != undefined) {
