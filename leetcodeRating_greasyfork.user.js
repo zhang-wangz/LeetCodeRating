@@ -5,6 +5,7 @@
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
+// @leetcodehomepage   https://leetcode.cn/u/runonline/
 // @homepageURL  https://github.com/zhang-wangz/LeetCodeRating
 // @contributionURL https://www.showdoc.com.cn/2069209189620830
 // @match        *://*leetcode.cn/*
