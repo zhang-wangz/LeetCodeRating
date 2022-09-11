@@ -34,6 +34,7 @@
 // @note         2022-09-11 1.2.5 fix 缓存
 // @note         2022-09-11 1.2.6 fix当 hover题目后面的反馈按钮的时候,会不断的添加周赛link的bug
 // @note         2022-09-11 1.2.7 更新具体问题页面， 题目侧边弹出页难度分显示
+// @note         2022-09-12 1.2.8 重构数据标识为题目id，因为lc不计算剑指offer，lcp这种题号，id作为标识更加准确些
 // ==/UserScript==
 
 (function () {
@@ -80,6 +81,7 @@
         }
         return time;
     }
+
     let t  // all and tag
     let t1, le // pb
     function getData() {
@@ -95,10 +97,10 @@
                 let v = childs[idx]
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
-                let title = data[data.length - 1].trim()
+                let id = data[0].trim()
                 let nd = v.childNodes[4].childNodes[0].innerHTML
-                if (t2rate[title] != undefined) {
-                    nd = t2rate[title]["rating"]
+                if (t2rate[id] != undefined) {
+                    nd = t2rate[id]["Rating"]
                     v.childNodes[4].childNodes[0].innerHTML = nd
                 }
             }
@@ -125,10 +127,10 @@
                 let v = childs[idx]
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
-                let title = data[data.length - 1].trim()
+                let id = data[0].trim()
                 let nd = v.childNodes[3].childNodes[0].innerHTML
-                if (t2rate[title] != undefined) {
-                    nd = t2rate[title]["rating"]
+                if (t2rate[id] != undefined) {
+                    nd = t2rate[id]["Rating"]
                     v.childNodes[3].childNodes[0].innerHTML = nd
                 }
             }
@@ -152,11 +154,11 @@
                 for (let idx = 0; idx < childs.length; idx++) {
                     let v = childs[idx]
                     let t = v.childNodes[0].childNodes[1].innerText
-                    let data = t.split(" ").slice(1)
-                    let title = data.join("").trim()
+                    let data = t.split(" ")[0]
+                    let id = data.slice(1)
                     let nd = v.childNodes[1].childNodes[0].innerText
-                    if (t2rate[title] != undefined) {
-                        nd = t2rate[title]["rating"]
+                    if (t2rate[id] != undefined) {
+                        nd = t2rate[id]["Rating"]
                         v.childNodes[1].childNodes[0].innerText = nd
                     }
                 }
@@ -167,18 +169,18 @@
                 return
             }
             let data = t.innerText.split(".")
-            let title = data[data.length - 1].trim()
+            let id = data[0].trim()
             let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
             let pa = colorSpan.parentNode
-            if ((t1 != undefined && t1 == title) && (le != undefined && le <= pa.childNodes.length)){
+            if ((t1 != undefined && t1 == id) && (le != undefined && le <= pa.childNodes.length)) {
                 return
             }
 
             // 统计难度分数
             let nd = colorSpan.getAttribute("data-degree")
             let nd2ch = {"easy": "简单", "medium": "中等", "hard": "困难"}
-            if (t2rate[title] != undefined) {
-                colorSpan.innerHTML = t2rate[title]["rating"]
+            if (t2rate[id] != undefined) {
+                colorSpan.innerHTML = t2rate[id]["Rating"]
             } else {
                 colorSpan.innerHTML = nd2ch[nd]
             }
@@ -190,9 +192,9 @@
                 abody.setAttribute("class", "css-nabodd-Button e167268t1")
                 let span = document.createElement("span")
                 // ContestID_zh  ContestSlug
-                if (t2rate[title] != undefined) {
-                    span.innerText = t2rate[title]["ContestID_zh"]
-                    abody.setAttribute("href", url + t2rate[title]["ContestSlug"])
+                if (t2rate[id] != undefined) {
+                    span.innerText = t2rate[id]["ContestID_zh"]
+                    abody.setAttribute("href", url + t2rate[id]["ContestSlug"])
                     abody.setAttribute("target", "_blank")
                     abody.removeAttribute("hidden")
                 } else {
@@ -204,9 +206,9 @@
                 abody.appendChild(span)
                 pa.appendChild(abody)
             } else if (le == pa.childNodes.length) {  // 存在就直接替换
-                if (t2rate[title] != undefined) {
-                    pa.childNodes[le - 1].childNodes[0].innerText = t2rate[title]["ContestID_zh"]
-                    pa.childNodes[le - 1].setAttribute("href", url + t2rate[title]["ContestSlug"])
+                if (t2rate[id] != undefined) {
+                    pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
+                    pa.childNodes[le - 1].setAttribute("href", url + t2rate[id]["ContestSlug"])
                     pa.childNodes[le - 1].setAttribute("target", "_blank")
                     pa.childNodes[le - 1].removeAttribute("hidden")
                 } else {
@@ -217,7 +219,7 @@
                 }
             }
             le = pa.childNodes.length
-            t1 = deepclone(title)
+            t1 = deepclone(id)
         } catch (e) {
             return
         }
@@ -227,7 +229,7 @@
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx8"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["idx"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
@@ -238,20 +240,14 @@
             onload: function (res) {
                 if (res.status === 200) {
                     // 保留唯一标识
+                    t2rate = {}
                     let dataStr = res.response
                     let json = eval(dataStr)
                     for (let i = 0; i < json.length; i++) {
-                        t2rate[json[i].TitleZH] = {}
-                        t2rate[json[i].TitleZH]["rating"] = Number.parseInt(json[i].Rating)
-                        t2rate[json[i].TitleZH]["ContestID_zh"] = json[i].ContestID_zh
-                        t2rate[json[i].TitleZH]["ContestSlug"] = json[i].ContestSlug
-
-                        t2rate[json[i].Title] = {}
-                        t2rate[json[i].Title]["rating"] = Number.parseInt(json[i].Rating)
-                        t2rate[json[i].Title]["ContestID_zh"] = json[i].ContestID_zh
-                        t2rate[json[i].Title]["ContestSlug"] = json[i].ContestSlug
+                        t2rate[json[i].ID] = json[i]
+                        t2rate[json[i].ID]["Rating"] = Number.parseInt(Number.parseFloat(json[i]["Rating"])+0.5)
                     }
-                    t2rate["idx8"] = -8
+                    t2rate["idx"] = -1
                     console.log("everyday getdate once...")
 
                     preDate = now
