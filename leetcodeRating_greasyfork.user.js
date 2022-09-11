@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.2.6
+// @version      1.2.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -32,6 +32,7 @@
 // @note         2022-09-11 1.2.4 重构所有实现，取消所有依赖包优化性能，同步优化未知周赛时pb页面隐藏周赛链接
 // @note         2022-09-11 1.2.5 fix 缓存
 // @note         2022-09-11 1.2.6 fix当 hover题目后面的反馈按钮的时候,会不断的添加周赛link的bug
+// @note         2022-09-11 1.2.7 更新具体问题页面， 题目侧边弹出页难度分显示
 // ==/UserScript==
 
 (function () {
@@ -144,6 +145,21 @@
             return
         }
         try {
+            let pbAll = document.querySelector("body > div.question-picker-detail__2A9V.show__GfjG > div.question-picker-detail-menu__3NQq.show__3hiR > div.lc-theme-dark.question-picker-questions-wrapper__13qM > div")
+            if (pbAll != undefined) {
+                let childs = pbAll.childNodes
+                for (let idx = 0; idx < childs.length; idx++) {
+                    let v = childs[idx]
+                    let t = v.childNodes[0].childNodes[1].innerText
+                    let data = t.split(" ").slice(1)
+                    let title = data.join("").trim()
+                    let nd = v.childNodes[1].childNodes[0].innerText
+                    if (t2rate[title] != undefined) {
+                        nd = t2rate[title]["rating"]
+                        v.childNodes[1].childNodes[0].innerText = nd
+                    }
+                }
+            }
             let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
             if (t == undefined) {
                 t1 = "unknown"
