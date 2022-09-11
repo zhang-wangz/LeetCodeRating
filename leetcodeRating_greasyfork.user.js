@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.2.4
+// @version      1.2.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -30,6 +30,7 @@
 // @note         2022-09-09 1.2.2 在具体问题页面，翻译成英文后，数据消失，是因为只保存了中文，增加英文对应数据
 // @note         2022-09-10 1.2.3 修复在具体问题页面，快速切换导致的数据缺失问题
 // @note         2022-09-11 1.2.4 重构所有实现，取消所有依赖包优化性能，同步优化未知周赛时pb页面隐藏周赛链接
+// @note         2022-09-11 1.2.5 fix 缓存
 // ==/UserScript==
 
 (function () {
@@ -108,6 +109,7 @@
         if (!window.location.href.startsWith(tagUrl)) {
             clearInterval(id2)
             id3 = setInterval(getpb, 1000)
+            GM_setValue("pb", id3)
             return
         }
         try {
@@ -137,6 +139,7 @@
         if (!window.location.href.startsWith(pbUrl)) {
             clearInterval(id3)
             id2 = setInterval(getTagData, 1000)
+            GM_setValue("tag", id2)
             return
         }
         try {
