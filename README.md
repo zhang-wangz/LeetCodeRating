@@ -63,7 +63,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 ![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/2.png)
 
-![image-20220909230424363](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/3.png)
+![image-20220911231824291](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220911231824291.png)
 
 <br/>
 
