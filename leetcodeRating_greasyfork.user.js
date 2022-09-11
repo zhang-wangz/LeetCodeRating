@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.2.3
+// @version      1.2.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
-// @require      https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js
 // @homepageURL  https://github.com/zhang-wangz/LeetCodeRating
 // @contributionURL https://www.showdoc.com.cn/2069209189620830
 // @match        *://*leetcode.cn/*
@@ -30,6 +29,7 @@
 // @note         2022-09-09 1.2.1 增加对应周赛链接
 // @note         2022-09-09 1.2.2 在具体问题页面，翻译成英文后，数据消失，是因为只保存了中文，增加英文对应数据
 // @note         2022-09-10 1.2.3 修复在具体问题页面，快速切换导致的数据缺失问题
+// @note         2022-09-11 1.2.4 重构所有实现，取消所有依赖包优化性能，同步优化未知周赛时pb页面隐藏周赛链接
 // ==/UserScript==
 
 (function () {
@@ -66,21 +66,146 @@
         if (minu < 10) minu = "0" + minu;
         if (sec < 10) sec = "0" + sec;
         var time = "";
-        //精确到天
+        // 精确到天
         if (format == 1) {
             time = year + "年" + month + "月" + date + "日";
         }
-        //精确到分
+        // 精确到分
         else if (format == 2) {
             time = year + "-" + month + "-" + date + " " + hour + ":" + minu + ":" + sec;
         }
         return time;
     }
+    let t  // all and tag
+    let t1, le // pb
+    function getData() {
+        try {
+            let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
+            // 防止过多的无效操作
+            if (t != undefined && t == arr.lastChild.innerHTML) {
+                return
+            }
+
+            let childs = arr.childNodes
+            for (let idx = 0; idx < childs.length; idx++) {
+                let v = childs[idx]
+                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                let data = t.split(".")
+                let title = data[data.length - 1].trim()
+                let nd = v.childNodes[4].childNodes[0].innerHTML
+                if (t2rate[title] != undefined) {
+                    nd = t2rate[title]["rating"]
+                    v.childNodes[4].childNodes[0].innerHTML = nd
+                }
+            }
+            t = deepclone(arr.lastChild.innerHTML)
+        } catch (e) {
+            return
+        }
+    }
+
+    function getTagData() {
+        if (!window.location.href.startsWith(tagUrl)) {
+            clearInterval(id2)
+            id3 = setInterval(getpb, 1000)
+            return
+        }
+        try {
+            let arr = document.querySelector("#lc-content > div > div.css-207dbg-TableContainer.ermji1u1 > div > section > div > div.css-ibx34q-antdPaginationOverride-layer1-dropdown-layer1-hoverOverlayBg-layer1-card-layer1-layer0 > div > div > div > div > div > div > table > tbody")
+            if (t != undefined && t == arr.lastChild.innerHTML) {
+                return
+            }
+            let childs = arr.childNodes
+            for (let idx = 0; idx < childs.length; idx++) {
+                let v = childs[idx]
+                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                let data = t.split(".")
+                let title = data[data.length - 1].trim()
+                let nd = v.childNodes[3].childNodes[0].innerHTML
+                if (t2rate[title] != undefined) {
+                    nd = t2rate[title]["rating"]
+                    v.childNodes[3].childNodes[0].innerHTML = nd
+                }
+            }
+            t = deepclone(arr.lastChild.innerHTML)
+        } catch (e) {
+            return
+        }
+    }
+
+    function getpb() {
+        if (!window.location.href.startsWith(pbUrl)) {
+            clearInterval(id3)
+            id2 = setInterval(getTagData, 1000)
+            return
+        }
+        try {
+            let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
+            if (t == undefined) {
+                t1 = "unknown"
+                return
+            }
+            let data = t.innerText.split(".")
+            let title = data[data.length - 1].trim()
+            let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
+            let pa = colorSpan.parentNode
+            if ((t1 != undefined && t1 == title) && (le != undefined && le == pa.childNodes.length)){
+                return
+            }
+            // 统计难度分数
+            let nd = colorSpan.getAttribute("data-degree")
+            let nd2ch = {"easy": "简单", "medium": "中等", "hard": "困难"}
+            if (t2rate[title] != undefined) {
+                colorSpan.innerHTML = t2rate[title]["rating"]
+            } else {
+                colorSpan.innerHTML = nd2ch[nd]
+            }
+            // 准备做周赛链接,如果已经不存在组件就执行操作
+            let url = "https://leetcode.cn/contest/"
+            if (le == undefined || le != pa.childNodes.length) {
+                let abody = document.createElement("a")
+                abody.setAttribute("data-small-spacing", "true")
+                abody.setAttribute("class", "css-nabodd-Button e167268t1")
+                let span = document.createElement("span")
+                // ContestID_zh  ContestSlug
+                if (t2rate[title] != undefined) {
+                    span.innerText = t2rate[title]["ContestID_zh"]
+                    abody.setAttribute("href", url + t2rate[title]["ContestSlug"])
+                    abody.setAttribute("target", "_blank")
+                    abody.removeAttribute("hidden")
+                } else {
+                    span.innerText = "对应周赛未知"
+                    abody.setAttribute("href", "")
+                    abody.setAttribute("target", "_self")
+                    abody.setAttribute("hidden", "true")
+                }
+                abody.appendChild(span)
+                pa.appendChild(abody)
+            } else if (le == pa.childNodes.length) {  // 存在就直接替换
+                if (t2rate[title] != undefined) {
+                    pa.childNodes[le - 1].childNodes[0].innerText = t2rate[title]["ContestID_zh"]
+                    pa.childNodes[le - 1].setAttribute("href", url + t2rate[title]["ContestSlug"])
+                    pa.childNodes[le - 1].setAttribute("target", "_blank")
+                    pa.childNodes[le - 1].removeAttribute("hidden")
+                } else {
+                    pa.childNodes[le - 1].childNodes[0].innerText = "对应周赛未知"
+                    pa.childNodes[le - 1].setAttribute("href", "")
+                    pa.childNodes[le - 1].setAttribute("target", "_self")
+                    pa.childNodes[le - 1].setAttribute("hidden", "true")
+                }
+            }
+            le = pa.childNodes.length
+            t1 = deepclone(title)
+        } catch (e) {
+            return
+        }
+    }
+
 
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx6"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["idx7"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
@@ -91,9 +216,8 @@
             onload: function (res) {
                 if (res.status === 200) {
                     // 保留唯一标识
-                    var data = jQuery.parseHTML(res.response)
-                    let dataStr = data[0].data
-                    let json = jQuery.parseJSON(dataStr)
+                    let dataStr = res.response
+                    let json = eval(dataStr)
                     for (let i = 0; i < json.length; i++) {
                         t2rate[json[i].TitleZH] = {}
                         t2rate[json[i].TitleZH]["rating"] = Number.parseInt(json[i].Rating)
@@ -105,7 +229,7 @@
                         t2rate[json[i].Title]["ContestID_zh"] = json[i].ContestID_zh
                         t2rate[json[i].Title]["ContestSlug"] = json[i].ContestSlug
                     }
-                    t2rate["idx6"] = -6
+                    t2rate["idx7"] = -7
                     console.log("everyday getdate once...")
 
                     preDate = now
@@ -122,150 +246,27 @@
 
     if (window.location.href.startsWith(allUrl)) {
         let tag = GM_getValue("tag", -2)
-        clearInterval(tag)
         let pb = GM_getValue("pb", -3)
+        clearInterval(tag)
         clearInterval(pb)
-        let t
 
-        function getData() {
-            try {
-                let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
-                // 防止过多的无效操作
-                if (t != undefined && t == arr.lastChild.innerHTML) {
-                    return
-                }
-
-                let childs = arr.childNodes
-                for (let idx = 0; idx < childs.length; idx++) {
-                    let v = childs[idx]
-                    let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                    let data = t.split(".")
-                    let title = data[data.length - 1].trim()
-                    let nd = v.childNodes[4].childNodes[0].innerHTML
-                    if (t2rate[title] != undefined) {
-                        nd = t2rate[title]["rating"]
-                        v.childNodes[4].childNodes[0].innerHTML = nd
-                    }
-                }
-                t = deepclone(arr.lastChild.innerHTML)
-            } catch (e) {
-                return
-            }
-        }
-
-        setTimeout(getData, 2000)
+        // 设置定时
         id1 = setInterval(getData, 1000)
         GM_setValue("all", id1)
     } else if (window.location.href.startsWith(tagUrl)) {
         let all = GM_getValue("all", -1)
-        clearInterval(all)
         let pb = GM_getValue("pb", -3)
+        clearInterval(all)
         clearInterval(pb)
-
-        let t
-
-        function getTagData() {
-            if (!window.location.href.startsWith(tagUrl)) {
-                location.reload()
-            }
-            try {
-                let arr = document.querySelector("#lc-content > div > div.css-207dbg-TableContainer.ermji1u1 > div > section > div > div.css-ibx34q-antdPaginationOverride-layer1-dropdown-layer1-hoverOverlayBg-layer1-card-layer1-layer0 > div > div > div > div > div > div > table > tbody")
-                if (t != undefined && t == arr.lastChild.innerHTML) {
-                    return
-                }
-                let childs = arr.childNodes
-                for (let idx = 0; idx < childs.length; idx++) {
-                    let v = childs[idx]
-                    let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                    let data = t.split(".")
-                    let title = data[data.length - 1].trim()
-                    let nd = v.childNodes[3].childNodes[0].innerHTML
-                    if (t2rate[title] != undefined) {
-                        nd = t2rate[title]["rating"]
-                        v.childNodes[3].childNodes[0].innerHTML = nd
-                    }
-                }
-                t = deepclone(arr.lastChild.innerHTML)
-            } catch (e) {
-                return
-            }
-        }
-
-        setTimeout(getTagData, 2200)
-        id2 = setInterval(getTagData, 1200)
+        // 设置定时
+        id2 = setInterval(getTagData, 1000)
         GM_setValue("tag", id2)
     } else if (window.location.href.startsWith(pbUrl)) {
         let all = GM_getValue("all", -1)
         let tag = GM_getValue("tag", -2)
         clearInterval(all)
         clearInterval(tag)
-
-        let t1
-        let le
-
-        function getpb() {
-            if (!window.location.href.startsWith(pbUrl)) {
-                location.reload()
-            }
-            try {
-                let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
-                if (t == undefined) {
-                    t1 = "unknown"
-                    return
-                }
-                let data = t.innerText.split(".")
-                let title = data[data.length - 1].trim()
-                let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
-                let pa = colorSpan.parentNode
-                if ((t1 != undefined && t1 == title) && (le != undefined && le == pa.childNodes.length)){
-                    return
-                }
-                // 统计难度分数
-                let nd = colorSpan.getAttribute("data-degree")
-                let nd2ch = {"easy": "简单", "medium": "中等", "hard": "困难"}
-                if (t2rate[title] != undefined) {
-                    colorSpan.innerHTML = t2rate[title]["rating"]
-                } else {
-                    colorSpan.innerHTML = nd2ch[nd]
-                }
-                // 准备做周赛链接,如果已经不存在组件就执行操作
-                let url = "https://leetcode.cn/contest/"
-                if (le == undefined || le != pa.childNodes.length) {
-                    let abody = document.createElement("a")
-                    abody.setAttribute("data-small-spacing", "true")
-                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
-                    let span = document.createElement("span")
-                    // ContestID_zh  ContestSlug
-                    if (t2rate[title] != undefined) {
-                        span.innerText = t2rate[title]["ContestID_zh"]
-                        abody.setAttribute("href", url + t2rate[title]["ContestSlug"])
-                        abody.setAttribute("target", "_blank")
-                    } else {
-                        span.innerText = "对应周赛未知"
-                        abody.setAttribute("href", "")
-                        abody.setAttribute("target", "_self")
-                    }
-                    abody.appendChild(span)
-                    pa.appendChild(abody)
-                } else if (le == pa.childNodes.length) {  // 存在就直接替换
-                    if (t2rate[title] != undefined) {
-                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[title]["ContestID_zh"]
-                        pa.childNodes[le - 1].setAttribute("href", url + t2rate[title]["ContestSlug"])
-                        pa.childNodes[le - 1].setAttribute("target", "_blank")
-                    } else {
-                        pa.childNodes[le - 1].childNodes[0].innerText = "对应周赛未知"
-                        pa.childNodes[le - 1].setAttribute("href", "")
-                        pa.childNodes[le - 1].setAttribute("target", "_self")
-                    }
-                }
-                le = pa.childNodes.length
-                t1 = deepclone(title)
-            } catch (e) {
-                return
-            }
-        }
-
-        setTimeout(getpb, 2000)
+        // 设置定时
         id3 = setInterval(getpb, 1000)
         GM_setValue("pb", id3)
     } else {
