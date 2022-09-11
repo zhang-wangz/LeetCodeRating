@@ -31,6 +31,7 @@
 // @note         2022-09-10 1.2.3 修复在具体问题页面，快速切换导致的数据缺失问题
 // @note         2022-09-11 1.2.4 重构所有实现，取消所有依赖包优化性能，同步优化未知周赛时pb页面隐藏周赛链接
 // @note         2022-09-11 1.2.5 fix 缓存
+// @note         2022-09-11 1.2.6 fix当 hover题目后面的反馈按钮的时候,会不断的添加周赛link的bug
 // ==/UserScript==
 
 (function () {
@@ -152,9 +153,10 @@
             let title = data[data.length - 1].trim()
             let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
             let pa = colorSpan.parentNode
-            if ((t1 != undefined && t1 == title) && (le != undefined && le == pa.childNodes.length)){
+            if ((t1 != undefined && t1 == title) && (le != undefined && le <= pa.childNodes.length)){
                 return
             }
+
             // 统计难度分数
             let nd = colorSpan.getAttribute("data-degree")
             let nd2ch = {"easy": "简单", "medium": "中等", "hard": "困难"}
@@ -208,7 +210,7 @@
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx7"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["idx8"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
@@ -232,7 +234,7 @@
                         t2rate[json[i].Title]["ContestID_zh"] = json[i].ContestID_zh
                         t2rate[json[i].Title]["ContestSlug"] = json[i].ContestSlug
                     }
-                    t2rate["idx7"] = -7
+                    t2rate["idx8"] = -8
                     console.log("everyday getdate once...")
 
                     preDate = now
