@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.2.9
+// @version      1.2.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -36,6 +36,7 @@
 // @note         2022-09-11 1.2.7 更新具体问题页面， 题目侧边弹出页难度分显示
 // @note         2022-09-12 1.2.8 重构数据标识为题目id，因为lc不计算剑指offer，lcp这种题号，id作为标识更加准确些
 // @note         2022-09-12 1.2.9 修改数据唯一标识，使得用户数据缓存更新
+// @note         2022-09-12 1.2.10 修复刷新机制导致的bug
 // ==/UserScript==
 
 (function () {
@@ -103,6 +104,10 @@
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
                     v.childNodes[4].childNodes[0].innerHTML = nd
+                }else {
+                    let nd2ch = {"text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难"}
+                    let cls = v.childNodes[4].childNodes[0].getAttribute("class")
+                    v.childNodes[4].childNodes[0].innerHTML = nd2ch[cls]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -133,6 +138,10 @@
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
                     v.childNodes[3].childNodes[0].innerHTML = nd
+                }else {
+                    let nd2ch = {"rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难"}
+                    let clr = v.childNodes[3].childNodes[0].getAttribute("color")
+                    v.childNodes[3].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -230,7 +239,7 @@
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx10"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["idx11"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
@@ -248,7 +257,7 @@
                         t2rate[json[i].ID] = json[i]
                         t2rate[json[i].ID]["Rating"] = Number.parseInt(Number.parseFloat(json[i]["Rating"])+0.5)
                     }
-                    t2rate["idx10"] = -10
+                    t2rate["idx11"] = -11
                     console.log("everyday getdate once...")
 
                     preDate = now
