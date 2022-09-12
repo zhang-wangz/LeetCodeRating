@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.2.8
+// @version      1.2.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -35,6 +35,7 @@
 // @note         2022-09-11 1.2.6 fix当 hover题目后面的反馈按钮的时候,会不断的添加周赛link的bug
 // @note         2022-09-11 1.2.7 更新具体问题页面， 题目侧边弹出页难度分显示
 // @note         2022-09-12 1.2.8 重构数据标识为题目id，因为lc不计算剑指offer，lcp这种题号，id作为标识更加准确些
+// @note         2022-09-12 1.2.9 修改数据唯一标识，使得用户数据缓存更新
 // ==/UserScript==
 
 (function () {
@@ -229,7 +230,7 @@
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["idx10"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
@@ -247,7 +248,7 @@
                         t2rate[json[i].ID] = json[i]
                         t2rate[json[i].ID]["Rating"] = Number.parseInt(Number.parseFloat(json[i]["Rating"])+0.5)
                     }
-                    t2rate["idx"] = -1
+                    t2rate["idx10"] = -10
                     console.log("everyday getdate once...")
 
                     preDate = now
