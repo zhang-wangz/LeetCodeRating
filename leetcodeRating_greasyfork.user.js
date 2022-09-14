@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.2.10
+// @version      1.3.0
 // @license      MIT
-// @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面和题目页面
+// @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面和题目页面
 // @author       小东是个阳光蛋(力扣名
 // @leetcodehomepage   https://leetcode.cn/u/runonline/
 // @homepageURL  https://github.com/zhang-wangz/LeetCodeRating
@@ -37,6 +37,7 @@
 // @note         2022-09-12 1.2.8 重构数据标识为题目id，因为lc不计算剑指offer，lcp这种题号，id作为标识更加准确些
 // @note         2022-09-12 1.2.9 修改数据唯一标识，使得用户数据缓存更新
 // @note         2022-09-12 1.2.10 修复刷新机制导致的bug
+// @note         2022-09-14 1.3.0 支持company页面
 // ==/UserScript==
 
 (function () {
@@ -45,9 +46,12 @@
     var id1 = ""
     var id2 = ""
     var id3 = ""
+    var id4 = ""
     var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
+    var companyUrl = "https://leetcode.cn/company"
+
     var pbUrl = "https://leetcode.cn/problems"
 
     // 深拷贝
@@ -149,7 +153,39 @@
             return
         }
     }
-
+    function getCompanyData() {
+        if (!window.location.href.startsWith(companyUrl)) {
+            clearInterval(id4)
+            id3 = setInterval(getpb, 1000)
+            GM_setValue("pb", id3)
+            return
+        }
+        try {
+            let arr = document.querySelector("#lc-content > div > div.css-207dbg-TableContainer.ermji1u1 > div > section > div > div.css-ibx34q-antdPaginationOverride-layer1-dropdown-layer1-hoverOverlayBg-layer1-card-layer1-layer0 > div > div > div > div > div > div > table > tbody")
+            if (t != undefined && t == arr.lastChild.innerHTML) {
+                return
+            }
+            let childs = arr.childNodes
+            for (let idx = 0; idx < childs.length; idx++) {
+                let v = childs[idx]
+                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                let data = t.split(".")
+                let id = data[0].trim()
+                let nd = v.childNodes[3].childNodes[0].innerHTML
+                if (t2rate[id] != undefined) {
+                    nd = t2rate[id]["Rating"]
+                    v.childNodes[3].childNodes[0].innerHTML = nd
+                }else {
+                    let nd2ch = {"rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难"}
+                    let clr = v.childNodes[3].childNodes[0].getAttribute("color")
+                    v.childNodes[3].childNodes[0].innerHTML = nd2ch[clr]
+                }
+            }
+            t = deepclone(arr.lastChild.innerHTML)
+        } catch (e) {
+            return
+        }
+    }
     function getpb() {
         if (!window.location.href.startsWith(pbUrl)) {
             clearInterval(id3)
@@ -275,6 +311,8 @@
     if (window.location.href.startsWith(allUrl)) {
         let tag = GM_getValue("tag", -2)
         let pb = GM_getValue("pb", -3)
+        let company = GM_getValue("company", -4)
+        clearInterval(company)
         clearInterval(tag)
         clearInterval(pb)
 
@@ -284,6 +322,8 @@
     } else if (window.location.href.startsWith(tagUrl)) {
         let all = GM_getValue("all", -1)
         let pb = GM_getValue("pb", -3)
+        let company = GM_getValue("company", -4)
+        clearInterval(company)
         clearInterval(all)
         clearInterval(pb)
         // 设置定时
@@ -292,15 +332,29 @@
     } else if (window.location.href.startsWith(pbUrl)) {
         let all = GM_getValue("all", -1)
         let tag = GM_getValue("tag", -2)
+        let company = GM_getValue("company", -4)
+        clearInterval(company)
         clearInterval(all)
         clearInterval(tag)
         // 设置定时
         id3 = setInterval(getpb, 1000)
         GM_setValue("pb", id3)
+    } else if (window.location.href.startsWith(companyUrl)) {
+        let all = GM_getValue("all", -1)
+        let tag = GM_getValue("tag", -2)
+        let pb = GM_getValue("pb", -3)
+        clearInterval(all)
+        clearInterval(tag)
+        clearInterval(pb)
+        // 设置定时
+        id4 = setInterval(getCompanyData, 1000)
+        GM_setValue("company", id4)
     } else {
         let all = GM_getValue("all", -1)
         let tag = GM_getValue("tag", -2)
         let pb = GM_getValue("pb", -3)
+        let company = GM_getValue("company", -4)
+        clearInterval(company)
         clearInterval(all)
         clearInterval(tag)
         clearInterval(pb)
