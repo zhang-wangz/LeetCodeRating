@@ -93,7 +93,7 @@
     let t  // all and tag
     let t1, le // pb
     function getData() {
-//        try {
+        try {
             let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
             // 防止过多的无效操作
             if (t != undefined && t == arr.lastChild.innerHTML) {
@@ -118,9 +118,9 @@
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
-//        } catch (e) {
-//            return
-//        }
+        } catch (e) {
+            return
+        }
     }
 
     function getTagData() {
