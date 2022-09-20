@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.3.1
+// @version      1.3.2
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -39,6 +39,7 @@
 // @note         2022-09-12 1.2.10 修复刷新机制导致的bug
 // @note         2022-09-14 1.3.0 支持company页面
 // @note         2022-09-14 1.3.1 支持力扣复制时去除署名
+// @note         2022-09-14 1.3.2 修复力扣新增的题库和tag页面 设置按钮里点击显示企业之后出现的bug
 // ==/UserScript==
 
 (function () {
@@ -92,7 +93,7 @@
     let t  // all and tag
     let t1, le // pb
     function getData() {
-        try {
+//        try {
             let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
             // 防止过多的无效操作
             if (t != undefined && t == arr.lastChild.innerHTML) {
@@ -102,23 +103,24 @@
             let childs = arr.childNodes
             for (let idx = 0; idx < childs.length; idx++) {
                 let v = childs[idx]
+                let length = v.childNodes.length
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[4].childNodes[0].innerHTML
+                let nd = v.childNodes[length-2].childNodes[0].innerHTML
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[4].childNodes[0].innerHTML = nd
+                    v.childNodes[length-2].childNodes[0].innerHTML = nd
                 }else {
                     let nd2ch = {"text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难"}
-                    let cls = v.childNodes[4].childNodes[0].getAttribute("class")
-                    v.childNodes[4].childNodes[0].innerHTML = nd2ch[cls]
+                    let cls = v.childNodes[length-2].childNodes[0].getAttribute("class")
+                    v.childNodes[length-2].childNodes[0].innerHTML = nd2ch[cls]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
-        } catch (e) {
-            return
-        }
+//        } catch (e) {
+//            return
+//        }
     }
 
     function getTagData() {
@@ -136,17 +138,18 @@
             let childs = arr.childNodes
             for (let idx = 0; idx < childs.length; idx++) {
                 let v = childs[idx]
+                let length = v.childNodes.length
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[3].childNodes[0].innerHTML
+                let nd = v.childNodes[length-2].childNodes[0].innerHTML
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[3].childNodes[0].innerHTML = nd
+                    v.childNodes[length-2].childNodes[0].innerHTML = nd
                 }else {
                     let nd2ch = {"rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难"}
-                    let clr = v.childNodes[3].childNodes[0].getAttribute("color")
-                    v.childNodes[3].childNodes[0].innerHTML = nd2ch[clr]
+                    let clr = v.childNodes[length-2].childNodes[0].getAttribute("color")
+                    v.childNodes[length-2].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -169,17 +172,18 @@
             let childs = arr.childNodes
             for (let idx = 0; idx < childs.length; idx++) {
                 let v = childs[idx]
+                let length = v.childNodes.length
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[3].childNodes[0].innerHTML
+                let nd = v.childNodes[length-2].childNodes[0].innerHTML
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[3].childNodes[0].innerHTML = nd
+                    v.childNodes[length-2].childNodes[0].innerHTML = nd
                 }else {
                     let nd2ch = {"rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难"}
-                    let clr = v.childNodes[3].childNodes[0].getAttribute("color")
-                    v.childNodes[3].childNodes[0].innerHTML = nd2ch[clr]
+                    let clr = v.childNodes[length-2].childNodes[0].getAttribute("color")
+                    v.childNodes[length-2].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -200,13 +204,14 @@
                 let childs = pbAll.childNodes
                 for (let idx = 0; idx < childs.length; idx++) {
                     let v = childs[idx]
+                    let length = v.childNodes.length
                     let t = v.childNodes[0].childNodes[1].innerText
                     let data = t.split(" ")[0]
                     let id = data.slice(1)
-                    let nd = v.childNodes[1].childNodes[0].innerText
+                    let nd = v.childNodes[length-1].childNodes[0].innerText
                     if (t2rate[id] != undefined) {
                         nd = t2rate[id]["Rating"]
-                        v.childNodes[1].childNodes[0].innerText = nd
+                        v.childNodes[length-1].childNodes[0].innerText = nd
                     }
                 }
             }
