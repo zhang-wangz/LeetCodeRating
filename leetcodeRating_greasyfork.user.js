@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.3.2
+// @version      1.3.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -40,6 +40,7 @@
 // @note         2022-09-14 1.3.0 支持company页面
 // @note         2022-09-14 1.3.1 支持力扣复制时去除署名
 // @note         2022-09-14 1.3.2 修复力扣新增的题库和tag页面 设置按钮里点击显示企业之后出现的bug
+// @note         2022-09-22 1.3.3 增加具体问题页面竞赛题属于Q几
 // ==/UserScript==
 
 (function () {
@@ -242,32 +243,64 @@
                 let abody = document.createElement("a")
                 abody.setAttribute("data-small-spacing", "true")
                 abody.setAttribute("class", "css-nabodd-Button e167268t1")
+
+                let button = document.createElement("button")
+                button.setAttribute("class", "css-nabodd-Button e167268t1")
+                let abody2 = document.createElement("a")
+                abody2.setAttribute("data-small-spacing", "true")
+                abody2.setAttribute("class", "css-nabodd-Button e167268t1")
+
                 let span = document.createElement("span")
+                let span2 = document.createElement("span")
                 // ContestID_zh  ContestSlug
                 if (t2rate[id] != undefined) {
                     span.innerText = t2rate[id]["ContestID_zh"]
+                    span2.innerText = t2rate[id]["ProblemIndex"]
+
                     abody.setAttribute("href", url + t2rate[id]["ContestSlug"])
                     abody.setAttribute("target", "_blank")
                     abody.removeAttribute("hidden")
+
+                    abody2.setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                    abody2.setAttribute("target", "_blank")
+                    abody2.removeAttribute("hidden")
                 } else {
                     span.innerText = "对应周赛未知"
                     abody.setAttribute("href", "")
                     abody.setAttribute("target", "_self")
                     abody.setAttribute("hidden", "true")
+
+                    span2.innerText = "未知"
+                    abody2.setAttribute("href", "")
+                    abody2.setAttribute("target", "_self")
+                    abody2.setAttribute("hidden", "true")
                 }
                 abody.appendChild(span)
+                abody2.appendChild(span2)
+                button.appendChild(abody2)
                 pa.appendChild(abody)
+                pa.appendChild(button)
             } else if (le == pa.childNodes.length) {  // 存在就直接替换
                 if (t2rate[id] != undefined) {
-                    pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                    pa.childNodes[le - 1].setAttribute("href", url + t2rate[id]["ContestSlug"])
-                    pa.childNodes[le - 1].setAttribute("target", "_blank")
-                    pa.childNodes[le - 1].removeAttribute("hidden")
+                    pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
+                    pa.childNodes[le - 2].setAttribute("href", url + t2rate[id]["ContestSlug"])
+                    pa.childNodes[le - 2].setAttribute("target", "_blank")
+                    pa.childNodes[le - 2].removeAttribute("hidden")
+
+                    pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
+                    pa.childNodes[le - 1].childNodes[0].setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                    pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_blank")
+                    pa.childNodes[le - 1].childNodes[0].removeAttribute("hidden")
                 } else {
-                    pa.childNodes[le - 1].childNodes[0].innerText = "对应周赛未知"
-                    pa.childNodes[le - 1].setAttribute("href", "")
-                    pa.childNodes[le - 1].setAttribute("target", "_self")
-                    pa.childNodes[le - 1].setAttribute("hidden", "true")
+                    pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
+                    pa.childNodes[le - 2].setAttribute("href", "")
+                    pa.childNodes[le - 2].setAttribute("target", "_self")
+                    pa.childNodes[le - 2].setAttribute("hidden", "true")
+
+                    pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = "未知"
+                    pa.childNodes[le - 1].childNodes[0].setAttribute("href", "")
+                    pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_self")
+                    pa.childNodes[le - 1].childNodes[0].setAttribute("hidden", "true")
                 }
             }
             le = pa.childNodes.length
