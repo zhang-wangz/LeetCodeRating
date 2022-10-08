@@ -45,6 +45,7 @@
 // @note         2022-10-08 1.3.5 更换灵茶按钮颜色使得更加美观
 // ==/UserScript==
 
+
 (function () {
     // 'use strict';
     var t2rate = {}
