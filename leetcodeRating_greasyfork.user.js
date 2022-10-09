@@ -57,6 +57,7 @@
 // @note         2022-10-09 1.3.9 增加时间戳使GM_xmlhttpRequest缓存机制失效
 // ==/UserScript==
 
+
 (function () {
     // 'use strict';
     var t2rate = {}
