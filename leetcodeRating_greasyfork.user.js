@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.3.6
+// @version      1.3.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -12,8 +12,14 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @connect      zerotrac.github.io
+// @grant        GM_addStyle
+// @grant        GM_getResourceText
+// @connect      zerotrac.github.io,raw.staticdn.net,raw.githubusercontents.com
+// @require      https://gcore.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js
+// @require      https://gcore.jsdelivr.net/gh/andywang425/BLTH@4368883c643af57c07117e43785cd28adcb0cb3e/assets/js/library/layer.min.js
+// @resource css https://gcore.jsdelivr.net/gh/andywang425/BLTH@d25aa353c8c5b2d73d2217b1b43433a80100c61e/assets/css/layer.css
 // @grant        unsafeWindow
+// @run-at       document-end
 // @note         2022-09-07 1.1.0 支持tag页面和题库页面显示匹配的周赛分难度
 // @note         2022-09-07 1.1.0 分数数据出自零神项目
 // @note         2022-09-07 1.1.1 修改一些小bug
@@ -44,8 +50,8 @@
 // @note         2022-10-08 1.3.4 题库页面增加灵茶の试炼按钮
 // @note         2022-10-08 1.3.5 更换灵茶按钮颜色使得更加美观
 // @note         2022-10-08 1.3.6 增加problem_list页面的分数展示
+// @note         2022-10-09 1.3.7 使用document-end功能，去除加载上的1s延迟并且增加脚本更新机制
 // ==/UserScript==
-
 
 (function () {
     // 'use strict';
@@ -55,6 +61,7 @@
     var id3 = ""
     var id4 = ""
     var id5 = ""
+    var version = "1.3.7"
     var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
@@ -146,7 +153,7 @@
     function getTagData() {
         if (!window.location.href.startsWith(tagUrl)) {
             clearInterval(id2)
-            id3 = setInterval(getpb, 1000)
+            id3 = setInterval(getpb, 1)
             GM_setValue("pb", id3)
             return
         }
@@ -180,7 +187,7 @@
     function getCompanyData() {
         if (!window.location.href.startsWith(companyUrl)) {
             clearInterval(id4)
-            id3 = setInterval(getpb, 1000)
+            id3 = setInterval(getpb, 1)
             GM_setValue("pb", id3)
             return
         }
@@ -215,7 +222,7 @@
     function getPblistData() {
         if (!window.location.href.startsWith(pblistUrl)) {
             clearInterval(id5)
-            id3 = setInterval(getpb, 1000)
+            id3 = setInterval(getpb, 1)
             GM_setValue("pb", id3)
             return
         }
@@ -251,8 +258,14 @@
     function getpb() {
         if (!window.location.href.startsWith(pbUrl)) {
             clearInterval(id3)
-            id2 = setInterval(getTagData, 1000)
+            id1 = setInterval(getData, 1)
+            id2 = setInterval(getTagData, 1)
+            id4 = setInterval(getCompanyData, 1)
+            id5 = setInterval(getPblistData, 1)
+            GM_setValue("all", id1)
             GM_setValue("tag", id2)
+            GM_setValue("company", id4)
+            GM_setValue("pblist", id5)
             return
         }
         try {
@@ -366,7 +379,6 @@
         }
     }
 
-
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
@@ -402,10 +414,44 @@
             }
         })
     }
+
     [...document.querySelectorAll('*')].forEach(item=>{
         item.oncopy = function(e) {
             e.stopPropagation();
         }
+    })
+    GM_addStyle(GM_getResourceText("css"));
+    // 版本更新机制
+    GM_xmlhttpRequest({
+                method: "get",
+                url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json',
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
+                },
+                onload: function (res) {
+                    if (res.status === 200) {
+                        let dataStr = res.response
+                        let json = JSON.parse(dataStr)
+                        v = json["version"]
+                        if (v != version){
+                            layer.open({
+                              content: 'leetcodeRating难度分插件有新的版本啦，请前往更新～',
+                              yes: function(index, layero){
+                                var c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
+                                c.close()
+                                layer.close(index)
+                              }
+                            });
+                        } else {
+                            console.log("leetcodeRating难度分插件当前已经是最新版本～")
+                        }
+                    }
+                },
+                onerror: function (err) {
+                    console.log('error')
+                    console.log(err)
+                }
     })
     if (window.location.href.startsWith(allUrl)) {
         let tag = GM_getValue("tag", -2)
@@ -414,9 +460,8 @@
         clearInterval(company)
         clearInterval(tag)
         clearInterval(pb)
-
         // 设置定时
-        id1 = setInterval(getData, 1000)
+        id1 = setInterval(getData, 1)
         GM_setValue("all", id1)
     } else if (window.location.href.startsWith(tagUrl)) {
         let all = GM_getValue("all", -1)
@@ -428,7 +473,7 @@
         clearInterval(pb)
         clearInterval(pblist)
         // 设置定时
-        id2 = setInterval(getTagData, 1000)
+        id2 = setInterval(getTagData, 1)
         GM_setValue("tag", id2)
     } else if (window.location.href.startsWith(pbUrl)) {
         let all = GM_getValue("all", -1)
@@ -440,7 +485,7 @@
         clearInterval(company)
         clearInterval(pblist)
         // 设置定时
-        id3 = setInterval(getpb, 1000)
+        id3 = setInterval(getpb, 1)
         GM_setValue("pb", id3)
     } else if (window.location.href.startsWith(companyUrl)) {
         let all = GM_getValue("all", -1)
@@ -452,7 +497,7 @@
         clearInterval(pb)
         clearInterval(pblist)
         // 设置定时
-        id4 = setInterval(getCompanyData, 1000)
+        id4 = setInterval(getCompanyData, 1)
         GM_setValue("company", id4)
     } else if (window.location.href.startsWith(pblistUrl)) {
         let all = GM_getValue("all", -1)
@@ -464,7 +509,7 @@
         clearInterval(pb)
         clearInterval(company)
         // 设置定时
-        id5 = setInterval(getPblistData, 1000)
+        id5 = setInterval(getPblistData, 1)
         GM_setValue("pblist", id5)
     } else {
         let all = GM_getValue("all", -1)
