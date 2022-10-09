@@ -58,7 +58,6 @@
 // @note         2022-10-09 1.3.10 修正时间戳标识
 // ==/UserScript==
 
-
 (function () {
     // 'use strict';
     var t2rate = {}
