@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.3.8
+// @version      1.3.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -54,6 +54,7 @@
 // @note         2022-10-08 1.3.6 增加problem_list页面的分数展示
 // @note         2022-10-09 1.3.7 使用document-end功能，去除加载上的1s延迟并且增加脚本更新机制
 // @note         2022-10-09 1.3.8 更新connect list
+// @note         2022-10-09 1.3.9 增加时间戳使GM_xmlhttpRequest缓存机制失效
 // ==/UserScript==
 
 (function () {
@@ -64,7 +65,7 @@
     var id3 = ""
     var id4 = ""
     var id5 = ""
-    var version = "1.3.8"
+    var version = "1.3.9"
     var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
@@ -388,7 +389,7 @@
     if (t2rate["idx11"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json',
+            url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json' + "&timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
@@ -427,7 +428,7 @@
     // 版本更新机制
     GM_xmlhttpRequest({
                 method: "get",
-                url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json',
+                url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json' + + "&timeStamp=" + new Date().getTime(),
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                     "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
