@@ -390,7 +390,7 @@
     if (t2rate["idx11"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json' + "&timeStamp=" + new Date().getTime(),
+            url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
@@ -429,7 +429,7 @@
     // 版本更新机制
     GM_xmlhttpRequest({
                 method: "get",
-                url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json' + + "&timeStamp=" + new Date().getTime(),
+                url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                     "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
