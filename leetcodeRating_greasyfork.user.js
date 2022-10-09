@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.3.7
+// @version      1.3.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -14,7 +14,9 @@
 // @grant        GM_getValue
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
-// @connect      zerotrac.github.io,raw.staticdn.net,raw.githubusercontents.com
+// @connect      zerotrac.github.io
+// @connect      raw.staticdn.net
+// @connect      raw.githubusercontents.com
 // @require      https://gcore.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js
 // @require      https://gcore.jsdelivr.net/gh/andywang425/BLTH@4368883c643af57c07117e43785cd28adcb0cb3e/assets/js/library/layer.min.js
 // @resource css https://gcore.jsdelivr.net/gh/andywang425/BLTH@d25aa353c8c5b2d73d2217b1b43433a80100c61e/assets/css/layer.css
@@ -51,6 +53,7 @@
 // @note         2022-10-08 1.3.5 更换灵茶按钮颜色使得更加美观
 // @note         2022-10-08 1.3.6 增加problem_list页面的分数展示
 // @note         2022-10-09 1.3.7 使用document-end功能，去除加载上的1s延迟并且增加脚本更新机制
+// @note         2022-10-09 1.3.8 更新connect list
 // ==/UserScript==
 
 (function () {
@@ -61,7 +64,7 @@
     var id3 = ""
     var id4 = ""
     var id5 = ""
-    var version = "1.3.7"
+    var version = "1.3.8"
     var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
