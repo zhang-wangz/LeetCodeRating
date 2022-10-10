@@ -4,8 +4,12 @@
 name: Gen TeaFile
 
 on:
-  schedule:
-    - cron: '5 * * * *'
+  push:
+    # 分支随意
+    branches:
+      - main
+#  schedule:
+#    - cron: '5 * * * *'
 
 permissions:
   contents: read
