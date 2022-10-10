@@ -4,12 +4,13 @@
 name: Gen TeaFile
 
 on:
-  workflow_dispatch: "Gen-File"
   schedule:
     - cron:  '* */6 * * *'
   push:
     branches:
       - main
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
