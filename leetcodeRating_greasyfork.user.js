@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.4.0
+// @version      1.4.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -57,6 +57,7 @@
 // @note         2022-10-09 1.3.9 增加时间戳使GM_xmlhttpRequest缓存机制失效
 // @note         2022-10-09 1.3.10 修正时间戳标识
 // @note         2022-10-10 1.4.0 增加首页近日灵茶
+// @note         2022-10-10 1.4.1 修复更新频率
 // ==/UserScript==
 
 (function () {
@@ -68,7 +69,7 @@
     var id3 = ""
     var id4 = ""
     var id5 = ""
-    var version = "1.4.0"
+    var version = "1.4.1"
     var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
@@ -458,7 +459,7 @@
     latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx12"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["idx13"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json' + "?timeStamp=" + new Date().getTime(),
@@ -476,7 +477,7 @@
                         t2rate[json[i].ID] = json[i]
                         t2rate[json[i].ID]["Rating"] = Number.parseInt(Number.parseFloat(json[i]["Rating"]) + 0.5)
                     }
-                    t2rate["idx12"] = -12
+                    t2rate["idx13"] = -13
                     console.log("everyday getdate once...")
                     preDate = now
                     GM_setValue("preDate", preDate)
@@ -564,9 +565,8 @@
         clearInterval(company)
         clearInterval(tag)
         clearInterval(pb)
-        getData()
         // 设置定时
-        id1 = setInterval(getData, 1000000000)
+        id1 = setInterval(getData, 1)
         GM_setValue("all", id1)
     } else if (window.location.href.startsWith(tagUrl)) {
         let all = GM_getValue("all", -1)
