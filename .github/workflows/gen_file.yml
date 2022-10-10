@@ -6,6 +6,9 @@ name: Gen TeaFile
 on:
   schedule:
     - cron:  '*/6 * * * *'
+  push:
+    branches:
+      - main
 jobs:
   build:
     runs-on: ubuntu-latest
