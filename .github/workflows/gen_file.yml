@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
     # 使用别人封装好的的action，用于clone该仓库的源码到工作流中
     - name: Checkout
@@ -37,9 +37,9 @@ jobs:
     - name: 'Add Diff'
       run: git add .
     
-    - name: GitHub Push
-      uses: actions-go/push@master
+    - name:  Commit & Push changes
+      uses: actions-js/push@master
       with:
-        commit-message: '[Auto] commit teafile'
-        remote: main
+        message: '[Auto] fetch teaFile'
+        github_token: ${{ secrets.TOKEN }}
 
