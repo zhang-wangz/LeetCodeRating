@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.3.10
+// @version      1.4.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -56,23 +56,26 @@
 // @note         2022-10-09 1.3.8 更新connect list
 // @note         2022-10-09 1.3.9 增加时间戳使GM_xmlhttpRequest缓存机制失效
 // @note         2022-10-09 1.3.10 修正时间戳标识
+// @note         2022-10-10 1.4.0 增加首页近日灵茶
 // ==/UserScript==
 
 (function () {
     // 'use strict';
     var t2rate = {}
+    var latestpb = {}
     var id1 = ""
     var id2 = ""
     var id3 = ""
     var id4 = ""
     var id5 = ""
-    var version = "1.3.10"
+    var version = "1.4.0"
     var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
     var companyUrl = "https://leetcode.cn/company"
     var pblistUrl = "https://leetcode.cn/problem-list"
     var pbUrl = "https://leetcode.cn/problems"
+    GM_addStyle(GM_getResourceText("css"));
 
     // 深拷贝
     function deepclone(obj) {
@@ -108,6 +111,42 @@
         return time;
     }
 
+    function checksolve(){
+        layer.open({
+            type: 1 // Page 层类型
+            ,area: ['650px', '450px']
+            ,title: '题解说明'
+            ,shade: 0.6 // 遮罩透明度
+            ,maxmin: true // 允许全屏最小化
+            ,anim: 5 // 0-6的动画形式，-1不开启
+            ,content: `<pre style="padding:20px;">${latestpb["solve"]}</pre>`
+        });
+    }
+
+    function checkout(){
+        layer.open({
+            type: 1 // Page 层类型
+            ,area: ['650px', '450px']
+            ,title: '题解说明'
+            ,shade: 0.6 // 遮罩透明度
+            ,maxmin: true // 允许全屏最小化
+            ,anim: 5 // 0-6的动画形式，-1不开启
+            ,content: `<pre style="padding:20px;">${latestpb["out"]}</pre>`
+        });
+    }
+
+    function checktrans(){
+        layer.open({
+            type: 1 // Page 层类型
+            ,area: ['650px', '450px']
+            ,title: '题解说明'
+            ,shade: 0.6 // 遮罩透明度
+            ,maxmin: true // 允许全屏最小化
+            ,anim: 5 // 0-6的动画形式，-1不开启
+            ,content: `<pre style="padding:20px;">${latestpb["pb"]}</pre>`
+        });
+    }
+
     let t  // all and tag
     let t1, le // pb
     function getData() {
@@ -115,27 +154,58 @@
             let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
             let head = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div.relative.flex.items-center.space-x-4.py-3.my-4.-ml-4.overflow-hidden.pl-4")
             let l = head.childNodes.length
-            let last = head.childNodes[l-1]
+            let last = head.childNodes[l - 1]
+
+            if (arr.childNodes[0].childNodes[0].innerText != latestpb["date"]) {
+                let div = document.createElement('div')
+                div.setAttribute("role", "row")
+                div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
+                div.setAttribute("class", "odd:bg-layer-1 even:bg-overlay-1 dark:odd:bg-dark-layer-bg dark:even:bg-dark-fill-4")
+                div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]}</div><div \
+                role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">&nbsp近日灵茶</a></div></div></div></div></div><div \
+                role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
+                role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
+                role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']}</span></div><div \
+                role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
+
+                div.childNodes[2].childNodes[0].childNodes[0].addEventListener("click", (e)=>{
+                    e.preventDefault();
+                    checksolve();
+                });
+                div.childNodes[3].childNodes[0].childNodes[0].addEventListener("click", (e)=> {
+                    e.preventDefault();
+                    checkout();
+                })
+                div.childNodes[5].childNodes[0].childNodes[0].addEventListener("click", (e)=> {
+                    e.preventDefault();
+                    checktrans();
+                })
+                arr.insertBefore(div, arr.childNodes[0])
+                console.log(div)
+            }
+
             // 防止过多的无效操作
-            if (t != undefined && t == arr.lastChild.innerHTML && last.childNodes[0].childNodes[1].textContent == "灵茶の试炼") {
+            if (t != undefined && t == arr.lastChild.innerHTML
+                && last.childNodes[0].childNodes[1] instanceof Text
+                && last.childNodes[0].childNodes[1].textContent == "灵茶の试炼") {
                 return
             }
 
             let childs = arr.childNodes
-            for (let idx = 0; idx < childs.length; idx++) {
+            for (let idx = 1; idx < childs.length; idx++) {
                 let v = childs[idx]
                 let length = v.childNodes.length
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length-2].childNodes[0].innerHTML
+                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length-2].childNodes[0].innerHTML = nd
-                }else {
-                    let nd2ch = {"text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难"}
-                    let cls = v.childNodes[length-2].childNodes[0].getAttribute("class")
-                    v.childNodes[length-2].childNodes[0].innerHTML = nd2ch[cls]
+                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+                } else {
+                    let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
+                    let cls = v.childNodes[length - 2].childNodes[0].getAttribute("class")
+                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[cls]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -174,14 +244,14 @@
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length-2].childNodes[0].innerHTML
+                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length-2].childNodes[0].innerHTML = nd
-                }else {
-                    let nd2ch = {"rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难"}
-                    let clr = v.childNodes[length-2].childNodes[0].getAttribute("color")
-                    v.childNodes[length-2].childNodes[0].innerHTML = nd2ch[clr]
+                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+                } else {
+                    let nd2ch = { "rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难" }
+                    let clr = v.childNodes[length - 2].childNodes[0].getAttribute("color")
+                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -208,14 +278,14 @@
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length-2].childNodes[0].innerHTML
+                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length-2].childNodes[0].innerHTML = nd
-                }else {
-                    let nd2ch = {"rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难"}
-                    let clr = v.childNodes[length-2].childNodes[0].getAttribute("color")
-                    v.childNodes[length-2].childNodes[0].innerHTML = nd2ch[clr]
+                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+                } else {
+                    let nd2ch = { "rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难" }
+                    let clr = v.childNodes[length - 2].childNodes[0].getAttribute("color")
+                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -243,15 +313,15 @@
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length-2].childNodes[0].innerHTML
+                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
                 console.log(t2rate[id])
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length-2].childNodes[0].innerHTML = nd
-                }else {
-                    let nd2ch = {"text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难"}
-                    let cls = v.childNodes[length-2].childNodes[0].getAttribute("class")
-                    v.childNodes[length-2].childNodes[0].innerHTML = nd2ch[cls]
+                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+                } else {
+                    let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
+                    let cls = v.childNodes[length - 2].childNodes[0].getAttribute("class")
+                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[cls]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -283,10 +353,10 @@
                     let t = v.childNodes[0].childNodes[1].innerText
                     let data = t.split(" ")[0]
                     let id = data.slice(1)
-                    let nd = v.childNodes[length-1].childNodes[0].innerText
+                    let nd = v.childNodes[length - 1].childNodes[0].innerText
                     if (t2rate[id] != undefined) {
                         nd = t2rate[id]["Rating"]
-                        v.childNodes[length-1].childNodes[0].innerText = nd
+                        v.childNodes[length - 1].childNodes[0].innerText = nd
                     }
                 }
             }
@@ -305,7 +375,7 @@
 
             // 统计难度分数
             let nd = colorSpan.getAttribute("data-degree")
-            let nd2ch = {"easy": "简单", "medium": "中等", "hard": "困难"}
+            let nd2ch = { "easy": "简单", "medium": "中等", "hard": "困难" }
             if (t2rate[id] != undefined) {
                 colorSpan.innerHTML = t2rate[id]["Rating"]
             } else {
@@ -385,9 +455,10 @@
     }
 
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+    latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx11"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["idx12"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://zerotrac.github.io/leetcode_problem_rating/data.json' + "?timeStamp=" + new Date().getTime(),
@@ -403,11 +474,10 @@
                     let json = eval(dataStr)
                     for (let i = 0; i < json.length; i++) {
                         t2rate[json[i].ID] = json[i]
-                        t2rate[json[i].ID]["Rating"] = Number.parseInt(Number.parseFloat(json[i]["Rating"])+0.5)
+                        t2rate[json[i].ID]["Rating"] = Number.parseInt(Number.parseFloat(json[i]["Rating"]) + 0.5)
                     }
-                    t2rate["idx11"] = -11
+                    t2rate["idx12"] = -12
                     console.log("everyday getdate once...")
-
                     preDate = now
                     GM_setValue("preDate", preDate)
                     GM_setValue("t2ratedb", JSON.stringify(t2rate))
@@ -417,47 +487,76 @@
                 console.log('error')
                 console.log(err)
             }
-        })
-    }
+        });
 
-    [...document.querySelectorAll('*')].forEach(item=>{
-        item.oncopy = function(e) {
-            e.stopPropagation();
-        }
-    })
-    GM_addStyle(GM_getResourceText("css"));
-    // 版本更新机制
-    GM_xmlhttpRequest({
-                method: "get",
-                url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
-                },
-                onload: function (res) {
-                    if (res.status === 200) {
-                        let dataStr = res.response
-                        let json = JSON.parse(dataStr)
-                        v = json["version"]
-                        if (v != version){
-                            layer.open({
-                              content: 'leetcodeRating难度分插件有新的版本啦，请前往更新～',
-                              yes: function(index, layero){
+        // 版本更新机制
+        GM_xmlhttpRequest({
+            method: "get",
+            url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
+            },
+            onload: function (res) {
+                if (res.status === 200) {
+                    console.log("everyday check version once...")
+                    let dataStr = res.response
+                    let json = JSON.parse(dataStr)
+                    let v = json["version"]
+                    if (v != version) {
+                        layer.open({
+                            content: 'leetcodeRating难度分插件有新的版本啦,请前往更新~',
+                            yes: function (index, layero) {
                                 var c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
                                 c.close()
                                 layer.close(index)
-                              }
-                            });
-                        } else {
-                            console.log("leetcodeRating难度分插件当前已经是最新版本～")
-                        }
+                            }
+                        });
+                    } else {
+                        console.log("leetcodeRating难度分插件当前已经是最新版本~")
                     }
-                },
-                onerror: function (err) {
-                    console.log('error')
-                    console.log(err)
                 }
-    })
+            },
+            onerror: function (err) {
+                console.log('error')
+                console.log(err)
+            }
+        });
+
+        // 获取茶数据
+        GM_xmlhttpRequest({
+            method: "get",
+            url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/tea.json' + "?timeStamp=" + new Date().getTime(),
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
+            },
+            onload: function (res) {
+                if (res.status === 200) {
+                    latestpb = {}
+                    let dataStr = res.response
+                    let json = JSON.parse(dataStr)
+                    let al = json["算法趣题"][1]
+                    latestpb["date"] = al[0];latestpb["pb"] = al[1];latestpb["url"] = al[2];
+                    latestpb["out"] = al[3];latestpb["nd"] = al[4];latestpb["solve"] = al[5];
+                    latestpb["blank"] = al[6]
+                    console.log("everyday gettea once...")
+                    GM_setValue("latestpb", JSON.stringify(latestpb))
+                }
+            },
+            onerror: function (err) {
+                console.log('error')
+                console.log(err)
+            }
+        });
+    }
+
+    [...document.querySelectorAll('*')].forEach(item => {
+        item.oncopy = function (e) {
+            e.stopPropagation();
+        }
+    });
+
     if (window.location.href.startsWith(allUrl)) {
         let tag = GM_getValue("tag", -2)
         let pb = GM_getValue("pb", -3)
@@ -465,8 +564,9 @@
         clearInterval(company)
         clearInterval(tag)
         clearInterval(pb)
+        getData()
         // 设置定时
-        id1 = setInterval(getData, 1)
+        id1 = setInterval(getData, 1000000000)
         GM_setValue("all", id1)
     } else if (window.location.href.startsWith(tagUrl)) {
         let all = GM_getValue("all", -1)
