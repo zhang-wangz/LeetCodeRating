@@ -5,7 +5,7 @@ name: Gen TeaFile
 
 on:
   schedule:
-    - cron:  '* 9,12,17 * * *'
+    - cron:  '* 2,4,9 * * *'
   push:
     branches:
       - main
