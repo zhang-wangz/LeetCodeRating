@@ -42,4 +42,3 @@ jobs:
       with:
         message: '[Auto] fetch teaFile'
         github_token: ${{ secrets.TOKEN }}
-
