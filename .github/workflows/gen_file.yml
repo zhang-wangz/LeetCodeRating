@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-11
+    runs-on: ubuntu-latest
     steps:
     # 使用别人封装好的的action，用于clone该仓库的源码到工作流中
     - name: Checkout
