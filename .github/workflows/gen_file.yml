@@ -4,6 +4,7 @@
 name: Gen TeaFile
 
 on:
+  workflow_dispatch: "Gen-File"
   schedule:
     - cron:  '* */6 * * *'
   push:
