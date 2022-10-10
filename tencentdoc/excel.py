@@ -46,13 +46,13 @@ if __name__ == '__main__':
             if '2' in v:
                 if str(v['2'][1]).isdigit() and len(str(v['2'][1]))>4:
                     row.append(todate(int(v['2'][1])))
-                    if fidx < 2: row1.append(todate(int(v['2'][1])))
+                    if fidx < 2: row1.append(str(todate(int(v['2'][1]))).replace(r"\n", r"<\br>"))
                 else:
                     row.append(v['2'][1])
-                    if fidx < 2: row1.append(v['2'][1])
+                    if fidx < 2: row1.append(str(v['2'][1]).replace(r"\n", r"<\br>"))
                 if '6' in v:
                     row.append(v['6'])
-                    if fidx<2 : row1.append(v['6'])
+                    if fidx<2 : row1.append(str(v['6']).replace(r"\n", r"<\br>"))
             else:
                 row.append("")
     empty_ws = wb["Sheet"]
