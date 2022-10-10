@@ -24,7 +24,7 @@ if __name__ == '__main__':
     print("文档名称: %s" % title)
     wb = Workbook()
     obj = {}
-    idx = 1
+    fidx = 0
     for tab in tabs:
         tab_id = tab["id"]
         name = tab["name"]
@@ -38,19 +38,21 @@ if __name__ == '__main__':
         for k, v in sheet_content.items():
             if (int(k) % max_col == 0 and k != '0'):
                 ws.append(row)
-                obj[name].append(row1)
                 row=[]
-                row1=[]
+                if fidx < 2:
+                    obj[name].append(row1)
+                    row1 = []
+                    fidx += 1
             if '2' in v:
                 if str(v['2'][1]).isdigit() and len(str(v['2'][1]))>4:
                     row.append(todate(int(v['2'][1])))
-                    row1.append(todate(int(v['2'][1])))
+                    if fidx < 2: row1.append(todate(int(v['2'][1])))
                 else:
                     row.append(v['2'][1])
-                    row1.append(v['2'][1])
+                    if fidx < 2: row1.append(v['2'][1])
                 if '6' in v:
                     row.append(v['6'])
-                    row1.append(v['6'])
+                    if fidx<2 : row1.append(v['6'])
             else:
                 row.append("")
     empty_ws = wb["Sheet"]
