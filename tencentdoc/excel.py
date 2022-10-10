@@ -58,4 +58,5 @@ if __name__ == '__main__':
     wb.save('%s.xlsx' % "tea")
     with open("tea.json", 'w') as file:
         json.dump(obj, file)
+        print("save tea.json...")
     print("下载完成，已保存与根目录")
