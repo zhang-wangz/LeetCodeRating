@@ -33,7 +33,7 @@ jobs:
     - name: 'Gen File'
       run: python tencentdoc/excel.py
       
-    - name: 'Add Diff'
+    - name: Add Diff
       run: git add .
 
     - name: Commit files
