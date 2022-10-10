@@ -27,7 +27,7 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f tencentdoc/requirements.txt ]; then pip install -r tencentdoc/requirements.txt; fi
     - name: 'Gen File'
-      run: python tencentdoc/excel.py tencentdoc/cookies.py
+      run: python tencentdoc/excel.py
       
     - name: 'Add Diff'
       run: git add .
