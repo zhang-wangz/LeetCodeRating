@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.4.2
+// @version      1.4.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -59,6 +59,7 @@
 // @note         2022-10-10 1.4.0 增加首页近日灵茶
 // @note         2022-10-10 1.4.1 修复更新频率
 // @note         2022-10-10 1.4.2 修改layer名称
+// @note         2022-10-11 1.4.3 修复难度数据过长和page页面名称，考虑到github文件加载缓存机制，更换检查频率到首页
 // ==/UserScript==
 
 (function () {
@@ -70,7 +71,7 @@
     var id3 = ""
     var id4 = ""
     var id5 = ""
-    var version = "1.4.2"
+    var version = "1.4.3"
     var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
@@ -168,7 +169,7 @@
                 role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">&nbsp近日灵茶</a></div></div></div></div></div><div \
                 role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
                 role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
-                role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']}</span></div><div \
+                role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd'].substr(0,4)}</span></div><div \
                 role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
 
                 div.childNodes[2].childNodes[0].childNodes[0].addEventListener("click", (e)=>{
@@ -490,7 +491,15 @@
                 console.log(err)
             }
         });
+    }
 
+    [...document.querySelectorAll('*')].forEach(item => {
+        item.oncopy = function (e) {
+            e.stopPropagation();
+        }
+    });
+
+    if (window.location.href.startsWith(allUrl)) {
         // 版本更新机制
         GM_xmlhttpRequest({
             method: "get",
@@ -501,7 +510,7 @@
             },
             onload: function (res) {
                 if (res.status === 200) {
-                    console.log("everyday check version once...")
+                    console.log("enter home page check version once...")
                     let dataStr = res.response
                     let json = JSON.parse(dataStr)
                     let v = json["version"]
@@ -524,7 +533,6 @@
                 console.log(err)
             }
         });
-
         // 获取茶数据
         GM_xmlhttpRequest({
             method: "get",
@@ -535,6 +543,7 @@
             },
             onload: function (res) {
                 if (res.status === 200) {
+                    console.log("enter home page gettea once...")
                     latestpb = {}
                     let dataStr = res.response
                     let json = JSON.parse(dataStr)
@@ -542,7 +551,6 @@
                     latestpb["date"] = al[0];latestpb["pb"] = al[1];latestpb["url"] = al[2];
                     latestpb["out"] = al[3];latestpb["nd"] = al[4];latestpb["solve"] = al[5];
                     latestpb["blank"] = al[6]
-                    console.log("everyday gettea once...")
                     GM_setValue("latestpb", JSON.stringify(latestpb))
                 }
             },
@@ -551,15 +559,6 @@
                 console.log(err)
             }
         });
-    }
-
-    [...document.querySelectorAll('*')].forEach(item => {
-        item.oncopy = function (e) {
-            e.stopPropagation();
-        }
-    });
-
-    if (window.location.href.startsWith(allUrl)) {
         let tag = GM_getValue("tag", -2)
         let pb = GM_getValue("pb", -3)
         let company = GM_getValue("company", -4)
