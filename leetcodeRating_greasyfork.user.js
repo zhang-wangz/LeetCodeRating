@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.4.3
+// @version      1.4.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -60,6 +60,7 @@
 // @note         2022-10-10 1.4.1 修复更新频率
 // @note         2022-10-10 1.4.2 修改layer名称
 // @note         2022-10-11 1.4.3 修复难度数据过长和page页面名称，考虑到github文件加载缓存机制，更换检查频率到首页
+// @note         2022-10-11 1.4.4 修复灵茶里面特殊字符<造成的显示问题
 // ==/UserScript==
 
 (function () {
@@ -71,7 +72,7 @@
     var id3 = ""
     var id4 = ""
     var id5 = ""
-    var version = "1.4.3"
+    var version = "1.4.4"
     var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
@@ -139,11 +140,13 @@
     }
 
     function checktrans(){
+        latestpb["pb"] = latestpb["pb"].replace('<', "&lt;")
+                                       .replace('>', "&gt;")
+        console.log(latestpb["pb"])
         layer.open({
-            type: 1
+            type: 0
             ,area: ['650px', '450px']
             ,title: '中文翻译'
-            ,scrollbar: false
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
