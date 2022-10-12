@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.4.4
+// @version      1.4.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -61,6 +61,7 @@
 // @note         2022-10-10 1.4.2 修改layer名称
 // @note         2022-10-11 1.4.3 修复难度数据过长和page页面名称，考虑到github文件加载缓存机制，更换检查频率到首页
 // @note         2022-10-11 1.4.4 修复灵茶里面特殊字符<造成的显示问题
+// @note         2022-10-12 1.4.5 修复company页面
 // ==/UserScript==
 
 (function () {
@@ -72,7 +73,7 @@
     var id3 = ""
     var id4 = ""
     var id5 = ""
-    var version = "1.4.4"
+    var version = "1.4.5"
     var preDate
     var allUrl = "https://leetcode.cn/problemset"
     var tagUrl = "https://leetcode.cn/tag"
@@ -284,14 +285,14 @@
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
+                let nd = v.childNodes[length - 3].childNodes[0].innerHTML
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+                    v.childNodes[length - 3].childNodes[0].innerHTML = nd
                 } else {
                     let nd2ch = { "rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难" }
-                    let clr = v.childNodes[length - 2].childNodes[0].getAttribute("color")
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[clr]
+                    let clr = v.childNodes[length - 3].childNodes[0].getAttribute("color")
+                    v.childNodes[length - 3].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
