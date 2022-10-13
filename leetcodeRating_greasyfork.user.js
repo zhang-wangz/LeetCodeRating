@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.4.5
+// @version      1.4.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -62,6 +62,7 @@
 // @note         2022-10-11 1.4.3 修复难度数据过长和page页面名称，考虑到github文件加载缓存机制，更换检查频率到首页
 // @note         2022-10-11 1.4.4 修复灵茶里面特殊字符<造成的显示问题
 // @note         2022-10-12 1.4.5 修复company页面
+// @note         2022-10-13 1.4.6 修复因为缓存导致可能一天出现两次不同灵茶的问题
 // ==/UserScript==
 
 (function () {
@@ -163,8 +164,7 @@
             let head = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div.relative.flex.items-center.space-x-4.py-3.my-4.-ml-4.overflow-hidden.pl-4")
             let l = head.childNodes.length
             let last = head.childNodes[l - 1]
-
-            if (arr.childNodes[0].childNodes[0].innerText != latestpb["date"]) {
+            if (arr.childNodes[0].childNodes[2].childNodes[0].childNodes[0].innerText != "题解") {
                 let div = document.createElement('div')
                 div.setAttribute("role", "row")
                 div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
