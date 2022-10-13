@@ -35,6 +35,8 @@ jobs:
 
     - name: Commit files
       run: |
+          git config --global user.email "githubBot@bot.com"
+          git config --global user.name "githubBot"
           git commit -m "🐻[Auto] fetch teaFile" -a
 
     - name: Push changes
