@@ -35,8 +35,6 @@ jobs:
 
     - name: Commit files
       run: |
-          git config --local user.email "745268436@qq.com"
-          git config --local user.name "wangzhang"
           git commit -m "🐻[Auto] fetch teaFile" -a
 
     - name: Push changes
