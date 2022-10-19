@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.4.7
+// @version      1.4.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -64,24 +64,25 @@
 // @note         2022-10-12 1.4.5 修复company页面
 // @note         2022-10-13 1.4.6 修复因为缓存导致可能一天出现两次不同灵茶的问题
 // @note         2022-10-13 1.4.7 修复脚本版本bug
+// @note         2022-10-19 1.4.8 兼容新版pb内测页面
 // ==/UserScript==
 
 (function () {
-    // 'use strict';
-    var t2rate = {}
-    var latestpb = {}
-    var id1 = ""
-    var id2 = ""
-    var id3 = ""
-    var id4 = ""
-    var id5 = ""
-    var version = "1.4.7"
-    var preDate
-    var allUrl = "https://leetcode.cn/problemset"
-    var tagUrl = "https://leetcode.cn/tag"
-    var companyUrl = "https://leetcode.cn/company"
-    var pblistUrl = "https://leetcode.cn/problem-list"
-    var pbUrl = "https://leetcode.cn/problems"
+    'use strict';
+    let t2rate = {}
+    let latestpb = {}
+    let id1 = ""
+    let id2 = ""
+    let id3 = ""
+    let id4 = ""
+    let id5 = ""
+    let version = "1.4.8"
+    let preDate
+    let allUrl = "https://leetcode.cn/problemset"
+    let tagUrl = "https://leetcode.cn/tag"
+    let companyUrl = "https://leetcode.cn/company"
+    let pblistUrl = "https://leetcode.cn/problem-list"
+    let pbUrl = "https://leetcode.cn/problems"
     GM_addStyle(GM_getResourceText("css"));
 
     // 深拷贝
@@ -92,21 +93,20 @@
 
     // 获取时间
     function getCurrentDate(format) {
-        var now = new Date();
-        var year = now.getFullYear(); //得到年份
-        var month = now.getMonth(); //得到月份
-        var date = now.getDate(); //得到日期
-        var day = now.getDay(); //得到周几
-        var hour = now.getHours(); //得到小时
-        var minu = now.getMinutes(); //得到分钟
-        var sec = now.getSeconds(); //得到秒
+        let now = new Date();
+        let year = now.getFullYear(); //得到年份
+        let month = now.getMonth(); //得到月份
+        let date = now.getDate(); //得到日期
+        let hour = now.getHours(); //得到小时
+        let minu = now.getMinutes(); //得到分钟
+        let sec = now.getSeconds(); //得到秒
         month = month + 1;
         if (month < 10) month = "0" + month;
         if (date < 10) date = "0" + date;
         if (hour < 10) hour = "0" + hour;
         if (minu < 10) minu = "0" + minu;
         if (sec < 10) sec = "0" + sec;
-        var time = "";
+        let time = "";
         // 精确到天
         if (format == 1) {
             time = year + "年" + month + "月" + date + "日";
@@ -143,8 +143,7 @@
     }
 
     function checktrans(){
-        latestpb["pb"] = latestpb["pb"].replace('<', "&lt;")
-                                       .replace('>', "&gt;")
+        latestpb["pb"] = latestpb["pb"].replace('<', "&lt;").replace('>', "&gt;")
         console.log(latestpb["pb"])
         layer.open({
             type: 0
@@ -162,6 +161,10 @@
     function getData() {
         try {
             let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
+            // pb页面加载时直接返回
+            if (arr == undefined) {
+                return 
+            }
             let head = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div.relative.flex.items-center.space-x-4.py-3.my-4.-ml-4.overflow-hidden.pl-4")
             let l = head.childNodes.length
             let last = head.childNodes[l - 1]
@@ -227,7 +230,6 @@
                 tea.setAttribute("target", "_blank")
                 head.appendChild(tea)
             }
-
         } catch (e) {
             return
         }
@@ -246,8 +248,8 @@
                 return
             }
             let childs = arr.childNodes
-            for (let idx = 0; idx < childs.length; idx++) {
-                let v = childs[idx]
+            for (const element of childs) {
+                let v = element
                 let length = v.childNodes.length
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
@@ -280,8 +282,8 @@
                 return
             }
             let childs = arr.childNodes
-            for (let idx = 0; idx < childs.length; idx++) {
-                let v = childs[idx]
+            for (const element of childs) {
+                let v = element
                 let length = v.childNodes.length
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
@@ -315,8 +317,8 @@
                 return
             }
             let childs = arr.childNodes
-            for (let idx = 0; idx < childs.length; idx++) {
-                let v = childs[idx]
+            for (const element of childs) {
+                let v = element
                 let length = v.childNodes.length
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
@@ -341,122 +343,228 @@
     function getpb() {
         if (!window.location.href.startsWith(pbUrl)) {
             clearInterval(id3)
-            id1 = setInterval(getData, 1)
-            id2 = setInterval(getTagData, 1)
-            id4 = setInterval(getCompanyData, 1)
-            id5 = setInterval(getPblistData, 1)
-            GM_setValue("all", id1)
-            GM_setValue("tag", id2)
-            GM_setValue("company", id4)
-            GM_setValue("pblist", id5)
+            if (window.location.href.startsWith(allUrl)){
+                id1 = setInterval(getData, 1)
+                GM_setValue("all", id1)
+            }else if (window.location.href.startsWith(tagUrl)) {
+                id2 = setInterval(getTagData, 1)
+                GM_setValue("tag", id2)
+            } else if (window.location.href.startsWith(pbUrl)) {
+                id3 = setInterval(getpb, 1)
+                GM_setValue("pb", id3)
+            } else if (window.location.href.startsWith(companyUrl)) {
+                id4 = setInterval(getCompanyData, 1)
+                GM_setValue("company", id4)
+            } else if (window.location.href.startsWith(pblistUrl)) {
+                id5 = setInterval(getPblistData, 1)
+                GM_setValue("pblist", id5)
+            }
             return
         }
+
         try {
-            let pbAll = document.querySelector("body > div.question-picker-detail__2A9V.show__GfjG > div.question-picker-detail-menu__3NQq.show__3hiR > div.lc-theme-dark.question-picker-questions-wrapper__13qM > div")
-            if (pbAll != undefined) {
-                let childs = pbAll.childNodes
-                for (let idx = 0; idx < childs.length; idx++) {
-                    let v = childs[idx]
-                    let length = v.childNodes.length
-                    let t = v.childNodes[0].childNodes[1].innerText
-                    let data = t.split(" ")[0]
-                    let id = data.slice(1)
-                    let nd = v.childNodes[length - 1].childNodes[0].innerText
-                    if (t2rate[id] != undefined) {
-                        nd = t2rate[id]["Rating"]
-                        v.childNodes[length - 1].childNodes[0].innerText = nd
+
+            // 旧版的标题位置
+            let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
+            if (t == undefined){
+                // 新版逻辑
+                t = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div:nth-child(1) > div.flex-1 > div > div > span")
+                if (t == undefined) {
+                    t1 = "unknown"
+                    return 
+                }
+                let data = t.innerText.split(".")
+                let id = data[0].trim()
+                let colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div.mt-3.flex.space-x-4 > div:nth-child(1) > div")
+                let pa = colorSpan.parentNode.parentNode
+                if (t1 != undefined && t1 == id) {
+                    return
+                }
+                // 新版统计难度分数并且修改
+                let nd = colorSpan.getAttribute("class")
+                let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
+                if (t2rate[id] != undefined) {
+                    colorSpan.innerHTML = t2rate[id]["Rating"]
+                } else {
+                    for (let item in nd2ch) {
+                        if (nd.toString().includes(item)) {
+                            colorSpan.innerHTML = nd2ch[item]
+                            break
+                        }
                     }
                 }
-            }
-            let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
-            if (t == undefined) {
-                t1 = "unknown"
-                return
-            }
-            let data = t.innerText.split(".")
-            let id = data[0].trim()
-            let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
-            let pa = colorSpan.parentNode
-            if ((t1 != undefined && t1 == id) && (le != undefined && le <= pa.childNodes.length)) {
-                return
-            }
+                // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
+                let url = "https://leetcode.cn/contest/"
+                let q = pa.lastChild
+                let le = pa.childNodes.length
+                if (q.textContent == "") {
+                    let abody = document.createElement("a")
+                    abody.setAttribute("data-small-spacing", "true")
+                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
 
-            // 统计难度分数
-            let nd = colorSpan.getAttribute("data-degree")
-            let nd2ch = { "easy": "简单", "medium": "中等", "hard": "困难" }
-            if (t2rate[id] != undefined) {
-                colorSpan.innerHTML = t2rate[id]["Rating"]
-            } else {
-                colorSpan.innerHTML = nd2ch[nd]
-            }
-            // 准备做周赛链接,如果已经不存在组件就执行操作
-            let url = "https://leetcode.cn/contest/"
-            if (le == undefined || le != pa.childNodes.length) {
-                let abody = document.createElement("a")
-                abody.setAttribute("data-small-spacing", "true")
-                abody.setAttribute("class", "css-nabodd-Button e167268t1")
+                    let abody2 = document.createElement("a")
+                    abody2.setAttribute("data-small-spacing", "true")
+                    abody2.setAttribute("class", "css-nabodd-Button e167268t1")
 
-                let button = document.createElement("button")
-                button.setAttribute("class", "css-nabodd-Button e167268t1")
-                let abody2 = document.createElement("a")
-                abody2.setAttribute("data-small-spacing", "true")
-                abody2.setAttribute("class", "css-nabodd-Button e167268t1")
+                    let span = document.createElement("span")
+                    let span2 = document.createElement("span")
+                    // ContestID_zh  ContestSlug
+                    if (t2rate[id] != undefined) {
+                        span.innerText = t2rate[id]["ContestID_zh"]
+                        span2.innerText = t2rate[id]["ProblemIndex"]
 
-                let span = document.createElement("span")
-                let span2 = document.createElement("span")
-                // ContestID_zh  ContestSlug
-                if (t2rate[id] != undefined) {
-                    span.innerText = t2rate[id]["ContestID_zh"]
-                    span2.innerText = t2rate[id]["ProblemIndex"]
+                        abody.setAttribute("href", url + t2rate[id]["ContestSlug"])
+                        abody.setAttribute("target", "_blank")
+                        abody.removeAttribute("hidden")
 
-                    abody.setAttribute("href", url + t2rate[id]["ContestSlug"])
-                    abody.setAttribute("target", "_blank")
-                    abody.removeAttribute("hidden")
+                        abody2.setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        abody2.setAttribute("target", "_blank")
+                        abody2.removeAttribute("hidden")
+                    } else {
+                        span.innerText = "对应周赛未知"
+                        abody.setAttribute("href", "")
+                        abody.setAttribute("target", "_self")
+                        abody.setAttribute("hidden", "true")
 
-                    abody2.setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                    abody2.setAttribute("target", "_blank")
-                    abody2.removeAttribute("hidden")
-                } else {
-                    span.innerText = "对应周赛未知"
-                    abody.setAttribute("href", "")
-                    abody.setAttribute("target", "_self")
-                    abody.setAttribute("hidden", "true")
+                        span2.innerText = "未知"
+                        abody2.setAttribute("href", "")
+                        abody2.setAttribute("target", "_self")
+                        abody2.setAttribute("hidden", "true")
+                    }
+                    abody.appendChild(span)
+                    abody2.appendChild(span2)
+                    pa.appendChild(abody)
+                    pa.appendChild(abody2)
+                } else if(q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
+                    if (t2rate[id] != undefined) {
+                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
+                        pa.childNodes[le - 2].setAttribute("href", url + t2rate[id]["ContestSlug"])
+                        pa.childNodes[le - 2].setAttribute("target", "_blank")
+                        pa.childNodes[le - 2].removeAttribute("hidden")
 
-                    span2.innerText = "未知"
-                    abody2.setAttribute("href", "")
-                    abody2.setAttribute("target", "_self")
-                    abody2.setAttribute("hidden", "true")
+                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
+                        pa.childNodes[le - 1].setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        pa.childNodes[le - 1].setAttribute("target", "_blank")
+                        pa.childNodes[le - 1].removeAttribute("hidden")
+                    } else {
+                        pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
+                        pa.childNodes[le - 2].setAttribute("href", "")
+                        pa.childNodes[le - 2].setAttribute("target", "_self")
+                        pa.childNodes[le - 2].setAttribute("hidden", "true")
+
+                        pa.childNodes[le - 1].childNodes[0].innerText = "未知"
+                        pa.childNodes[le - 1].setAttribute("href", "")
+                        pa.childNodes[le - 1].setAttribute("target", "_self")
+                        pa.childNodes[le - 1].setAttribute("hidden", "true")
+                    }
                 }
-                abody.appendChild(span)
-                abody2.appendChild(span2)
-                button.appendChild(abody2)
-                pa.appendChild(abody)
-                pa.appendChild(button)
-            } else if (le == pa.childNodes.length) {  // 存在就直接替换
-                if (t2rate[id] != undefined) {
-                    pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                    pa.childNodes[le - 2].setAttribute("href", url + t2rate[id]["ContestSlug"])
-                    pa.childNodes[le - 2].setAttribute("target", "_blank")
-                    pa.childNodes[le - 2].removeAttribute("hidden")
+                t1 = deepclone(id)
 
-                    pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                    pa.childNodes[le - 1].childNodes[0].setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                    pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_blank")
-                    pa.childNodes[le - 1].childNodes[0].removeAttribute("hidden")
-                } else {
-                    pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
-                    pa.childNodes[le - 2].setAttribute("href", "")
-                    pa.childNodes[le - 2].setAttribute("target", "_self")
-                    pa.childNodes[le - 2].setAttribute("hidden", "true")
+            }else {
+                // 旧版逻辑，使用参数t和t1，分别代表标题的html和标题id
 
-                    pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = "未知"
-                    pa.childNodes[le - 1].childNodes[0].setAttribute("href", "")
-                    pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_self")
-                    pa.childNodes[le - 1].childNodes[0].setAttribute("hidden", "true")
+                // 旧版题目左侧列表里面所有分数
+                let pbAll = document.querySelector("body > div.question-picker-detail__2A9V.show__GfjG > div.question-picker-detail-menu__3NQq.show__3hiR > div.lc-theme-dark.question-picker-questions-wrapper__13qM > div")
+                if (pbAll != undefined) {
+                    let childs = pbAll.childNodes
+                    for (const element of childs) {
+                        let v = element
+                        let length = v.childNodes.length
+                        let t = v.childNodes[0].childNodes[1].innerText
+                        let data = t.split(" ")[0]
+                        let id = data.slice(1)
+                        let nd = v.childNodes[length - 1].childNodes[0].innerText
+                        if (t2rate[id] != undefined) {
+                            nd = t2rate[id]["Rating"]
+                            v.childNodes[length - 1].childNodes[0].innerText = nd
+                        }
+                    }
                 }
+                // 旧版标题修改位置
+                let data = t.innerText.split(".")
+                let id = data[0].trim()
+                let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
+                let pa = colorSpan.parentNode
+                if ((t1 != undefined && t1 == id) && (le != undefined && le <= pa.childNodes.length)) {
+                    return
+                }
+                // 统计难度分数
+                let nd = colorSpan.getAttribute("data-degree")
+                let nd2ch = { "easy": "简单", "medium": "中等", "hard": "困难" }
+                if (t2rate[id] != undefined) {
+                    colorSpan.innerHTML = t2rate[id]["Rating"]
+                } else {
+                    colorSpan.innerHTML = nd2ch[nd]
+                }
+                // 准备做周赛链接,如果已经不存在组件就执行操作
+                let url = "https://leetcode.cn/contest/"
+                if (le == undefined || le != pa.childNodes.length) {
+                    let abody = document.createElement("a")
+                    abody.setAttribute("data-small-spacing", "true")
+                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
+
+                    let button = document.createElement("button")
+                    button.setAttribute("class", "css-nabodd-Button e167268t1")
+                    let abody2 = document.createElement("a")
+                    abody2.setAttribute("data-small-spacing", "true")
+                    abody2.setAttribute("class", "css-nabodd-Button e167268t1")
+
+                    let span = document.createElement("span")
+                    let span2 = document.createElement("span")
+                    // ContestID_zh  ContestSlug
+                    if (t2rate[id] != undefined) {
+                        span.innerText = t2rate[id]["ContestID_zh"]
+                        span2.innerText = t2rate[id]["ProblemIndex"]
+
+                        abody.setAttribute("href", url + t2rate[id]["ContestSlug"])
+                        abody.setAttribute("target", "_blank")
+                        abody.removeAttribute("hidden")
+
+                        abody2.setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        abody2.setAttribute("target", "_blank")
+                        abody2.removeAttribute("hidden")
+                    } else {
+                        span.innerText = "对应周赛未知"
+                        abody.setAttribute("href", "")
+                        abody.setAttribute("target", "_self")
+                        abody.setAttribute("hidden", "true")
+
+                        span2.innerText = "未知"
+                        abody2.setAttribute("href", "")
+                        abody2.setAttribute("target", "_self")
+                        abody2.setAttribute("hidden", "true")
+                    }
+                    abody.appendChild(span)
+                    abody2.appendChild(span2)
+                    button.appendChild(abody2)
+                    pa.appendChild(abody)
+                    pa.appendChild(button)
+                } else if (le == pa.childNodes.length) {  // 存在就直接替换
+                    if (t2rate[id] != undefined) {
+                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
+                        pa.childNodes[le - 2].setAttribute("href", url + t2rate[id]["ContestSlug"])
+                        pa.childNodes[le - 2].setAttribute("target", "_blank")
+                        pa.childNodes[le - 2].removeAttribute("hidden")
+
+                        pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
+                        pa.childNodes[le - 1].childNodes[0].setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_blank")
+                        pa.childNodes[le - 1].childNodes[0].removeAttribute("hidden")
+                    } else {
+                        pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
+                        pa.childNodes[le - 2].setAttribute("href", "")
+                        pa.childNodes[le - 2].setAttribute("target", "_self")
+                        pa.childNodes[le - 2].setAttribute("hidden", "true")
+
+                        pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = "未知"
+                        pa.childNodes[le - 1].childNodes[0].setAttribute("href", "")
+                        pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_self")
+                        pa.childNodes[le - 1].childNodes[0].setAttribute("hidden", "true")
+                    }
+                }
+                le = pa.childNodes.length
+                t1 = deepclone(id)
             }
-            le = pa.childNodes.length
-            t1 = deepclone(id)
         } catch (e) {
             return
         }
@@ -480,9 +588,9 @@
                     t2rate = {}
                     let dataStr = res.response
                     let json = eval(dataStr)
-                    for (let i = 0; i < json.length; i++) {
-                        t2rate[json[i].ID] = json[i]
-                        t2rate[json[i].ID]["Rating"] = Number.parseInt(Number.parseFloat(json[i]["Rating"]) + 0.5)
+                    for (const element of json) {
+                        t2rate[element.ID] = element
+                        t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
                     }
                     t2rate["idx13"] = -13
                     console.log("everyday getdate once...")
@@ -523,7 +631,7 @@
                         layer.open({
                             content: 'leetcodeRating难度分插件有新的版本啦,请前往更新~',
                             yes: function (index, layero) {
-                                var c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
+                                let c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
                                 c.close()
                                 layer.close(index)
                             }
@@ -597,6 +705,8 @@
         // 设置定时
         id3 = setInterval(getpb, 1)
         GM_setValue("pb", id3)
+        id1 = setInterval(getData, 1)
+        GM_setValue("all", id1)
     } else if (window.location.href.startsWith(companyUrl)) {
         let all = GM_getValue("all", -1)
         let tag = GM_getValue("tag", -2)
