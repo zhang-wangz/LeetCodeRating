@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.4.8
+// @version      1.4.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -17,6 +17,7 @@
 // @connect      zerotrac.github.io
 // @connect      raw.staticdn.net
 // @connect      raw.githubusercontents.com
+// @connect      raw.githubusercontent.com
 // @require      https://gcore.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js
 // @require      https://gcore.jsdelivr.net/gh/andywang425/BLTH@4368883c643af57c07117e43785cd28adcb0cb3e/assets/js/library/layer.min.js
 // @resource css https://gcore.jsdelivr.net/gh/andywang425/BLTH@d25aa353c8c5b2d73d2217b1b43433a80100c61e/assets/css/layer.css
@@ -65,6 +66,7 @@
 // @note         2022-10-13 1.4.6 修复因为缓存导致可能一天出现两次不同灵茶的问题
 // @note         2022-10-13 1.4.7 修复脚本版本bug
 // @note         2022-10-19 1.4.8 兼容新版pb内测页面
+// @note         2022-10-19 1.4.9 版本获取github CDN网站维护，更新使用原生网站
 // ==/UserScript==
 
 (function () {
@@ -76,7 +78,7 @@
     let id3 = ""
     let id4 = ""
     let id5 = ""
-    let version = "1.4.8"
+    let version = "1.4.9"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
@@ -616,7 +618,7 @@
         // 版本更新机制
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
+            url: 'https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
@@ -649,7 +651,7 @@
         // 获取茶数据
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/tea.json' + "?timeStamp=" + new Date().getTime(),
+            url: 'https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/tea.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
