@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.4.9
+// @version      1.4.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -67,6 +67,7 @@
 // @note         2022-10-13 1.4.7 修复脚本版本bug
 // @note         2022-10-19 1.4.8 兼容新版pb内测页面
 // @note         2022-10-19 1.4.9 版本获取github CDN网站维护，更新使用原生网站
+// @note         2022-10-31 1.4.10 修复之前就有的缺陷，当周赛在中文站最早的第83周赛之前时，跳转到英文站
 // ==/UserScript==
 
 (function () {
@@ -78,7 +79,7 @@
     let id3 = ""
     let id4 = ""
     let id5 = ""
-    let version = "1.4.9"
+    let version = "1.4.10"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
@@ -89,8 +90,13 @@
 
     // 深拷贝
     function deepclone(obj) {
-        let str = JSON.stringify(obj)
-        return JSON.parse(str)
+        let str = JSON.stringify(obj);
+        return JSON.parse(str);
+    }
+
+    // 获取数字
+    function getcontestNumber(url) {
+        return parseInt(url.substr(15));
     }
 
     // 获取时间
@@ -397,6 +403,7 @@
                 }
                 // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
                 let url = "https://leetcode.cn/contest/"
+                let zhUrl = "https://leetcode.com/contest/"
                 let q = pa.lastChild
                 let le = pa.childNodes.length
                 if (q.textContent == "") {
@@ -412,14 +419,17 @@
                     let span2 = document.createElement("span")
                     // ContestID_zh  ContestSlug
                     if (t2rate[id] != undefined) {
+                        let contestUrl;
+                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
                         span.innerText = t2rate[id]["ContestID_zh"]
                         span2.innerText = t2rate[id]["ProblemIndex"]
 
-                        abody.setAttribute("href", url + t2rate[id]["ContestSlug"])
+                        abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
                         abody.setAttribute("target", "_blank")
                         abody.removeAttribute("hidden")
 
-                        abody2.setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
                         abody2.setAttribute("target", "_blank")
                         abody2.removeAttribute("hidden")
                     } else {
@@ -439,13 +449,16 @@
                     pa.appendChild(abody2)
                 } else if(q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
                     if (t2rate[id] != undefined) {
+                        let contestUrl;
+                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
                         pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                        pa.childNodes[le - 2].setAttribute("href", url + t2rate[id]["ContestSlug"])
+                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
                         pa.childNodes[le - 2].setAttribute("target", "_blank")
                         pa.childNodes[le - 2].removeAttribute("hidden")
 
                         pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                        pa.childNodes[le - 1].setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
                         pa.childNodes[le - 1].setAttribute("target", "_blank")
                         pa.childNodes[le - 1].removeAttribute("hidden")
                     } else {
@@ -500,6 +513,7 @@
                 }
                 // 准备做周赛链接,如果已经不存在组件就执行操作
                 let url = "https://leetcode.cn/contest/"
+                let zhUrl = "https://leetcode.com/contest/"
                 if (le == undefined || le != pa.childNodes.length) {
                     let abody = document.createElement("a")
                     abody.setAttribute("data-small-spacing", "true")
@@ -515,14 +529,17 @@
                     let span2 = document.createElement("span")
                     // ContestID_zh  ContestSlug
                     if (t2rate[id] != undefined) {
+                        let contestUrl;
+                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
                         span.innerText = t2rate[id]["ContestID_zh"]
                         span2.innerText = t2rate[id]["ProblemIndex"]
 
-                        abody.setAttribute("href", url + t2rate[id]["ContestSlug"])
+                        abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
                         abody.setAttribute("target", "_blank")
                         abody.removeAttribute("hidden")
 
-                        abody2.setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
                         abody2.setAttribute("target", "_blank")
                         abody2.removeAttribute("hidden")
                     } else {
@@ -543,13 +560,16 @@
                     pa.appendChild(button)
                 } else if (le == pa.childNodes.length) {  // 存在就直接替换
                     if (t2rate[id] != undefined) {
+                        let contestUrl;
+                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
                         pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                        pa.childNodes[le - 2].setAttribute("href", url + t2rate[id]["ContestSlug"])
+                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
                         pa.childNodes[le - 2].setAttribute("target", "_blank")
                         pa.childNodes[le - 2].removeAttribute("hidden")
 
                         pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("href", url + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        pa.childNodes[le - 1].childNodes[0].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
                         pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_blank")
                         pa.childNodes[le - 1].childNodes[0].removeAttribute("hidden")
                     } else {
