@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.5.0
+// @version      1.5.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -69,6 +69,7 @@
 // @note         2022-10-19 1.4.9 版本获取github CDN网站维护，更新使用原生网站
 // @note         2022-10-31 1.4.10 修复之前就有的缺陷，当周赛在中文站最早的第83周赛之前时，跳转到英文站
 // @note         2022-10-31 1.5.0 cdn网站维护结束，还原为cdn使用，同时修复灵茶抓取格式，如果不存在该url，就不读取
+// @note         2022-11-11 1.5.1 增加首页搜索页面的题目难度分并且修复新版题目页面难度分，同时整理代码结构
 // ==/UserScript==
 
 (function () {
@@ -80,13 +81,15 @@
     let id3 = ""
     let id4 = ""
     let id5 = ""
-    let version = "1.5.0"
+    let id6 = ""
+    let version = "1.5.1"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
     let companyUrl = "https://leetcode.cn/company"
     let pblistUrl = "https://leetcode.cn/problem-list"
     let pbUrl = "https://leetcode.cn/problems"
+    let searchUrl = "https://leetcode.cn/search"
     GM_addStyle(GM_getResourceText("css"));
 
     // 深拷贝
@@ -357,10 +360,9 @@
             return
         }
     }
-
-    function getpb() {
-        if (!window.location.href.startsWith(pbUrl)) {
-            clearInterval(id3)
+    function getSearch() {
+        if (!window.location.href.startsWith(searchUrl)) {
+            clearInterval(id4)
             if (window.location.href.startsWith(allUrl)){
                 id1 = setInterval(getData, 1)
                 GM_setValue("all", id1)
@@ -379,6 +381,54 @@
             }
             return
         }
+        try {
+            let arr = document.querySelector("#headlessui-tabs-panel-11 > div > div.mx-auto.mt-6.w-\\[880px\\].rounded.bg-layer-1.pt-2.pb-4.shadow-level1.dark\\:bg-dark-layer-1.dark\\:shadow-dark-level1 > div > div.border-t.border-divider-border-2.px-4.dark\\:border-dark-divider-border-2")
+            if (arr == undefined) {
+                return 
+            }
+            let childs = arr.childNodes
+            for (const element of childs) {
+                let v = element
+                let length = v.childNodes.length
+                let t = v.childNodes[1].childNodes[0].childNodes[0].innerText
+                let data = t.split(".")
+                let id = data[0].trim()
+                let nd = v.childNodes[length - 1].childNodes[0].innerHTML
+                if (t2rate[id] != undefined) {
+                    nd = t2rate[id]["Rating"]
+                    v.childNodes[length - 1].childNodes[0].innerHTML = nd
+                } else {
+                    let nd2ch = { "text-green-s": "简单", "text-yellow": "中等", "text-red-s": "困难" }
+                    let clr = v.childNodes[length - 1].childNodes[0].getAttribute("class")
+                    v.childNodes[length - 1].childNodes[0].innerHTML = nd2ch[clr]
+                }
+            }
+        } catch (e) {
+            return
+        }
+    }
+
+    function getpb() {
+        if (!window.location.href.startsWith(pbUrl)) {
+            clearInterval(id3)
+            if (window.location.href.startsWith(allUrl)){
+                id1 = setInterval(getData, 1)
+                GM_setValue("all", id1)
+            }else if (window.location.href.startsWith(tagUrl)) {
+                id2 = setInterval(getTagData, 1)
+                GM_setValue("tag", id2)
+            } else if (window.location.href.startsWith(searchUrl)) {
+                id6 = setInterval(getSearch, 1)
+                GM_setValue("search", id6)
+            } else if (window.location.href.startsWith(companyUrl)) {
+                id4 = setInterval(getCompanyData, 1)
+                GM_setValue("company", id4)
+            } else if (window.location.href.startsWith(pblistUrl)) {
+                id5 = setInterval(getPblistData, 1)
+                GM_setValue("pblist", id5)
+            }
+            return
+        }
 
         try {
 
@@ -386,14 +436,14 @@
             let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
             if (t == undefined){
                 // 新版逻辑
-                t = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div:nth-child(1) > div.flex-1 > div > div > span")
+                t = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div:nth-child(1) > div.flex-1 > div > div > span")
                 if (t == undefined) {
                     t1 = "unknown"
                     return 
                 }
                 let data = t.innerText.split(".")
                 let id = data[0].trim()
-                let colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div.mt-3.flex.space-x-4 > div:nth-child(1) > div")
+                let colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div.mt-3.flex.space-x-4 > div:nth-child(1) > div")
                 let pa = colorSpan.parentNode.parentNode
                 if (t1 != undefined && t1 == id) {
                     return
@@ -637,6 +687,45 @@
             }
         });
     }
+    
+    function clearAndStart(start, func, timeout) {
+        let lst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
+        lst.forEach(each => {
+            if (each !== start) {
+                let tmp = GM_getValue(each, -1)
+                clearInterval(tmp)
+            }
+        })
+        if (start !== "") {
+            let cnt = lst.indexOf(start) + 1
+            switch (cnt) {
+                case 1:
+                    id1 = setInterval(func, timeout)
+                    GM_setValue(start, id1)
+                    break
+                case 2:
+                    id2 = setInterval(func, timeout)
+                    GM_setValue(start, id2)
+                    break 
+                case 3:
+                    id3 = setInterval(func, timeout)
+                    GM_setValue(start, id3)
+                    break   
+                case 4:
+                    id4 = setInterval(func, timeout)
+                    GM_setValue(start, id4)
+                    break
+                case 5:
+                    id5 = setInterval(func, timeout)
+                    GM_setValue(start, id5)
+                    break
+                case 6:
+                    id6 = setInterval(func, timeout)
+                    GM_setValue(start, id6)
+                    break
+            }
+        }
+    }
 
     [...document.querySelectorAll('*')].forEach(item => {
         item.oncopy = function (e) {
@@ -659,10 +748,11 @@
                     let dataStr = res.response
                     let json = JSON.parse(dataStr)
                     let v = json["version"]
+                    let upcontent = json["content"]
                     if (v != version) {
                         layer.open({
-                            content: 'leetcodeRating难度分插件有新的版本啦,请前往更新~',
-                            yes: function (index, layero) {
+                            content: '更新通知: <br/>leetcodeRating难度分插件有新的版本啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent,
+                            yes: function (index, layer) {
                                 let c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
                                 c.close()
                                 layer.close(index)
@@ -704,77 +794,20 @@
                 console.log(err)
             }
         });
-        let tag = GM_getValue("tag", -2)
-        let pb = GM_getValue("pb", -3)
-        let company = GM_getValue("company", -4)
-        clearInterval(company)
-        clearInterval(tag)
-        clearInterval(pb)
-        // 设置定时
-        id1 = setInterval(getData, 1)
-        GM_setValue("all", id1)
+        clearAndStart('all', getData, 1)
     } else if (window.location.href.startsWith(tagUrl)) {
-        let all = GM_getValue("all", -1)
-        let pb = GM_getValue("pb", -3)
-        let company = GM_getValue("company", -4)
-        let pblist = GM_getValue("pblist", -5)
-        clearInterval(company)
-        clearInterval(all)
-        clearInterval(pb)
-        clearInterval(pblist)
-        // 设置定时
-        id2 = setInterval(getTagData, 1)
-        GM_setValue("tag", id2)
+        clearAndStart('tag', getTagData, 1)
     } else if (window.location.href.startsWith(pbUrl)) {
-        let all = GM_getValue("all", -1)
-        let tag = GM_getValue("tag", -2)
-        let company = GM_getValue("company", -4)
-        let pblist = GM_getValue("pblist", -5)
-        clearInterval(all)
-        clearInterval(tag)
-        clearInterval(company)
-        clearInterval(pblist)
-        // 设置定时
-        id3 = setInterval(getpb, 1)
-        GM_setValue("pb", id3)
-        id1 = setInterval(getData, 1)
-        GM_setValue("all", id1)
+        clearAndStart('pb', getpb, 1)
+        let id = setInterval(getData, 1)
+        GM_setValue("all", id)
     } else if (window.location.href.startsWith(companyUrl)) {
-        let all = GM_getValue("all", -1)
-        let tag = GM_getValue("tag", -2)
-        let pb = GM_getValue("pb", -3)
-        let pblist = GM_getValue("pblist", -5)
-        clearInterval(all)
-        clearInterval(tag)
-        clearInterval(pb)
-        clearInterval(pblist)
-        // 设置定时
-        id4 = setInterval(getCompanyData, 1)
-        GM_setValue("company", id4)
+        clearAndStart('company', getCompanyData, 1)
     } else if (window.location.href.startsWith(pblistUrl)) {
-        let all = GM_getValue("all", -1)
-        let tag = GM_getValue("tag", -2)
-        let pb = GM_getValue("pb", -3)
-        let company = GM_getValue("company", -4)
-        clearInterval(all)
-        clearInterval(tag)
-        clearInterval(pb)
-        clearInterval(company)
-        // 设置定时
-        id5 = setInterval(getPblistData, 1)
-        GM_setValue("pblist", id5)
+        clearAndStart('pblist', getPblistData, 1)
+    } else if (window.location.href.startsWith(searchUrl)){
+        clearAndStart('search', getSearch, 100)
     } else {
-        let all = GM_getValue("all", -1)
-        let tag = GM_getValue("tag", -2)
-        let pb = GM_getValue("pb", -3)
-        let company = GM_getValue("company", -4)
-        let pblist = GM_getValue("pblist", -5)
-        clearInterval(all)
-        clearInterval(tag)
-        clearInterval(pb)
-        clearInterval(company)
-        clearInterval(pblist)
+        clearAndStart('', undefined, 1)
     }
 })();
-
-
