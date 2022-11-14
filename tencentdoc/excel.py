@@ -76,8 +76,8 @@ if __name__ == '__main__':
                 row.append("")
     empty_ws = wb["Sheet"]
     wb.remove(empty_ws)
-    wb.save('%s.xlsx' % "tea")
-    with open("tea.json", 'w') as file:
+    wb.save('./tencentdoc/%s.xlsx' % "tea")
+    with open("./tencentdoc/tea.json", 'w') as file:
         json.dump(obj, file, cls=MyEncoder)
         print("save tea.json...")
     print("下载完成，已保存与根目录")
