@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.5.3
+// @version      1.5.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -72,6 +72,7 @@
 // @note         2022-11-11 1.5.1 增加首页搜索页面的题目难度分并且修复新版题目页面难度分，同时整理代码结构
 // @note         2022-11-12 1.5.2 整理目录结构
 // @note         2022-11-14 1.5.3 修复版本目录结构
+// @note         2022-11-14 1.5.4 修复layer弹出窗关闭功能
 // ==/UserScript==
 
 (function () {
@@ -84,7 +85,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.5.3"
+    let version = "1.5.4"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
@@ -754,7 +755,7 @@
                     if (v != version) {
                         layer.open({
                             content: '更新通知: <br/>leetcodeRating难度分插件有新的版本啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent,
-                            yes: function (index, layer) {
+                            yes: function (index) {
                                 let c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
                                 c.close()
                                 layer.close(index)
