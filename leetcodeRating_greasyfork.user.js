@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.5.2
+// @version      1.5.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -71,6 +71,7 @@
 // @note         2022-10-31 1.5.0 cdn网站维护结束，还原为cdn使用，同时修复灵茶抓取格式，如果不存在该url，就不读取
 // @note         2022-11-11 1.5.1 增加首页搜索页面的题目难度分并且修复新版题目页面难度分，同时整理代码结构
 // @note         2022-11-12 1.5.2 整理目录结构
+// @note         2022-11-14 1.5.3 修复版本目录结构
 // ==/UserScript==
 
 (function () {
@@ -83,7 +84,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.5.2"
+    let version = "1.5.3"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
@@ -738,7 +739,7 @@
         // 版本更新机制
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/tencentdoc/version.json' + "?timeStamp=" + new Date().getTime(),
+            url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
