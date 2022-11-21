@@ -68,10 +68,11 @@ if __name__ == '__main__':
                 else:
                     row.append(v['2'][1])
                     if fidx < 2: tmp.s = str(v['2'][1])
-                if '6' in v:
-                    # row.append(v['6']) # 表格不再保存链接数据
-                    if fidx<2 : tmp.url = str(v['6'])
-                if fidx<2: row1.append(tmp)
+                if '16' in v:
+                    # row.append(v['16'][1]) # 表格不再保存链接数据 6,16
+                    if fidx < 2: 
+                        tmp.url = str(v['16'][0][1])
+                if fidx < 2: row1.append(tmp)
             else:
                 row.append("")
     empty_ws = wb["Sheet"]
