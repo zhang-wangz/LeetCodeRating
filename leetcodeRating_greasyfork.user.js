@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.5.4
+// @version      1.5.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -73,6 +73,7 @@
 // @note         2022-11-12 1.5.2 整理目录结构
 // @note         2022-11-14 1.5.3 修复版本目录结构
 // @note         2022-11-14 1.5.4 修复layer弹出窗关闭功能
+// @note         2022-11-15 1.5.5 修复当获取茶数据为空时改为默认值处理
 // ==/UserScript==
 
 (function () {
@@ -85,7 +86,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.5.4"
+    let version = "1.5.5"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
@@ -755,7 +756,7 @@
                     if (v != version) {
                         layer.open({
                             content: '更新通知: <br/>leetcodeRating难度分插件有新的版本啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent,
-                            yes: function (index) {
+                            yes: function (index, layer0) {
                                 let c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
                                 c.close()
                                 layer.close(index)
@@ -786,9 +787,9 @@
                     let dataStr = res.response
                     let json = JSON.parse(dataStr)
                     let al = json["算法趣题"][1]
-                    latestpb["date"] = al[0]['str'];latestpb["pb"] = al[1]['str'];latestpb["url"] = al[1]['url'];
-                    latestpb["out"] = al[2]['str'];latestpb["nd"] = al[3]['str'];latestpb["solve"] = al[4]['str'];
-                    latestpb["blank"] = al[5]
+                    latestpb["date"] = al[0]['str'] || '';latestpb["pb"] = al[1]['str'] || '';latestpb["url"] = al[1]['url'] || '';
+                    latestpb["out"] = al[2]['str'] || '';latestpb["nd"] = al[3]['str'] || '';latestpb["solve"] = al[4]['str'] || '';
+                    latestpb["blank"] = al[5] || '';
                     GM_setValue("latestpb", JSON.stringify(latestpb))
                 }
             },
