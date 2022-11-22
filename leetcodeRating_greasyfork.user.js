@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.5.5
+// @version      1.5.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -73,7 +73,8 @@
 // @note         2022-11-12 1.5.2 整理目录结构
 // @note         2022-11-14 1.5.3 修复版本目录结构
 // @note         2022-11-14 1.5.4 修复layer弹出窗关闭功能
-// @note         2022-11-15 1.5.5 修复当获取茶数据为空时改为默认值处理
+// @note         2022-11-22 1.5.5 修复当获取茶数据为空时改为默认值处理
+// @note         2022-11-22 1.5.6 修复当获取茶数据为空时改为默认值处理
 // ==/UserScript==
 
 (function () {
@@ -86,7 +87,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.5.5"
+    let version = "1.5.6"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
@@ -142,7 +143,7 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre style="padding:20px;">${latestpb["solve"]}</pre>`
+            ,content: `<pre style="padding:20px;">${latestpb["solve"]['str']}</pre>`
         });
     }
 
@@ -154,13 +155,12 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre style="padding:20px;">${latestpb["out"]}</pre>`
+            ,content: `<pre style="padding:20px;">${latestpb["out"]["str"]}</pre>`
         });
     }
 
     function checktrans(){
-        latestpb["pb"] = latestpb["pb"].replace('<', "&lt;").replace('>', "&gt;")
-        console.log(latestpb["pb"])
+        latestpb["pb"]["str"] = latestpb["pb"]["str"].replace('<', "&lt;").replace('>', "&gt;")
         layer.open({
             type: 0
             ,area: ['650px', '450px']
@@ -168,7 +168,7 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre style="padding:20px;">${latestpb["pb"]}</pre>`
+            ,content: `<pre style="padding:20px;">${latestpb["pb"]["str"]}</pre>`
         });
     }
 
@@ -189,19 +189,19 @@
                 div.setAttribute("role", "row")
                 div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
                 div.setAttribute("class", "odd:bg-layer-1 even:bg-overlay-1 dark:odd:bg-dark-layer-bg dark:even:bg-dark-fill-4")
-                if (latestpb["url"] != "") {
-                    div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]}</div><div \
-                    role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">&nbsp近日灵茶</a></div></div></div></div></div><div \
+                if (latestpb["url"]["url"] != "") {
+                    div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]["str"]}</div><div \
+                    role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">&nbsp近日灵茶</a></div></div></div></div></div><div \
                     role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
                     role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd'].substr(0,4)}</span></div><div \
+                    role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
                     role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
                 }else {
-                    div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]}</div><div \
+                    div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]["str"]}</div><div \
                     role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><p class="h-5">&nbsp近日灵茶</p></div></div></div></div></div><div \
                     role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
                     role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd'].substr(0,4)}</span></div><div \
+                    role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
                     role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
                 }
 
@@ -787,9 +787,9 @@
                     let dataStr = res.response
                     let json = JSON.parse(dataStr)
                     let al = json["算法趣题"][1]
-                    latestpb["date"] = al[0]['str'] || '';latestpb["pb"] = al[1]['str'] || '';latestpb["url"] = al[1]['url'] || '';
-                    latestpb["out"] = al[2]['str'] || '';latestpb["nd"] = al[3]['str'] || '';latestpb["solve"] = al[4]['str'] || '';
-                    latestpb["blank"] = al[5] || '';
+                    latestpb["date"] = al[0] || {'str':''};latestpb["pb"] = al[1] || {'str':''};latestpb["url"] = al[1] || {'url':''};
+                    latestpb["out"] = al[2] || {'str':''};latestpb["nd"] = al[3] || {'str':''};latestpb["solve"] = al[4] || {'str':''};
+                    latestpb["blank"] = al[5] || {'str':''};
                     GM_setValue("latestpb", JSON.stringify(latestpb))
                 }
             },
