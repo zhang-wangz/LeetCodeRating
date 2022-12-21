@@ -76,6 +76,7 @@
 // @note         2022-11-22 1.5.5 修复当获取茶数据为空时改为默认值处理
 // @note         2022-11-22 1.5.6 修复当获取茶数据为空时改为默认值处理
 // @note         2022-12-07 1.5.7 修改获取rating分数也使用cdn方式
+// @note         2022-12-21 1.5.8 跟随新版ui页面设计进行修改
 // ==/UserScript==
 
 (function () {
@@ -88,7 +89,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.5.7"
+    let version = "1.5.8"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
@@ -448,8 +449,8 @@
                 }
                 let data = t.innerText.split(".")
                 let id = data[0].trim()
-                let colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div.mt-3.flex.space-x-4 > div:nth-child(1) > div")
-                let pa = colorSpan.parentNode.parentNode
+                let colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div.mt-3.flex.space-x-4 > div:nth-child(1)")
+                let pa = colorSpan.parentNode
                 if (t1 != undefined && t1 == id) {
                     return
                 }
