@@ -14,11 +14,12 @@
   <br>
   LeetCodeRating，一款显示题目对应周赛难度分的浏览器插件。
   <br>
-  目前只支持力扣中文
+  支持中文和英文双站点，安装英文版本切换请切换github tag为english [点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
 </p>
 
 ### :iphone: 兼容性&安装
 
+安装英文版本切换请切换github tag为english [点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
 LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。  
 在使用脚本之前，你需要为浏览器安装脚本管理器插件。  
 经过测试，我们确定兼容以下浏览器和插件用于安装此脚本。
@@ -40,7 +41,6 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 #### :test_tube: 支持的操作系统
 
 * Windows、MacOS、Linux 等支持 Chrome 或 Firefox 浏览器的所有操作系统 <sup>*移动平台如 iOS、Android 除外</sup>
-
 
 
 #### 🐒 插件说明
