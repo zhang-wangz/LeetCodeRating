@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜English
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.0
+// @version      1.1.1
 // @license      MIT
 // @description  LeetCodeRating The score of the weekly competition is displayed, and currently supports the tag page, question bank page, problem_list page and question page
 // @author       小东是个阳光蛋(Leetcode Nickname of chinese site
@@ -24,6 +24,7 @@
 // @grant        unsafeWindow
 // @run-at       document-end
 // @note         2022-12-29 1.1.0 add english site support
+// @note         2022-12-29 1.1.1 fix when the dark mode is turned on, the prompt display is abnormal
 // ==/UserScript==
 
 (function () {
@@ -36,7 +37,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.1.0"
+    let version = "1.1.1"
     let preDate
     let allUrl = "https://leetcode.com/problemset"
     let tagUrl = "https://leetcode.com/tag"
@@ -529,7 +530,7 @@
                     let upcontent = json["content"]
                     if (v != version) {
                         layer.open({
-                            content: 'Update notice: <br/>leetcodeRating difficulty plugin has a new version, please go to update ~ <br/>' + "update content: <br/>" + upcontent,
+                            content: '<pre style="color:#000">Update notice: <br/>leetcodeRating difficulty plugin has a new version, please go to update ~ <br/>' + "update content: <br/>" + upcontent + "</pre>",
                             yes: function (index, layer0) {
                                 let c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/english/leetcodeRating_greasyfork.user.js")
                                 c.close()
