@@ -17,7 +17,10 @@
   Support Links International Station
 </p>
 
+[切换回中文](https://github.com/zhang-wangz/LeetCodeRating/tree/main)
+
 ### :iphone: Compatibility & Installation
+[切换回中文安装](https://github.com/zhang-wangz/LeetCodeRating/tree/main)
 
 LeetCodeRating｜A browser plug-in that displays the difficulty score of the weekly competition corresponding to the topic.  
 
