@@ -40,7 +40,8 @@ After testing, we have determined that the following browsers and plugins are co
 #### :page_facing_up: install script (ask star ヾ(≧▽≦*)o)
 
 * from GreasyFork install
-  by GreasyFork install script: **[click me](https://greasyfork.org/zh-CN/scripts/457303-leetcoderating-english)**
+  
+  - install script: **[click me](https://greasyfork.org/zh-CN/scripts/457303-leetcoderating-english)**
 
 #### :test_tube: Supported OS
 
