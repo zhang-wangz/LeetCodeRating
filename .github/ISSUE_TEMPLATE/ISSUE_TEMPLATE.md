@@ -1,12 +1,12 @@
 ---
-name: 问题反馈
-about: 遇到了问题或有意见？
+name: Question Feedback
+about: a problem or a comment？
 title: ''
 labels: help wanted
 assignees: athony.w
 
 ---
 
-> 添加vx heymanwz 可直接与作者沟通
+> add vx heymanwz can communicate directly with the author
 
-### 请描述你遇到的问题：
+### Please describe the problem you encountered：

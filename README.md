@@ -12,65 +12,66 @@
   <img src="https://img.shields.io/github/watchers/zhang-wangz/LeetCodeRating?style=flat-square"/>
   <img src="https://img.shields.io/github/issues-closed/zhang-wangz/LeetCodeRating?style=flat-square"/>
   <br>
-  LeetCodeRating，一款显示题目对应周赛难度分的浏览器插件。
+  LeetCodeRating，A browser plug-in that displays the difficulty score of the weekly competition corresponding to the topic.
   <br>
-  目前只支持力扣中文
+  Support Links International Station
 </p>
 
-### :iphone: 兼容性&安装
+### :iphone: Compatibility & Installation
 
-LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。  
-在使用脚本之前，你需要为浏览器安装脚本管理器插件。  
-经过测试，我们确定兼容以下浏览器和插件用于安装此脚本。
+LeetCodeRating｜A browser plug-in that displays the difficulty score of the weekly competition corresponding to the topic.  
 
-#### :globe_with_meridians: 浏览器支持（任选其一即可）
+Before using scripts, you need to install the Script Manager plugin for your browser.
 
-* Chrome 或 基于 Chromium 内核的浏览器 (Edge、360浏览器、CentBrowser等) <sup>*推荐</sup>
-* Firefox <sup>*功能兼容，但并非最佳性能</sup>
+After testing, we have determined that the following browsers and plugins are compatible for installing this script.
+
+#### :globe_with_meridians: Browser support (choose one)
+
+* Chrome or a Chromium-based browser (Edge, 360 Browser, CentBrowser, etc.) <sup>*recommended</sup>
+* Firefox <sup>*Feature compatible, but not optimal performance</sup>
 
 #### :see_no_evil: 浏览器需要安装的脚本管理器插件
 
-* Tampermonkey (新油猴) <sup>*<a href="https://www.tampermonkey.net/">插件安装链接</a></sup>
+* Tampermonkey  <sup>*<a href="https://www.tampermonkey.net/">plugin installation link</a></sup>
 
-#### :page_facing_up: 安装脚本 (求star ヾ(≧▽≦*)o)
+#### :page_facing_up: install script (求star ヾ(≧▽≦*)o)
 
-* 从 GreasyFork 安装
-  通过 GreasyFork 安装脚本: **[点我](https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86)**
+* from GreasyFork install
+  by GreasyFork install script: **[click me](https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86)**
 
-#### :test_tube: 支持的操作系统
+#### :test_tube: Supported OS
 
-* Windows、MacOS、Linux 等支持 Chrome 或 Firefox 浏览器的所有操作系统 <sup>*移动平台如 iOS、Android 除外</sup>
+* Windows, MacOS, Linux, etc. All operating systems that support Chrome or Firefox browsers <sup>*Except mobile platforms such as iOS, Android</sup>
 
 
 
 #### 🐒 插件说明
 
-- 有**周赛分数据的地方**才会**显示分数**，**没有**则**显示原有的难度**
+- Only where there is **weekly score data** will **display the score**, **if there is no**, **display the original difficulty**
 
-- 界面没有改变的话只是因为**对应的数据没有收录**导致的
+- If the interface has not changed, it is only because **corresponding data is not included**
 
-- 当前所有的数据都出自项目: https://zerotrac.github.io/leetcode_problem_rating/    <br/>
-  项目设计初衷来自灵佬的视频: https://www.bilibili.com/video/BV1rS4y1s721/ | 训练技巧，上分技巧 部分
+- All current data is from the project: https://zerotrac.github.io/leetcode_problem_rating/    <br/>
+  The original intention of the project design comes from Lingloo's video: https://www.bilibili.com/video/BV1rS4y1s721/ | 训练技巧，上分技巧 部分
 
-  - **ps: 只描述了重要更新内容～**
+  - **ps: Only important updates are described～**
 
-    💡1.1.3 更新:目前支持**tag页面和题库页面**显示难度分
+    💡1.1.3 update: Currently supports **tag page and question bank page** to display difficulty score
 
-    💡1.1.4 更新:支持**题目界面problems**显示难度分
+    💡1.1.4 update: Support **question interface problems** display difficulty score
 
-    💡1.1.7 更新: 经反馈每次都重新获取数据过于影响性能，现已修改为**一天获取一次**
+    💡1.1.7 update: After feedback, re-acquiring data every time is too affecting performance, it has been modified to **Once a day**
   
-    💡1.2.0 更新: 修改具体问题页面UI，和题库页面保持一致，有难度分直接替换原本的难度标识
+    💡1.2.0 update: Modify the UI of the specific question page to be consistent with the question bank page, and directly replace the original difficulty mark with difficulty points
   
-    💡1.2.1 更新: 增加对应周赛链接
+    💡1.2.1 update: Add the corresponding weekly game link
     
-    💡1.2.9 更新: 增加具体问题页面侧边栏题目中也显示难度分
+    💡1.2.9 update: Increase the difficulty score in the sidebar title of the specific question page
     
-    💡1.3.3 更新: 增加具体问题页面竞赛题属于Q几(周赛链接旁边)
-    
-    💡1.3.4 更新: 题库页面增加灵茶の试炼按钮
+    💡1.3.3 update: Add specific question page competition questions belong to Q few (next to the weekly competition link)
 
-#### 💡 脚本效果 (求star ヾ(≧▽≦*)o)
+
+#### 💡 script effect (求star ヾ(≧▽≦*)o)
 
 ![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1.png)
 
@@ -84,26 +85,26 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 <br/>
 
-### :rocket: 贡献
-非常欢迎你的加入！[提一个 Issue](https://github.com/zhang-wangz/LeetCodeRating/issues/new?assignees=athony.w&labels=help+wanted&template=ISSUE_TEMPLATE.md&title=) 或者提交一个 Pull Request。<br/>
-要求如下： <br/>
+### :rocket: contribute
+You are very welcome to join！[raise an issue](https://github.com/zhang-wangz/LeetCodeRating/issues/new?assignees=athony.w&labels=help+wanted&template=ISSUE_TEMPLATE.md&title=) or submit a Pull Request。<br/>
+Requirements are as follows： <br/>
 
-1. 修改版本号信息:
-- 如果第三位<10，将第三位+1，如果第三位=10，将第二位+1，第三位=0
-- 例：1.1.9 => 1.2.0; 1.1.3 => 1.1.4;
+1. Modify the version number information:
+- if the third number<10，place the third number+1，if the third number=10，place the second number+1，the third number=0
+- example：1.1.9 => 1.2.0; 1.1.3 => 1.1.4;
 ```
 // @version      1.1.9
 ```
-2. 将更新描述在最上方加上一行，修改版本号（要求同上），并修改更新描述：
+2. Add a line to the top of the update description，Modify the version number（same as above），and modify the update description：
 ```
-// @note    2022-09-07 1.1.9 (更新描述)
+// @note    2022-09-07 1.1.9 (update description)
 ```
-LeetCodeRating遵循 [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) 行为规范。
+LeetCodeRating follows [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct。
 
-### :heart: [捐助](https://www.showdoc.com.cn/2069209189620830)特别鸣谢
-| 捐助者 | 渠道 | 时间                 | 作者寄语           |
+### :heart: [donate](https://www.showdoc.com.cn/2069209189620830)Special thanks
+| Donors | channel | time                 | Author's message           |
 |-----| -- | -------------------- | ------------------ |
 | **君 | 支付宝 | 2022-09-08 | 谢谢大佬支持～             |
 
-### 🍬最后
-**如果有帮助到你，请给repo点个star，让更多的人看到 ~ ("▔□▔)/**
+### 🍬At last
+**if it helps you，Please give the repo a star，let more people see ~ ("▔□▔)/**
