@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.5.8
+// @version      1.5.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -77,6 +77,7 @@
 // @note         2022-11-22 1.5.6 修复当获取茶数据为空时改为默认值处理
 // @note         2022-12-07 1.5.7 修改获取rating分数也使用cdn方式
 // @note         2022-12-21 1.5.8 跟随新版ui页面设计进行修改
+// @note         2022-12-29 1.5.9 修复已知问题
 // ==/UserScript==
 
 (function () {
@@ -89,7 +90,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.5.8"
+    let version = "1.5.9"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
