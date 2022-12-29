@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.5.9
+// @version      1.6.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -78,6 +78,7 @@
 // @note         2022-12-07 1.5.7 修改获取rating分数也使用cdn方式
 // @note         2022-12-21 1.5.8 跟随新版ui页面设计进行修改
 // @note         2022-12-29 1.5.9 修复已知问题
+// @note         2022-12-29 1.6.0 修复力扣开启darkmode时候，提示语显示异常
 // ==/UserScript==
 
 (function () {
@@ -90,7 +91,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.5.9"
+    let version = "1.6.0"
     let preDate
     let allUrl = "https://leetcode.cn/problemset"
     let tagUrl = "https://leetcode.cn/tag"
@@ -146,7 +147,7 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre style="padding:20px;">${latestpb["solve"]['str']}</pre>`
+            ,content: `<pre style="padding:20px;color:#000;">${latestpb["solve"]['str']}</pre>`
         });
     }
 
@@ -158,7 +159,7 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre style="padding:20px;">${latestpb["out"]["str"]}</pre>`
+            ,content: `<pre style="padding:20px;color:#000;">${latestpb["out"]["str"]}</pre>`
         });
     }
 
@@ -171,7 +172,7 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre style="padding:20px;">${latestpb["pb"]["str"]}</pre>`
+            ,content: `<pre style="padding:20px;color:#000;">${latestpb["pb"]["str"]}</pre>`
         });
     }
 
@@ -758,7 +759,7 @@
                     let upcontent = json["content"]
                     if (v != version) {
                         layer.open({
-                            content: '更新通知: <br/>leetcodeRating难度分插件有新的版本啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent,
+                            content: '<pre style="color:#000"> 更新通知: <br/>leetcodeRating难度分插件有新的版本啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
                             yes: function (index, layer0) {
                                 let c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
                                 c.close()

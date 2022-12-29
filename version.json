@@ -1,4 +1,4 @@
 {
-  "version" : "1.5.9",
-  "content" : "修复已知问题"
+  "version" : "1.6.0",
+  "content" : "修复力扣开启darkmode时候，提示语显示异常"
 }
