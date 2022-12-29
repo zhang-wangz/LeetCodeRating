@@ -30,11 +30,11 @@ After testing, we have determined that the following browsers and plugins are co
 * Chrome or a Chromium-based browser (Edge, 360 Browser, CentBrowser, etc.) <sup>*recommended</sup>
 * Firefox <sup>*Feature compatible, but not optimal performance</sup>
 
-#### :see_no_evil: 浏览器需要安装的脚本管理器插件
+#### :see_no_evil: The script manager plugin that the browser needs to install
 
 * Tampermonkey  <sup>*<a href="https://www.tampermonkey.net/">plugin installation link</a></sup>
 
-#### :page_facing_up: install script (求star ヾ(≧▽≦*)o)
+#### :page_facing_up: install script (ask star ヾ(≧▽≦*)o)
 
 * from GreasyFork install
   by GreasyFork install script: **[click me](https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86)**
@@ -45,14 +45,14 @@ After testing, we have determined that the following browsers and plugins are co
 
 
 
-#### 🐒 插件说明
+#### 🐒 Plug-in description
 
 - Only where there is **weekly score data** will **display the score**, **if there is no**, **display the original difficulty**
 
 - If the interface has not changed, it is only because **corresponding data is not included**
 
 - All current data is from the project: https://zerotrac.github.io/leetcode_problem_rating/    <br/>
-  The original intention of the project design comes from Lingloo's video: https://www.bilibili.com/video/BV1rS4y1s721/ | 训练技巧，上分技巧 部分
+  The original intention of the project design comes from Lingloo's video: https://www.bilibili.com/video/BV1rS4y1s721/ | Training Tips, Top Score Tips Section
 
   - **ps: Only important updates are described～**
 
@@ -71,7 +71,7 @@ After testing, we have determined that the following browsers and plugins are co
     💡1.3.3 update: Add specific question page competition questions belong to Q few (next to the weekly competition link)
 
 
-#### 💡 script effect (求star ヾ(≧▽≦*)o)
+#### 💡 script effect (ask star ヾ(≧▽≦*)o)
 
 ![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1.png)
 
