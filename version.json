@@ -1,4 +1,4 @@
 {
-  "version" : "1.6.0",
-  "content" : "修复力扣开启darkmode时候，提示语显示异常"
+  "version" : "1.6.1",
+  "content" : "使新版ui中题目提交记录界面趋向于旧版设计"
 }

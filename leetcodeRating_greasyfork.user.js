@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.6.0
+// @version      1.6.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -79,27 +79,125 @@
 // @note         2022-12-21 1.5.8 跟随新版ui页面设计进行修改
 // @note         2022-12-29 1.5.9 修复已知问题
 // @note         2022-12-29 1.6.0 修复力扣开启darkmode时候，提示语显示异常
+// @note         2022-12-31 1.6.1 使新版ui中题目提交记录界面趋向于旧版设计
 // ==/UserScript==
 
 (function () {
     'use strict';
-    let t2rate = {}
-    let latestpb = {}
+
     let id1 = ""
     let id2 = ""
     let id3 = ""
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.6.0"
-    let preDate
-    let allUrl = "https://leetcode.cn/problemset"
-    let tagUrl = "https://leetcode.cn/tag"
-    let companyUrl = "https://leetcode.cn/company"
-    let pblistUrl = "https://leetcode.cn/problem-list"
-    let pbUrl = "https://leetcode.cn/problems"
-    let searchUrl = "https://leetcode.cn/search"
+    let version = "1.6."
+
+    // rank 相关数据
+    let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+    let latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
+    let preDate = GM_getValue("preDate", "")
+
+    // 题目提交数据
+    let pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
+    let questiontag = ""
+    let updateFlag = false
+
+    // url相关数据
+    const allUrl = "https://leetcode.cn/problemset"
+    const tagUrl = "https://leetcode.cn/tag"
+    const companyUrl = "https://leetcode.cn/company"
+    const pblistUrl = "https://leetcode.cn/problem-list"
+    const pbUrl = "https://leetcode.cn/problems"
+    const searchUrl = "https://leetcode.cn/search"
+
+    // 常量数据
+    const dummySend = XMLHttpRequest.prototype.send
+    const regPbSubmission = 'https://leetcode.cn/problems/.*/submissions/.*';
+    const queryPbSubmission ='\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: String, $status: SubmissionStatusEnum) {\n  submissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n    lang: $lang\n    status: $status\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      title\n      status\n      statusDisplay\n      lang\n      langName: langVerboseName\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      submissionComment {\n        comment\n      }\n    }\n  }\n}\n    '
+    const langMap = {
+        "所有语言": null,
+        "C++" : "cpp",
+        "Java" : "java",
+        "Python": "python",
+        "Python3": "python3",
+        "MySQL": "mysql",
+        "MS SQL Server": "mssql",
+        "Oracle": "oraclesql",
+        "C": "c",
+        "C#": "csharp",
+        "JavaScript": "javascript",
+        "Ruby": "ruby",
+        "Bash": "bash",
+        "Swift": "swift",
+        "Go": "golang",
+        "Scala": "scala",
+        "HTML": "html",
+        "Python ML": "pythonml",
+        "Kotlin": "kotlin",
+        "Rust": "rust",
+        "PHP": "php",
+        "TypeScript": "typescript",
+        "Racket": "racket",
+        "Erlang": "erlang",
+        "Elixir": "elixir",
+        "Dart": "dart",
+    }
+    const statusMap = {
+        "所有状态" : null,
+        "执行通过" : "AC",
+        "错误解答" : "WA",
+        "超出内存限制" : "MLE",
+        "超出输出限制" : "OLE",
+        "超出时间限制" : "TLE",
+        "执行出错" : "RE",
+        "内部出错" : "IE",
+        "编译出错" : "CE",
+        "超时" : "TO",
+    }
+
+    // 如果有数据就会直接初始化，否则初始化为空
+    pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
     GM_addStyle(GM_getResourceText("css"));
+
+
+    // lc 基础req
+    let baseReq = (query, variables, successFuc, type) => {
+        //请求参数
+        var list = {"query":query, "variables":variables};
+        //
+        $.ajax({
+            // 请求方式
+            type : type,
+            // 请求的媒体类型
+            contentType: "application/json;charset=UTF-8",
+            // 请求地址
+            url : "https://leetcode.cn/graphql/",
+            // 数据，json字符串
+            data : JSON.stringify(list),
+            // 同步方式
+            async: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            // 请求成功
+            success : function(result) {
+                successFuc(result)
+            },
+            // 请求失败，包含具体的错误信息
+            error : function(e){
+                console.log(e.status);
+                console.log(e.responseText);
+            }
+        });
+    };
+    // 修改参数
+    let submissionLst = []
+    let next = true
+
+    let postReq = (query, variables, successFuc) => {
+        baseReq(query, variables, successFuc, "POST")
+    }
 
     // 深拷贝
     function deepclone(obj) {
@@ -183,7 +281,7 @@
             let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
             // pb页面加载时直接返回
             if (arr == undefined) {
-                return 
+                return
             }
             let head = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div.relative.flex.items-center.space-x-4.py-3.my-4.-ml-4.overflow-hidden.pl-4")
             let l = head.childNodes.length
@@ -353,7 +451,6 @@
                 let data = t.split(".")
                 let id = data[0].trim()
                 let nd = v.childNodes[length - 2].childNodes[0].innerHTML
-                console.log(t2rate[id])
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
                     v.childNodes[length - 2].childNodes[0].innerHTML = nd
@@ -392,7 +489,7 @@
         try {
             let arr = document.querySelector("#headlessui-tabs-panel-11 > div > div.mx-auto.mt-6.w-\\[880px\\].rounded.bg-layer-1.pt-2.pb-4.shadow-level1.dark\\:bg-dark-layer-1.dark\\:shadow-dark-level1 > div > div.border-t.border-divider-border-2.px-4.dark\\:border-dark-divider-border-2")
             if (arr == undefined) {
-                return 
+                return
             }
             let childs = arr.childNodes
             for (const element of childs) {
@@ -437,9 +534,27 @@
             }
             return
         }
+        // 新版本
+        let nextData = document.getElementById("__NEXT_DATA__")
+        let statusEle = window.location.href.match(regPbSubmission)
 
+        if(nextData) {
+            if (!window.location.href.startsWith(pbUrl)) questiontag = ""
+            if(statusEle) {
+                let submissionUrl = window.location.href
+                let data = submissionUrl.split("/")
+                questiontag = data[data.length-3]
+                if (data[data.length-2] != "submissions") questiontag = data[data.length-4]
+                let statusOrlangPa = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div.sticky.top-0.w-full.bg-layer-1.dark\\:bg-dark-layer-1 > div")
+                if (statusOrlangPa == undefined) return;
+                let statusQus = statusOrlangPa.childNodes[0].childNodes[0].childNodes[0]
+                let lang = statusOrlangPa.childNodes[1].childNodes[0].childNodes[0]
+                if (lang == undefined || statusQus == undefined) return;
+                updateSubmissionLst(statusEle, questiontag, lang.innerText, statusQus.innerText);
+                return;
+            }
+        }
         try {
-
             // 旧版的标题位置
             let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
             if (t == undefined){
@@ -447,7 +562,7 @@
                 t = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div:nth-child(1) > div.flex-1 > div > div > span")
                 if (t == undefined) {
                     t1 = "unknown"
-                    return 
+                    return
                 }
                 let data = t.innerText.split(".")
                 let id = data[0].trim()
@@ -660,11 +775,123 @@
         }
     }
 
-    t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
-    latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
-    preDate = GM_getValue("preDate", "")
+
+    let QuerySubmissionUpdate = (questiontag, lang, statusQus) => {
+        let key = questiontag + langMap[lang] + statusMap[statusQus]
+        pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
+        let saveData = (key, lst) => {
+            pbSubmissionInfo[key] = lst
+            GM_setValue("pbSubmissionInfo", JSON.stringify(pbSubmissionInfo))
+        }
+
+        let successFuc = (res) => {
+            let data = res.data.submissionList
+            let submissions = data.submissions
+            next = deepclone(data.hasNext)
+            // console.log("req success: ", data)
+            submissionLst = deepclone(submissionLst.concat(submissions))
+            saveData(key, submissionLst)
+            console.log("update submission data: ", questiontag, langMap[lang], statusMap[statusQus])
+        }
+        var variables = {
+            "questionSlug": questiontag,
+            "offset": 0,
+            "limit": 40,
+            "lastKey": null,
+            "status": null,
+            "lang": langMap[lang],
+            "status": statusMap[statusQus],
+        };
+        next = true
+        submissionLst = []
+        let cnt = 0
+        while(next) {
+            postReq(queryPbSubmission, variables, successFuc)
+            variables.offset += 40
+            cnt += 1
+            // console.log("第" + cnt + "步")
+        }
+    }
+
+    let addListener = () => {
+        // console.log("addListener....")
+        XMLHttpRequest.prototype.send = function () {
+            const _onreadystatechange = this.onreadystatechange;
+            this.onreadystatechange = (...args) => {
+                if (this.readyState === this.DONE && this.responseURL == "https://leetcode.cn/graphql/noj-go/") {
+                    if (this.status === 200 || this.response.type === "application/json") {
+                        // console.log("update list....")
+                        updateFlag = true
+                    }
+                }
+                if (_onreadystatechange) {
+                    _onreadystatechange.apply(this, args);
+                }
+            }
+            dummySend.apply(this, arguments);
+        }
+    }
+
+    let updateSubmissionLst = (statusEle, questiontag, lang, statusQus) => {
+        // 数据替换操作
+        try{
+            let key = questiontag + langMap[lang] + statusMap[statusQus]
+            if (questiontag != "" && statusEle) {
+                let arr = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div.h-full.w-full")
+                if (arr == undefined) return
+                let childs = arr.childNodes
+                if (childs.length == 1 || childs.length == 0) return;
+
+                // 已经替换过就直接返回
+                var lastNode = childs[childs.length-2]
+                if (!lastNode.hasChildNodes()) {
+                    lastNode = childs[childs.length-3]
+                }
+                var lastIcon = lastNode.childNodes[0].childNodes[1]
+                var first = childs[0].childNodes[0].childNodes[1]
+                if (!updateFlag && lastIcon.childNodes.length > 1 && first.childNodes.length > 1) {
+                    return
+                }
+                if (updateFlag) updateFlag = false
+                QuerySubmissionUpdate(questiontag, lang, statusQus)
+                pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
+                let subLst = pbSubmissionInfo[key]
+                // console.log("替换数据: ", subLst)
+                if (subLst == undefined || subLst.length == 0) return
+                for (let i = 0; i < childs.length; i++) {
+                    let v = childs[i]
+                    let icon = v.childNodes[0].childNodes[1].childNodes[0]
+                    let pa = icon.parentNode
+                    let copy1 = icon.cloneNode(true);
+                    copy1.innerText = subLst[i]["runtime"]
+                    let copy2 = icon.cloneNode(true);
+                    copy2.innerText = subLst[i]["memory"]
+                    let copy3 = icon.cloneNode(true);
+                    copy3.innerText = subLst[i]["submissionComment"] == null ? "无备注" : subLst[i]["submissionComment"]["comment"]
+                    if (pa.childNodes.length > 1) {
+                        // console.log("replace", copy1, copy2)
+                        pa.replaceChild(copy1, pa.childNodes[1])
+                        pa.replaceChild(copy2, pa.childNodes[2])
+                        pa.replaceChild(copy3, pa.childNodes[3])
+                    } else {
+                        pa.appendChild(copy1);
+                        pa.appendChild(copy2);
+                        pa.appendChild(copy3);
+                    }
+                }
+            }
+        }catch(error){
+            // do nothing
+        }
+    }
+
+
     let now = getCurrentDate(1)
-    if (t2rate["idx13"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["tagVersion1"] == undefined || (preDate == "" || preDate != now)) {
+        // 每天重置为空
+        pbSubmissionInfo = JSON.parse("{}")
+        GM_setValue("pbSubmissionInfo", JSON.stringify(pbSubmissionInfo))
+
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://raw.staticdn.net/zerotrac/leetcode_problem_rating/main/data.json' + "?timeStamp=" + new Date().getTime(),
@@ -682,7 +909,7 @@
                         t2rate[element.ID] = element
                         t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
                     }
-                    t2rate["idx13"] = -13
+                    t2rate["tagVersion1"] = {}
                     console.log("everyday getdate once...")
                     preDate = now
                     GM_setValue("preDate", preDate)
@@ -695,7 +922,8 @@
             }
         });
     }
-    
+
+
     function clearAndStart(start, func, timeout) {
         let lst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
         lst.forEach(each => {
@@ -714,11 +942,11 @@
                 case 2:
                     id2 = setInterval(func, timeout)
                     GM_setValue(start, id2)
-                    break 
+                    break
                 case 3:
                     id3 = setInterval(func, timeout)
                     GM_setValue(start, id3)
-                    break   
+                    break
                 case 4:
                     id4 = setInterval(func, timeout)
                     GM_setValue(start, id4)
@@ -806,7 +1034,8 @@
     } else if (window.location.href.startsWith(tagUrl)) {
         clearAndStart('tag', getTagData, 1)
     } else if (window.location.href.startsWith(pbUrl)) {
-        clearAndStart('pb', getpb, 1)
+        clearAndStart('pb', getpb, 100)
+        addListener();
         let id = setInterval(getData, 1)
         GM_setValue("all", id)
     } else if (window.location.href.startsWith(companyUrl)) {
