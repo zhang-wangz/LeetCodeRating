@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.6.4
+// @version      1.6.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -83,6 +83,7 @@
 // @note         2022-12-31 1.6.2 修复版本异常
 // @note         2023-01-05 1.6.3 修改cdn访问方式和频率
 // @note         2023-01-05 1.6.4 修改cdn地址避免检测访问频率
+// @note         2023-01-05 1.6.5 修改更新时候打开的js地址，避免不能访问github的人无法更新插件
 // ==/UserScript==
 
 (function () {
@@ -94,7 +95,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.6.4"
+    let version = "1.6.5"
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
@@ -668,7 +669,6 @@
 
             }else {
                 // 旧版逻辑，使用参数t和t1，分别代表标题的html和标题id
-
                 // 旧版题目左侧列表里面所有分数
                 let pbAll = document.querySelector("body > div.question-picker-detail__2A9V.show__GfjG > div.question-picker-detail-menu__3NQq.show__3hiR > div.lc-theme-dark.question-picker-questions-wrapper__13qM > div")
                 if (pbAll != undefined) {
@@ -996,7 +996,7 @@
                         layer.open({
                             content: '<pre style="color:#000">更新通知: <br/>leetcodeRating难度分插件有新的版本啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
                             yes: function (index, layer0) {
-                                let c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
+                                let c = window.open("https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js" + "?timeStamp=" + new Date().getTime())
                                 c.close()
                                 layer.close(index)
                             }

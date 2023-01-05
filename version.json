@@ -1,4 +1,4 @@
 {
-  "version" : "1.6.4",
-  "content" : "修改cdn地址避免检测访问频率"
+  "version" : "1.6.5",
+  "content" : "修改更新时候打开的js地址，避免不能访问github的人无法更新插件"
 }
