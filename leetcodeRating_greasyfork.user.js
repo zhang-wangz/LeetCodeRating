@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜English
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.1
+// @version      1.1.2
 // @license      MIT
 // @description  LeetCodeRating The score of the weekly competition is displayed, and currently supports the tag page, question bank page, problem_list page and question page
 // @author       小东是个阳光蛋(Leetcode Nickname of chinese site
@@ -25,6 +25,7 @@
 // @run-at       document-end
 // @note         2022-12-29 1.1.0 add english site support
 // @note         2022-12-29 1.1.1 fix when the dark mode is turned on, the prompt display is abnormal
+// @note         2023-01-05 1.1.2 modify the cdn access address
 // ==/UserScript==
 
 (function () {
@@ -37,7 +38,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.1.1"
+    let version = "1.1.2"
     let preDate
     let allUrl = "https://leetcode.com/problemset"
     let tagUrl = "https://leetcode.com/tag"
@@ -435,13 +436,12 @@
     latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
-    if (t2rate["idx13"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["tagVersion"] == undefined || (preDate == "" || preDate != now)) {
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.staticdn.net/zerotrac/leetcode_problem_rating/main/data.json' + "?timeStamp=" + new Date().getTime(),
+            url: 'https://raw.githubusercontents.com/zerotrac/leetcode_problem_rating/main/data.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
+                "Content-Type": "application/x-www-form-urlencoded"
             },
             onload: function (res) {
                 if (res.status === 200) {
@@ -453,7 +453,7 @@
                         t2rate[element.ID] = element
                         t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
                     }
-                    t2rate["idx13"] = -13
+                    t2rate["tagVersion"] = {}
                     console.log("everyday getdate once...")
                     preDate = now
                     GM_setValue("preDate", preDate)
@@ -516,10 +516,9 @@
         // 版本更新机制
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/english/version.json' + "?timeStamp=" + new Date().getTime(),
+            url: 'https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/version.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
+                "Content-Type": "application/x-www-form-urlencoded"
             },
             onload: function (res) {
                 if (res.status === 200) {
@@ -532,7 +531,7 @@
                         layer.open({
                             content: '<pre style="color:#000">Update notice: <br/>leetcodeRating difficulty plugin has a new version, please go to update ~ <br/>' + "update content: <br/>" + upcontent + "</pre>",
                             yes: function (index, layer0) {
-                                let c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/english/leetcodeRating_greasyfork.user.js")
+                                let c = window.open("https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/leetcodeRating_greasyfork.user.js" + "?timeStamp=" + new Date().getTime())
                                 c.close()
                                 layer.close(index)
                             }
