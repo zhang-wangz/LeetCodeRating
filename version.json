@@ -1,4 +1,4 @@
 {
-  "version" : "1.6.2",
-  "content" : "修复版本异常"
+  "version" : "1.6.3",
+  "content" : "修改cdn访问方式和频率"
 }

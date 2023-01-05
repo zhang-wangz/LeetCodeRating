@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.6.2
+// @version      1.6.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -81,6 +81,7 @@
 // @note         2022-12-29 1.6.0 修复力扣开启darkmode时候，提示语显示异常
 // @note         2022-12-31 1.6.1 使新版ui中题目提交记录界面趋向于旧版设计
 // @note         2022-12-31 1.6.2 修复版本异常
+// @note         2022-12-31 1.6.3 修改cdn访问方式和频率
 // ==/UserScript==
 
 (function () {
@@ -92,7 +93,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.6.2"
+    let version = "1.6.3"
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
@@ -165,7 +166,7 @@
     // lc 基础req
     let baseReq = (query, variables, successFuc, type) => {
         //请求参数
-        var list = {"query":query, "variables":variables};
+        var list = { "query":query, "variables":variables };
         //
         $.ajax({
             // 请求方式
@@ -277,6 +278,7 @@
 
     let t  // all and tag
     let t1, le // pb
+
     function getData() {
         try {
             let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
@@ -288,6 +290,8 @@
             let l = head.childNodes.length
             let last = head.childNodes[l - 1]
             if (arr.childNodes[0].childNodes[2].childNodes[0].childNodes[0].innerText != "题解") {
+                t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+                latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
                 let div = document.createElement('div')
                 div.setAttribute("role", "row")
                 div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
@@ -397,6 +401,7 @@
             return
         }
     }
+
     function getCompanyData() {
         if (!window.location.href.startsWith(companyUrl)) {
             clearInterval(id4)
@@ -466,6 +471,7 @@
             return
         }
     }
+
     function getSearch() {
         if (!window.location.href.startsWith(searchUrl)) {
             clearInterval(id4)
@@ -888,7 +894,8 @@
 
 
     let now = getCurrentDate(1)
-    if (t2rate["tagVersion1"] == undefined || (preDate == "" || preDate != now)) {
+    preDate = GM_getValue("preDate", "")
+    if (t2rate["tagVersion3"] == undefined || (preDate == "" || preDate != now)) {
         // 每天重置为空
         pbSubmissionInfo = JSON.parse("{}")
         GM_setValue("pbSubmissionInfo", JSON.stringify(pbSubmissionInfo))
@@ -898,7 +905,6 @@
             url: 'https://raw.staticdn.net/zerotrac/leetcode_problem_rating/main/data.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
             },
             onload: function (res) {
                 if (res.status === 200) {
@@ -910,7 +916,7 @@
                         t2rate[element.ID] = element
                         t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
                     }
-                    t2rate["tagVersion1"] = {}
+                    t2rate["tagVersion3"] = {}
                     console.log("everyday getdate once...")
                     preDate = now
                     GM_setValue("preDate", preDate)
@@ -977,7 +983,6 @@
             url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
             },
             onload: function (res) {
                 if (res.status === 200) {
@@ -988,7 +993,7 @@
                     let upcontent = json["content"]
                     if (v != version) {
                         layer.open({
-                            content: '<pre style="color:#000"> 更新通知: <br/>leetcodeRating难度分插件有新的版本啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
+                            content: '<pre style="color:#000">更新通知: <br/>leetcodeRating难度分插件有新的版本啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
                             yes: function (index, layer0) {
                                 let c = window.open("https://github.com/zhang-wangz/LeetCodeRating/raw/main/leetcodeRating_greasyfork.user.js")
                                 c.close()
@@ -1005,13 +1010,13 @@
                 console.log(err)
             }
         });
+
         // 获取茶数据
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
             },
             onload: function (res) {
                 if (res.status === 200) {
