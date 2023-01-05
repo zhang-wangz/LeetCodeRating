@@ -1,4 +1,4 @@
 {
-  "version" : "1.6.3",
-  "content" : "修改cdn访问方式和频率"
+  "version" : "1.6.4",
+  "content" : "修改cdn地址避免检测访问频率"
 }

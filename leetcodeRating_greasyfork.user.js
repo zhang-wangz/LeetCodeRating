@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.6.3
+// @version      1.6.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -81,7 +81,8 @@
 // @note         2022-12-29 1.6.0 修复力扣开启darkmode时候，提示语显示异常
 // @note         2022-12-31 1.6.1 使新版ui中题目提交记录界面趋向于旧版设计
 // @note         2022-12-31 1.6.2 修复版本异常
-// @note         2022-12-31 1.6.3 修改cdn访问方式和频率
+// @note         2023-01-05 1.6.3 修改cdn访问方式和频率
+// @note         2023-01-05 1.6.4 修改cdn地址避免检测访问频率
 // ==/UserScript==
 
 (function () {
@@ -93,7 +94,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.6.3"
+    let version = "1.6.4"
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
@@ -902,7 +903,7 @@
 
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.staticdn.net/zerotrac/leetcode_problem_rating/main/data.json' + "?timeStamp=" + new Date().getTime(),
+            url: 'https://raw.githubusercontents.com/zerotrac/leetcode_problem_rating/main/data.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
@@ -980,7 +981,7 @@
         // 版本更新机制
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
+            url: 'https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
@@ -1014,7 +1015,7 @@
         // 获取茶数据
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json' + "?timeStamp=" + new Date().getTime(),
+            url: 'https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json' + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
