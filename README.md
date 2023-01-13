@@ -21,7 +21,8 @@
 
 ### :iphone: 兼容性&安装
 
-安装英文版本切换请切换github tag为english [点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
+请注意： 英文版只有题库页面，tag页面和题目页面展示周赛分，并且不支持其余中文站功能
+安装英文版本请切换github tag为english [点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
 
 LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。 
 
@@ -73,7 +74,10 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
     
     💡1.3.3 更新: 增加具体问题页面竞赛题属于Q几(周赛链接旁边)
     
-    💡1.3.4 更新: 题库页面增加灵茶の试炼按钮
+    💡1.4.8 更新: 兼容新版pb内测页面
+
+    💡1.6.1 更新: 使新版ui中题目提交记录界面趋向于旧版设计
+
 
 #### 💡 脚本效果 (求star ヾ(≧▽≦*)o)
 
@@ -81,11 +85,15 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 ![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/2.png)
 
-![image-20220911231824291](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220911231824291.png)
+![image5.png](https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/images/5.png)
 
 ![image-20220912001243159](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220912001243159.png)
 
-![image-20221008121311231](https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/images/4.png)
+![image-20221008121311231](https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/images/4.png)
+
+![image6.png](https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/images/6.png)
+
+![image7.png](https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/images/7.png)
 
 <br/>
 
