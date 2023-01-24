@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.6.8
+// @version      1.6.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -90,6 +90,7 @@
 // @note         2023-01-05 1.6.5 修改更新时候打开的js地址，避免不能访问github的人无法更新插件
 // @note         2023-01-24 1.6.6 1.题单页面与refine-leetcode插件兼容性修复 2. 增加题目页面refine-leetcode的计时器功能拦截开关
 // @note         2023-01-24 1.6.7 删除无效打印
+// @note         2023-01-24 1.6.9 增加各页面功能开关，同时修复部分页面评分不显示的bug 
 // ==/UserScript==
 
 (function () {
@@ -101,7 +102,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.6.8"
+    let version = "1.6.9"
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
@@ -116,8 +117,16 @@
     // 菜单
     function Script_setting(){
         var menu_ALL = [
-            ['switchTimeoff', 'refined-leetcode sc-timer has closed', '拦截refined-leetcode计时器功能', true],
-        ], menu_ID = [];
+            ['switchTimeoff', 'refined-leetcode sc-timer fuction', '拦截refined-leetcode计时器功能', true, true],
+            ['switchTea', '0x3f tea', '灵茶相关功能', true, true],
+            ['switchpbRepo', 'pbRepo function', '题库页面评分(不包括灵茶)', true, false],
+            ['switchpb', 'pb function', '题目页面评分和新版提交信息', true, true],
+            ['switchsearch', 'search function', '题目搜索页面评分', true, false],
+            ['switchtag', 'tag function', 'tag题单页面评分(动态规划等分类题库)', true, false],
+            ['switchcompany', 'company function', 'company题单页面评分(字节等公司题库)', true, false],
+            ['switchpblist', 'pbList function', 'pbList题单页面评分', true, false],
+            ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
+        ], menu_ID = [], menu_ID_Content = [];
         for (let i=0;i<menu_ALL.length;i++){ // 如果读取到的值为 null 就写入默认值
             if (GM_getValue(menu_ALL[i][0]) == null){GM_setValue(menu_ALL[i][0], menu_ALL[i][3])};
         }
@@ -130,23 +139,26 @@
                     GM_unregisterMenuCommand(menu_ID[i]);
                 }
             }
-            for (let i=0;i<menu_ALL.length;i++){ // 循环注册脚本菜单
+            for (let i=0;i < menu_ALL.length;i++){ // 循环注册脚本菜单
                 menu_ALL[i][3] = GM_getValue(menu_ALL[i][0]);
-                menu_ID[i] = GM_registerMenuCommand(`${menu_ALL[i][3]?'✅':'❎'} ${menu_ALL[i][2]}`, function(){menu_switch(`${menu_ALL[i][0]}`,`${menu_ALL[i][1]}`,`${menu_ALL[i][2]}`,`${menu_ALL[i][3]}`)});
+                let content = `${menu_ALL[i][3]?'✅':'❎'} ${ menu_ALL[i][2]}`
+                menu_ID[i] = GM_registerMenuCommand(content, function(){ menu_switch(`${menu_ALL[i][0]}`,`${menu_ALL[i][1]}`,`${menu_ALL[i][2]}`,`${menu_ALL[i][3]}`)});
+                menu_ID_Content[i] = content
             }
             menu_ID[menu_ID.length] = GM_registerMenuCommand(`🏁 当前版本 ${version}`, function () {window.GM_openInTab('https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86', {active: true,insert: true,setParent: true});});
+            menu_ID_Content[menu_ID_Content.length] = `🏁 当前版本 ${version}`
         }
 
         //切换选项
-        function menu_switch(name,ename,cname,value){
+        function menu_switch(name, ename, cname, value){
             if(value == 'false'){
-                console.log(name);
+                // console.log(name);
                 GM_setValue(`${name}`, true);
                 registerMenuCommand(); // 重新注册脚本菜单
                 location.reload(); // 刷新网页
                 GM_notification({text: `「${cname}」已开启\n`, timeout: 3500}); // 提示消息
             }else{
-                console.log(name);
+                // console.log(name);
                 GM_setValue(`${name}`, false);
                 registerMenuCommand(); // 重新注册脚本菜单
                 location.reload(); // 刷新网页
@@ -155,6 +167,21 @@
             registerMenuCommand(); // 重新注册脚本菜单
         }
     }
+
+    // 去除复制时候的事件
+    if (GM_getValue("switchcopy")) {
+        [...document.querySelectorAll('*')].forEach(item => {
+            item.oncopy = function (e) {
+                e.stopPropagation();
+            }
+        });
+    }
+
+     // 新版本判断
+    let isBeta = document.getElementById("__NEXT_DATA__") != undefined
+
+    let time = $(".sc-gsDKAQ")
+    let subBtn = getSubmitBtn(isBeta)
 
     // 题目提交数据
     let pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
@@ -337,101 +364,112 @@
     let t1, le // pb
 
     function getData() {
-         try {
-            let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
+        let switchpbRepo = GM_getValue("switchpbRepo")
+        let switchTea = GM_getValue("switchTea")
+        try {
+            let arr = document.querySelector("div[role='rowgroup']")
             // pb页面加载时直接返回
             if (arr == undefined) {
                 return
             }
+
             let head = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div.relative.flex.items-center.space-x-4.py-3.my-4.-ml-4.overflow-hidden.pl-4")
             let l = head.childNodes.length
             let last = head.childNodes[l - 1]
-            if (arr.childNodes[0].childNodes[2].childNodes[0].childNodes[0].innerText != "题解") {
-                t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
-                latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
-                let div = document.createElement('div')
-                div.setAttribute("role", "row")
-                div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
-                div.setAttribute("class", "odd:bg-layer-1 even:bg-overlay-1 dark:odd:bg-dark-layer-bg dark:even:bg-dark-fill-4")
-                if (latestpb["url"]["url"] != "") {
-                    div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]["str"]}</div><div \
-                    role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">&nbsp近日灵茶</a></div></div></div></div></div><div \
-                    role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
-                }else {
-                    div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]["str"]}</div><div \
-                    role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><p class="h-5">&nbsp近日灵茶</p></div></div></div></div></div><div \
-                    role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
-                }
-
-                div.childNodes[2].childNodes[0].childNodes[0].addEventListener("click", (e)=>{
-                    e.preventDefault();
-                    checksolve();
-                });
-                div.childNodes[3].childNodes[0].childNodes[0].addEventListener("click", (e)=> {
-                    e.preventDefault();
-                    checkout();
-                })
-                div.childNodes[5].childNodes[0].childNodes[0].addEventListener("click", (e)=> {
-                    e.preventDefault();
-                    checktrans();
-                })
-                arr.insertBefore(div, arr.childNodes[0])
-            }
 
             // 防止过多的无效操作
-            if (t != undefined && t == arr.lastChild.innerHTML
-                && last.childNodes[0].childNodes[1] instanceof Text
-                && last.childNodes[0].childNodes[1].textContent == "灵茶の试炼") {
+            if ((!switchpbRepo || (t != undefined && t == arr.lastChild.innerHTML))
+                && (!switchTea || (last.childNodes[0].childNodes[1] instanceof Text && last.childNodes[0].childNodes[1].textContent == "灵茶の试炼"))) {
                 return
             }
+            t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+            latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
 
-            let allpbHead = document.querySelector("#__next > div > div.mx-auto.mt-\\[50px\\].w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div.border-b.border-divider-border-2.dark\\:border-dark-divider-border-2 > div")
+            // 灵茶题目渲染
+            if (switchTea) {
+                if (arr.childNodes[0].childNodes[2].childNodes[0].childNodes[0].innerText != "题解") {
+                    let div = document.createElement('div')
+                    div.setAttribute("role", "row")
+                    div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
+                    div.setAttribute("class", "odd:bg-layer-1 even:bg-overlay-1 dark:odd:bg-dark-layer-bg dark:even:bg-dark-fill-4")
+                    if (latestpb["url"]["url"] != "") {
+                        div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]["str"]}</div><div \
+                        role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">&nbsp近日灵茶</a></div></div></div></div></div><div \
+                        role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
+                        role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
+                        role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
+                        role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
+                    }else {
+                        div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]["str"]}</div><div \
+                        role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><p class="h-5">&nbsp近日灵茶</p></div></div></div></div></div><div \
+                        role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
+                        role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
+                        role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
+                        role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
+                    }
 
-            let frepb = allpbHead.lastChild && allpbHead.lastChild.childNodes[0] && allpbHead.lastChild.childNodes[0].childNodes[0]
-            if (frepb && frepb.textContent == "题目评分") rateRefresh = true
-            else rateRefresh = false
-
-            let childs = arr.childNodes
-            for (let idx = 1; idx < childs.length; idx++) {
-                let v = childs[idx]
-                let length = v.childNodes.length
-                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                let data = t.split(".")
-                let id = data[0].trim()
-                let nd = v.childNodes[length - rateIdx].childNodes[0].innerHTML
-                if (rateRefresh) { rateIdx = 3 } else rateIdx = 2
-                if (t2rate[id] != undefined && !rateRefresh){
-                    nd = t2rate[id]["Rating"]
-                    v.childNodes[length - rateIdx].childNodes[0].innerHTML = nd
-                } else {
-                    let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                    let cls = v.childNodes[length - rateIdx].childNodes[0].getAttribute("class")
-                    v.childNodes[length - rateIdx].childNodes[0].innerHTML = nd2ch[cls]
+                    div.childNodes[2].childNodes[0].childNodes[0].addEventListener("click", (e)=>{
+                        e.preventDefault();
+                        checksolve();
+                    });
+                    div.childNodes[3].childNodes[0].childNodes[0].addEventListener("click", (e)=> {
+                        e.preventDefault();
+                        checkout();
+                    })
+                    div.childNodes[5].childNodes[0].childNodes[0].addEventListener("click", (e)=> {
+                        e.preventDefault();
+                        checktrans();
+                    })
+                    arr.insertBefore(div, arr.childNodes[0])
+                }
+                // 试炼按钮渲染
+                if (last.childNodes[0].childNodes[1].textContent != "灵茶の试炼") {
+                    let tea = document.createElement("a")
+                    tea.innerHTML = '<div class="flex items-center space-x-2 whitespace-nowrap rounded-full px-4 py-[10px] leading-tight pointer-event-none text-base bg-fill-3 dark:bg-dark-fill-3 text-label-2 dark:text-dark-label-2 hover:bg-fill-2 dark:hover:bg-dark-fill-2 hover:text-label-2 dark:hover:text-dark-label-2"><svg \
+                                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="text-gray-9 dark:text-dark-gray-9 mr-2 hidden h-[18px] w-[18px] lg:block"><path fill-rule="evenodd" d="M12 22c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2zm6-6l2 2v1H4v-1l2-2v-5c0-3.08 1.64-5.64 4.5-6.32V4c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68C16.37 5.36 18 7.93 18 11v5zm-2 1v-6c0-2.48-1.51-4.5-4-4.5S8 8.52 8 11v6h8z" clip-rule="evenodd"></path> \
+                                        </svg>灵茶の试炼</div>'
+                    tea.setAttribute("href", "https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz")
+                    tea.setAttribute("target", "_blank")
+                    head.appendChild(tea)
                 }
             }
-            t = deepclone(arr.lastChild.innerHTML)
+            
+            if (switchpbRepo) {
+                let allpbHead = document.querySelector("div[role='row']")
+                let frepb = allpbHead.lastChild && allpbHead.lastChild.childNodes[0] && allpbHead.lastChild.childNodes[0].childNodes[0]
+                
+                // refine-leetcode相关
+                if (frepb && frepb.textContent == "题目评分") rateRefresh = true
+                else rateRefresh = false
 
-            if (last.childNodes[0].childNodes[1].textContent != "灵茶の试炼") {
-                let tea = document.createElement("a")
-                tea.innerHTML = '<div class="flex items-center space-x-2 whitespace-nowrap rounded-full px-4 py-[10px] leading-tight pointer-event-none text-base bg-fill-3 dark:bg-dark-fill-3 text-label-2 dark:text-dark-label-2 hover:bg-fill-2 dark:hover:bg-dark-fill-2 hover:text-label-2 dark:hover:text-dark-label-2"><svg \
-                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="text-gray-9 dark:text-dark-gray-9 mr-2 hidden h-[18px] w-[18px] lg:block"><path fill-rule="evenodd" d="M12 22c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2zm6-6l2 2v1H4v-1l2-2v-5c0-3.08 1.64-5.64 4.5-6.32V4c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68C16.37 5.36 18 7.93 18 11v5zm-2 1v-6c0-2.48-1.51-4.5-4-4.5S8 8.52 8 11v6h8z" clip-rule="evenodd"></path> \
-                                    </svg>灵茶の试炼</div>'
-                tea.setAttribute("href", "https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz")
-                tea.setAttribute("target", "_blank")
-                head.appendChild(tea)
+                let childs = arr.childNodes
+                let idx = switchTea ? 1 : 0
+                for (; idx < childs.length; idx++) {
+                    let v = childs[idx]
+                    let length = v.childNodes.length
+                    let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                    let data = t.split(".")
+                    let id = data[0].trim()
+                    let nd = v.childNodes[length - rateIdx].childNodes[0].innerHTML
+                    if (rateRefresh) { rateIdx = 3 } else rateIdx = 2
+                    if (t2rate[id] != undefined && !rateRefresh){
+                        nd = t2rate[id]["Rating"]
+                        v.childNodes[length - rateIdx].childNodes[0].innerHTML = nd
+                    } else {
+                        let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
+                        let cls = v.childNodes[length - rateIdx].childNodes[0].getAttribute("class")
+                        v.childNodes[length - rateIdx].childNodes[0].innerHTML = nd2ch[cls]
+                    }
+                }
+                t = deepclone(arr.lastChild.innerHTML)
             }
-         } catch (e) {
-             return
-         }
+        } catch (e) {
+            return
+        }
     }
 
     function getTagData() {
+        if (!GM_getValue("switchtag")) return;
         if (!window.location.href.startsWith(tagUrl)) {
             clearInterval(id2)
             id3 = setInterval(getpb, 1)
@@ -439,25 +477,35 @@
             return
         }
         try {
-            let arr = document.querySelector("#lc-content > div > div.css-207dbg-TableContainer.ermji1u1 > div > section > div > div.css-ibx34q-antdPaginationOverride-layer1-dropdown-layer1-hoverOverlayBg-layer1-card-layer1-layer0 > div > div > div > div > div > div > table > tbody")
+            // 筛选更新
+            let arr = document.querySelector(".ant-table-tbody")
+            let head = document.querySelector(".ant-table-thead")
             if (t != undefined && t == arr.lastChild.innerHTML) {
                 return
+            }
+            // 确认难度序列
+            let headndidx = 3
+            for (let i = 0; i < head.childNodes.length; i++) {
+                let headEle = head.childNodes[i]
+                if (headEle.textContent == "难度") {
+                    headndidx = i
+                    break
+                }
             }
             let childs = arr.childNodes
             for (const element of childs) {
                 let v = element
-                let length = v.childNodes.length
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
+                let nd = v.childNodes[headndidx].childNodes[0].innerHTML
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+                    v.childNodes[headndidx].childNodes[0].innerHTML = nd
                 } else {
                     let nd2ch = { "rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难" }
-                    let clr = v.childNodes[length - 2].childNodes[0].getAttribute("color")
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[clr]
+                    let clr = v.childNodes[headndidx].childNodes[0].getAttribute("color")
+                    v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -467,6 +515,7 @@
     }
 
     function getCompanyData() {
+        if (!GM_getValue("switchcompany")) return;
         if (!window.location.href.startsWith(companyUrl)) {
             clearInterval(id4)
             id3 = setInterval(getpb, 1)
@@ -474,25 +523,35 @@
             return
         }
         try {
-            let arr = document.querySelector("#lc-content > div > div.css-207dbg-TableContainer.ermji1u1 > div > section > div > div.css-ibx34q-antdPaginationOverride-layer1-dropdown-layer1-hoverOverlayBg-layer1-card-layer1-layer0 > div > div > div > div > div > div > table > tbody")
+            let arr = document.querySelector(".ant-table-tbody")
+            let head = document.querySelector(".ant-table-thead")
             if (t != undefined && t == arr.lastChild.innerHTML) {
                 return
             }
+            // 确认难度序列
+            let headndidx = 3
+            for (let i = 0; i < head.childNodes.length; i++) {
+                let headEle = head.childNodes[i]
+                if (headEle.textContent == "难度") {
+                    headndidx = i
+                    break
+                }
+            }
+
             let childs = arr.childNodes
             for (const element of childs) {
                 let v = element
-                let length = v.childNodes.length
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length - 3].childNodes[0].innerHTML
+                let nd = v.childNodes[headndidx].childNodes[0].innerHTML
                 if (t2rate[id] != undefined) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length - 3].childNodes[0].innerHTML = nd
+                    v.childNodes[headndidx].childNodes[0].innerHTML = nd
                 } else {
                     let nd2ch = { "rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难" }
-                    let clr = v.childNodes[length - 3].childNodes[0].getAttribute("color")
-                    v.childNodes[length - 3].childNodes[0].innerHTML = nd2ch[clr]
+                    let clr = v.childNodes[headndidx].childNodes[0].getAttribute("color")
+                    v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -502,6 +561,7 @@
     }
 
     function getPblistData() {
+        if (!GM_getValue("switchpblist")) return;
         if (!window.location.href.startsWith(pblistUrl)) {
             clearInterval(id5)
             id3 = setInterval(getpb, 1)
@@ -509,7 +569,8 @@
             return
         }
         try {
-            let arr = document.querySelector("#__next > div > div > div > div.col-span-4.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(2) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
+            let arr = document.querySelector("div[role='rowgroup']")
+            if (arr == undefined) return
             if (t != undefined && t == arr.lastChild.innerHTML) {
                 return
             }
@@ -537,6 +598,7 @@
     }
 
     function getSearch() {
+        if (!GM_getValue("switchsearch")) return
         if (!window.location.href.startsWith(searchUrl)) {
             clearInterval(id4)
             if (window.location.href.startsWith(allUrl)){
@@ -558,10 +620,9 @@
             return
         }
         try {
-            let arr = document.querySelector("#headlessui-tabs-panel-11 > div > div.mx-auto.mt-6.w-\\[880px\\].rounded.bg-layer-1.pt-2.pb-4.shadow-level1.dark\\:bg-dark-layer-1.dark\\:shadow-dark-level1 > div > div.border-t.border-divider-border-2.px-4.dark\\:border-dark-divider-border-2")
-            if (arr == undefined) {
-                return
-            }
+            let arr = $("div[role='table']")
+            if (arr.length == 0) return
+            arr = arr[0].childNodes[1]
             let childs = arr.childNodes
             for (const element of childs) {
                 let v = element
@@ -592,12 +653,9 @@
             return $("button[class='px-3 py-1.5 font-medium items-center whitespace-nowrap transition-all focus:outline-none inline-flex text-label-r bg-green-s dark:bg-dark-green-s hover:bg-green-3 dark:hover:bg-dark-green-3 rounded-lg']")
         }
     }
-     // 新版本判断
-    let isBeta = document.getElementById("__NEXT_DATA__") != undefined
-
-    let time = $(".sc-gsDKAQ")
-    let subBtn = getSubmitBtn(isBeta)
+    
     function getpb() {
+        if(!GM_getValue("switchpb")) return
         if (!window.location.href.startsWith(pbUrl)) {
             clearInterval(id3)
             if (window.location.href.startsWith(allUrl)){
@@ -643,8 +701,8 @@
             }
         }
 
+        // 是否在提交页面
         let statusEle = window.location.href.match(regPbSubmission)
-
         if(isBeta) {
             if (!window.location.href.startsWith(pbUrl)) questiontag = ""
             if(statusEle) {
@@ -881,7 +939,7 @@
         }
     }
 
-
+    // 查询提交更新信息并保存到内存中
     let QuerySubmissionUpdate = (questiontag, lang, statusQus) => {
         let key = questiontag + langMap[lang] + statusMap[statusQus]
         pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
@@ -918,7 +976,7 @@
             // console.log("第" + cnt + "步")
         }
     }
-
+    // 监听
     let addListener = () => {
         // console.log("addListener....")
         XMLHttpRequest.prototype.send = function () {
@@ -938,6 +996,7 @@
         }
     }
 
+    // 更新提交页数据列表
     let updateSubmissionLst = (statusEle, questiontag, lang, statusQus) => {
         // 数据替换操作
         try{
@@ -1071,12 +1130,6 @@
         }
     }
 
-    [...document.querySelectorAll('*')].forEach(item => {
-        item.oncopy = function (e) {
-            e.stopPropagation();
-        }
-    });
-
     if (window.location.href.startsWith(allUrl)) {
         // 版本更新机制
         GM_xmlhttpRequest({
@@ -1140,16 +1193,16 @@
         });
         clearAndStart('all', getData, 100)
     } else if (window.location.href.startsWith(tagUrl)) {
-        clearAndStart('tag', getTagData, 1)
+        clearAndStart('tag', getTagData, 100)
     } else if (window.location.href.startsWith(pbUrl)) {
         clearAndStart('pb', getpb, 100)
         addListener();
-        let id = setInterval(getData, 1)
+        let id = setInterval(getData, 100)
         GM_setValue("all", id)
     } else if (window.location.href.startsWith(companyUrl)) {
-        clearAndStart('company', getCompanyData, 1)
+        clearAndStart('company', getCompanyData, 100)
     } else if (window.location.href.startsWith(pblistUrl)) {
-        clearAndStart('pblist', getPblistData, 1)
+        clearAndStart('pblist', getPblistData, 100)
     } else if (window.location.href.startsWith(searchUrl)){
         clearAndStart('search', getSearch, 100)
     } else {
