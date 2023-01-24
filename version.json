@@ -1,4 +1,4 @@
 {
-  "version" : "1.6.5",
-  "content" : "修改更新时候打开的js地址，避免不能访问github的人无法更新插件"
+  "version" : "1.6.6",
+  "content" : "1.题单页面与refine-leetcode插件兼容性修复 2. 增加题目页面refine-leetcode的计时器功能拦截开关"
 }

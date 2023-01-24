@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.6.5
+// @version      1.6.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -10,6 +10,10 @@
 // @contributionURL https://www.showdoc.com.cn/2069209189620830
 // @match        *://*leetcode.cn/*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_registerMenuCommand
+// @grant        GM_unregisterMenuCommand
+// @grant        GM_openInTab
+// @grant        GM_notification
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addStyle
@@ -84,6 +88,7 @@
 // @note         2023-01-05 1.6.3 修改cdn访问方式和频率
 // @note         2023-01-05 1.6.4 修改cdn地址避免检测访问频率
 // @note         2023-01-05 1.6.5 修改更新时候打开的js地址，避免不能访问github的人无法更新插件
+// @note         2023-01-24 1.6.6 1.题单页面与refine-leetcode插件兼容性修复 2. 增加题目页面refine-leetcode的计时器功能拦截开关
 // ==/UserScript==
 
 (function () {
@@ -95,12 +100,60 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.6.5"
+    let version = "1.6.6"
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     let latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     let preDate = GM_getValue("preDate", "")
+    // 默认rateIdx是倒数第二个
+    let rateIdx = 2
+    // 刷新成原始数据
+    let rateRefresh = false
+    // 刷新菜单
+    Script_setting()
+    // 菜单
+    function Script_setting(){
+        var menu_ALL = [
+            ['switchTimeoff', 'refined-leetcode sc-timer has closed', '拦截refined-leetcode计时器功能', true],
+        ], menu_ID = [];
+        for (let i=0;i<menu_ALL.length;i++){ // 如果读取到的值为 null 就写入默认值
+            if (GM_getValue(menu_ALL[i][0]) == null){GM_setValue(menu_ALL[i][0], menu_ALL[i][3])};
+        }
+        registerMenuCommand();
+
+        // 注册脚本菜单
+        function registerMenuCommand() {
+            if (menu_ID.length > menu_ALL.length){ // 如果菜单ID数组多于菜单数组，说明不是首次添加菜单，需要卸载所有脚本菜单
+                for (let i=0;i<menu_ID.length;i++){
+                    GM_unregisterMenuCommand(menu_ID[i]);
+                }
+            }
+            for (let i=0;i<menu_ALL.length;i++){ // 循环注册脚本菜单
+                menu_ALL[i][3] = GM_getValue(menu_ALL[i][0]);
+                menu_ID[i] = GM_registerMenuCommand(`${menu_ALL[i][3]?'✅':'❎'} ${menu_ALL[i][2]}`, function(){menu_switch(`${menu_ALL[i][0]}`,`${menu_ALL[i][1]}`,`${menu_ALL[i][2]}`,`${menu_ALL[i][3]}`)});
+            }
+            menu_ID[menu_ID.length] = GM_registerMenuCommand(`🏁 当前版本 ${version}`, function () {window.GM_openInTab('https://greasyfork.org/zh-CN/scripts/450890-leetcodeweekly/admin', {active: true,insert: true,setParent: true});});
+        }
+
+        //切换选项
+        function menu_switch(name,ename,cname,value){
+            if(value == 'false'){
+                console.log(name);
+                GM_setValue(`${name}`, true);
+                registerMenuCommand(); // 重新注册脚本菜单
+                location.reload(); // 刷新网页
+                GM_notification({text: `「${cname}」已开启\n`, timeout: 3500}); // 提示消息
+            }else{
+                console.log(name);
+                GM_setValue(`${name}`, false);
+                registerMenuCommand(); // 重新注册脚本菜单
+                location.reload(); // 刷新网页
+                GM_notification({text: `「${cname}」已关闭\n`, timeout: 3500}); // 提示消息
+            }
+            registerMenuCommand(); // 重新注册脚本菜单
+        }
+    }
 
     // 题目提交数据
     let pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
@@ -202,6 +255,7 @@
     let postReq = (query, variables, successFuc) => {
         baseReq(query, variables, successFuc, "POST")
     }
+    
 
     // 深拷贝
     function deepclone(obj) {
@@ -282,7 +336,7 @@
     let t1, le // pb
 
     function getData() {
-        try {
+         try {
             let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
             // pb页面加载时直接返回
             if (arr == undefined) {
@@ -336,6 +390,12 @@
                 return
             }
 
+            let allpbHead = document.querySelector("#__next > div > div.mx-auto.mt-\\[50px\\].w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div.border-b.border-divider-border-2.dark\\:border-dark-divider-border-2 > div")
+            console.log(allpbHead.childNodes.length)
+            let frepb = allpbHead.lastChild && allpbHead.lastChild.childNodes[0] && allpbHead.lastChild.childNodes[0].childNodes[0]
+            if (frepb && frepb.textContent == "题目评分") rateRefresh = true
+            else rateRefresh = false
+
             let childs = arr.childNodes
             for (let idx = 1; idx < childs.length; idx++) {
                 let v = childs[idx]
@@ -343,14 +403,15 @@
                 let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
-                if (t2rate[id] != undefined) {
+                let nd = v.childNodes[length - rateIdx].childNodes[0].innerHTML
+                if (rateRefresh) { rateIdx = 3 } else rateIdx = 2
+                if (t2rate[id] != undefined && !rateRefresh){
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+                    v.childNodes[length - rateIdx].childNodes[0].innerHTML = nd
                 } else {
                     let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                    let cls = v.childNodes[length - 2].childNodes[0].getAttribute("class")
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[cls]
+                    let cls = v.childNodes[length - rateIdx].childNodes[0].getAttribute("class")
+                    v.childNodes[length - rateIdx].childNodes[0].innerHTML = nd2ch[cls]
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -364,9 +425,9 @@
                 tea.setAttribute("target", "_blank")
                 head.appendChild(tea)
             }
-        } catch (e) {
-            return
-        }
+         } catch (e) {
+             return
+         }
     }
 
     function getTagData() {
@@ -522,6 +583,19 @@
         }
     }
 
+    function getSubmitBtn(isBeta) {
+        if(!isBeta) {
+            let subBtn = $(".submit__-6u9")
+            return subBtn
+        } else {
+            return $("button[class='px-3 py-1.5 font-medium items-center whitespace-nowrap transition-all focus:outline-none inline-flex text-label-r bg-green-s dark:bg-dark-green-s hover:bg-green-3 dark:hover:bg-dark-green-3 rounded-lg']")
+        }
+    }
+     // 新版本判断
+    let isBeta = document.getElementById("__NEXT_DATA__") != undefined
+
+    let time = $(".sc-gsDKAQ")
+    let subBtn = getSubmitBtn(isBeta)
     function getpb() {
         if (!window.location.href.startsWith(pbUrl)) {
             clearInterval(id3)
@@ -543,11 +617,34 @@
             }
             return
         }
-        // 新版本
-        let nextData = document.getElementById("__NEXT_DATA__")
+
+        // 关闭计时器功能
+        let switchTimeoff = GM_getValue("switchTimeoff")
+        if (switchTimeoff) {
+            time = $(".sc-gsDKAQ")
+            subBtn = getSubmitBtn(isBeta)
+            if (time) time.remove()
+            // 如果是去除最后空元素
+            if (subBtn && subBtn.attr('name') && subBtn.attr('name') === 'copyBtn') {
+                if (subBtn.parent().slice(-1).text() == 'nullele') {
+                    subBtn.parent().children().slice(-1).remove() 
+                }
+            } else {
+                if (subBtn) {
+                    subBtn.attr("name", 'copyBtn')
+                    if (!isBeta) subBtn.attr('class', 'submit__-6u8 css-r8ozcn-BaseButtonComponent ery7n2v0')
+                    else {
+                        let nullele = '<a">nullele</a>'
+                        subBtn.parent().append(nullele)
+                        subBtn.parent().children().slice(-1).hide()
+                    }
+                }
+            }
+        }
+
         let statusEle = window.location.href.match(regPbSubmission)
 
-        if(nextData) {
+        if(isBeta) {
             if (!window.location.href.startsWith(pbUrl)) questiontag = ""
             if(statusEle) {
                 let submissionUrl = window.location.href
@@ -922,6 +1019,8 @@
                     preDate = now
                     GM_setValue("preDate", preDate)
                     GM_setValue("t2ratedb", JSON.stringify(t2rate))
+                    t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+                    preDate = GM_getValue("preDate", "")
                 }
             },
             onerror: function (err) {
@@ -1030,6 +1129,7 @@
                     latestpb["out"] = al[2] || {'str':''};latestpb["nd"] = al[3] || {'str':''};latestpb["solve"] = al[4] || {'str':''};
                     latestpb["blank"] = al[5] || {'str':''};
                     GM_setValue("latestpb", JSON.stringify(latestpb))
+                    latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
                 }
             },
             onerror: function (err) {
@@ -1037,7 +1137,7 @@
                 console.log(err)
             }
         });
-        clearAndStart('all', getData, 1)
+        clearAndStart('all', getData, 100)
     } else if (window.location.href.startsWith(tagUrl)) {
         clearAndStart('tag', getTagData, 1)
     } else if (window.location.href.startsWith(pbUrl)) {
