@@ -1,4 +1,4 @@
 {
-  "version" : "1.6.7",
-  "content" : "1.题单页面与refine-leetcode插件兼容性修复 <br/> 2.增加题目页面refine-leetcode的计时器功能拦截开关"
+  "version" : "1.6.8",
+  "content" : "1.题单页面与refine-leetcode插件兼容性修复 <br/>2.增加题目页面refine-leetcode的计时器功能拦截开关"
 }
