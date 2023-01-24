@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.6.6
+// @version      1.6.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -89,6 +89,7 @@
 // @note         2023-01-05 1.6.4 修改cdn地址避免检测访问频率
 // @note         2023-01-05 1.6.5 修改更新时候打开的js地址，避免不能访问github的人无法更新插件
 // @note         2023-01-24 1.6.6 1.题单页面与refine-leetcode插件兼容性修复 2. 增加题目页面refine-leetcode的计时器功能拦截开关
+// @note         2023-01-24 1.6.7 删除无效打印
 // ==/UserScript==
 
 (function () {
@@ -100,7 +101,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.6.6"
+    let version = "1.6.7"
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
@@ -391,7 +392,7 @@
             }
 
             let allpbHead = document.querySelector("#__next > div > div.mx-auto.mt-\\[50px\\].w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div.border-b.border-divider-border-2.dark\\:border-dark-divider-border-2 > div")
-            console.log(allpbHead.childNodes.length)
+
             let frepb = allpbHead.lastChild && allpbHead.lastChild.childNodes[0] && allpbHead.lastChild.childNodes[0].childNodes[0]
             if (frepb && frepb.textContent == "题目评分") rateRefresh = true
             else rateRefresh = false
