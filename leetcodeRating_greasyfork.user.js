@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.6.10
+// @version      1.7.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -92,12 +92,13 @@
 // @note         2023-01-24 1.6.7 删除无效打印
 // @note         2023-01-24 1.6.9 增加各页面功能开关，同时修复部分页面评分不显示的bug 
 // @note         2023-01-25 1.6.10 修复若干bug，优化代码逻辑结构
+// @note         2023-01-25 1.7.0 修复页面url改变时，循环添加事件监听导致的页面宕机问题
 // ==/UserScript==
 
 (function () {
     'use strict';
     
-    let version = "1.6.10"
+    let version = "1.7.0"
 
     // 用于延时函数的通用id
     let id = ""
@@ -203,19 +204,19 @@
             const oldReplaceState = history.replaceState
         
             history.pushState = function pushState(...args) {
-            const res = oldPushState.apply(this, args)
-            window.dispatchEvent(new Event('urlchange'))
-            return res
+                const res = oldPushState.apply(this, args)
+                window.dispatchEvent(new Event('urlchange'))
+                return res
             }
         
             history.replaceState = function replaceState(...args) {
-            const res = oldReplaceState.apply(this, args)
-            window.dispatchEvent(new Event('urlchange'))
-            return res
+                const res = oldReplaceState.apply(this, args)
+                window.dispatchEvent(new Event('urlchange'))
+                return res
             }
         
             window.addEventListener('popstate', () => {
-            window.dispatchEvent(new Event('urlchange'))
+                window.dispatchEvent(new Event('urlchange'))
             })
         }
         return load
@@ -430,31 +431,26 @@
                             break
                         }
                     }
-                    if ( teaUrl != "") {
-                        div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${src}</div><div \
-                        role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">${latestpb["date"]["str"]}&nbsp灵茶</a></div></div></div></div></div><div \
-                        role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
-                        role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
-                        role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
-                        role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
+                    div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${src}</div>`
+                    if (teaUrl != "") {
+                        div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">${latestpb["date"]["str"]}&nbsp灵茶</a></div></div></div></div></div>`
                     }else {
-                        div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${src}</div><div \
-                        role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><p class="h-5">${latestpb["date"]["str"]}&nbsp灵茶</p></div></div></div></div></div><div \
-                        role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
-                        role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
-                        role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
-                        role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
+                        div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><p class="h-5">${latestpb["date"]["str"]}&nbsp灵茶</p></div></div></div></div></div>`
                     }
+                    div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
+                        role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
+                        role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'] ? latestpb['nd']['str'].substr(0,4) : "未知"}</span></div><div \
+                        role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
 
-                    div.childNodes[2].childNodes[0].childNodes[0].addEventListener("click", (e)=>{
+                    div.childNodes[2].addEventListener("click", (e)=>{
                         e.preventDefault();
                         checksolve();
                     });
-                    div.childNodes[3].childNodes[0].childNodes[0].addEventListener("click", (e)=> {
+                    div.childNodes[3].addEventListener("click", (e)=> {
                         e.preventDefault();
                         checkout();
                     })
-                    div.childNodes[5].childNodes[0].childNodes[0].addEventListener("click", (e)=> {
+                    div.childNodes[5].addEventListener("click", (e)=> {
                         e.preventDefault();
                         checktrans();
                     })
@@ -483,7 +479,6 @@
                     if (e.textContent === '题目评分') rateRefresh = true
                     i += 1
                 })
-                
 
                 let childs = arr.childNodes
                 let idx = switchTea ? 1 : 0
@@ -1075,7 +1070,7 @@
     }
 
 
-    function clearAndStart(url, timeout) {
+    function clearAndStart(url, timeout, isAddEvent) {
         let start = ""
         let targetIdx = -1
         let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
@@ -1096,14 +1091,16 @@
             id = setInterval(funcLst[targetIdx], timeout)
             GM_setValue(start, id)
         }
-        window.addEventListener("urlchange", () => {
-            let newUrl = window.location.href
-            clearAndStart(newUrl, 100)
-        })
+        if (isAddEvent) {
+            window.addEventListener("urlchange", () => {
+                let newUrl = window.location.href
+                clearAndStart(newUrl, 100, false)
+            })
+        }
     }
     
     // 定时启动 
-    clearAndStart(window.location.href, 100)
+    clearAndStart(window.location.href, 5000, true)
     if (window.location.href.startsWith(allUrl)) {
         // 版本更新机制
         GM_xmlhttpRequest({
