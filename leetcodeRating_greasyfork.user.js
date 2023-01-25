@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.6.9
+// @version      1.6.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -91,82 +91,29 @@
 // @note         2023-01-24 1.6.6 1.题单页面与refine-leetcode插件兼容性修复 2. 增加题目页面refine-leetcode的计时器功能拦截开关
 // @note         2023-01-24 1.6.7 删除无效打印
 // @note         2023-01-24 1.6.9 增加各页面功能开关，同时修复部分页面评分不显示的bug 
+// @note         2023-01-25 1.6.10 修复若干bug，优化代码逻辑结构
 // ==/UserScript==
 
 (function () {
     'use strict';
+    
+    let version = "1.6.10"
 
-    let id1 = ""
-    let id2 = ""
-    let id3 = ""
-    let id4 = ""
-    let id5 = ""
-    let id6 = ""
-    let version = "1.6.9"
+    // 用于延时函数的通用id
+    let id = ""
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     let latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     let preDate = GM_getValue("preDate", "")
-    // 默认rateIdx是倒数第二个
-    let rateIdx = 2
-    // 刷新成原始数据
-    let rateRefresh = false
+
+    // 难度那一列默认rateIdx是asc第5个
+    let rateIdx = 5
+
     // 刷新菜单
     Script_setting()
-    // 菜单
-    function Script_setting(){
-        var menu_ALL = [
-            ['switchTimeoff', 'refined-leetcode sc-timer fuction', '拦截refined-leetcode计时器功能', true, true],
-            ['switchTea', '0x3f tea', '灵茶相关功能', true, true],
-            ['switchpbRepo', 'pbRepo function', '题库页面评分(不包括灵茶)', true, false],
-            ['switchpb', 'pb function', '题目页面评分和新版提交信息', true, true],
-            ['switchsearch', 'search function', '题目搜索页面评分', true, false],
-            ['switchtag', 'tag function', 'tag题单页面评分(动态规划等分类题库)', true, false],
-            ['switchcompany', 'company function', 'company题单页面评分(字节等公司题库)', true, false],
-            ['switchpblist', 'pbList function', 'pbList题单页面评分', true, false],
-            ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
-        ], menu_ID = [], menu_ID_Content = [];
-        for (let i=0;i<menu_ALL.length;i++){ // 如果读取到的值为 null 就写入默认值
-            if (GM_getValue(menu_ALL[i][0]) == null){GM_setValue(menu_ALL[i][0], menu_ALL[i][3])};
-        }
-        registerMenuCommand();
-
-        // 注册脚本菜单
-        function registerMenuCommand() {
-            if (menu_ID.length > menu_ALL.length){ // 如果菜单ID数组多于菜单数组，说明不是首次添加菜单，需要卸载所有脚本菜单
-                for (let i=0;i<menu_ID.length;i++){
-                    GM_unregisterMenuCommand(menu_ID[i]);
-                }
-            }
-            for (let i=0;i < menu_ALL.length;i++){ // 循环注册脚本菜单
-                menu_ALL[i][3] = GM_getValue(menu_ALL[i][0]);
-                let content = `${menu_ALL[i][3]?'✅':'❎'} ${ menu_ALL[i][2]}`
-                menu_ID[i] = GM_registerMenuCommand(content, function(){ menu_switch(`${menu_ALL[i][0]}`,`${menu_ALL[i][1]}`,`${menu_ALL[i][2]}`,`${menu_ALL[i][3]}`)});
-                menu_ID_Content[i] = content
-            }
-            menu_ID[menu_ID.length] = GM_registerMenuCommand(`🏁 当前版本 ${version}`, function () {window.GM_openInTab('https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86', {active: true,insert: true,setParent: true});});
-            menu_ID_Content[menu_ID_Content.length] = `🏁 当前版本 ${version}`
-        }
-
-        //切换选项
-        function menu_switch(name, ename, cname, value){
-            if(value == 'false'){
-                // console.log(name);
-                GM_setValue(`${name}`, true);
-                registerMenuCommand(); // 重新注册脚本菜单
-                location.reload(); // 刷新网页
-                GM_notification({text: `「${cname}」已开启\n`, timeout: 3500}); // 提示消息
-            }else{
-                // console.log(name);
-                GM_setValue(`${name}`, false);
-                registerMenuCommand(); // 重新注册脚本菜单
-                location.reload(); // 刷新网页
-                GM_notification({text: `「${cname}」已关闭\n`, timeout: 3500}); // 提示消息
-            }
-            registerMenuCommand(); // 重新注册脚本菜单
-        }
-    }
+    // urlchange事件
+    initUrlChange()
 
     // 去除复制时候的事件
     if (GM_getValue("switchcopy")) {
@@ -177,7 +124,7 @@
         });
     }
 
-     // 新版本判断
+    // 新版本判断
     let isBeta = document.getElementById("__NEXT_DATA__") != undefined
 
     let time = $(".sc-gsDKAQ")
@@ -189,12 +136,12 @@
     let updateFlag = false
 
     // url相关数据
-    const allUrl = "https://leetcode.cn/problemset"
-    const tagUrl = "https://leetcode.cn/tag"
-    const companyUrl = "https://leetcode.cn/company"
-    const pblistUrl = "https://leetcode.cn/problem-list"
-    const pbUrl = "https://leetcode.cn/problems"
-    const searchUrl = "https://leetcode.cn/search"
+    const allUrl = "https://leetcode.cn/problemset/"
+    const tagUrl = "https://leetcode.cn/tag/"
+    const companyUrl = "https://leetcode.cn/company/"
+    const pblistUrl = "https://leetcode.cn/problem-list/"
+    const pbUrl = "https://leetcode.cn/problems/"
+    const searchUrl = "https://leetcode.cn/search/"
 
     // 常量数据
     const dummySend = XMLHttpRequest.prototype.send
@@ -245,11 +192,91 @@
     pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
     GM_addStyle(GM_getResourceText("css"));
 
+    // 监听urlchange事件定义
+    function initUrlChange() {
+        let isLoad = false
+        const load = () => {
+            if (isLoad) return
+            isLoad = true
+        
+            const oldPushState = history.pushState
+            const oldReplaceState = history.replaceState
+        
+            history.pushState = function pushState(...args) {
+            const res = oldPushState.apply(this, args)
+            window.dispatchEvent(new Event('urlchange'))
+            return res
+            }
+        
+            history.replaceState = function replaceState(...args) {
+            const res = oldReplaceState.apply(this, args)
+            window.dispatchEvent(new Event('urlchange'))
+            return res
+            }
+        
+            window.addEventListener('popstate', () => {
+            window.dispatchEvent(new Event('urlchange'))
+            })
+        }
+        return load
+    }
+
+    // 菜单方法定义
+    function Script_setting(){
+        let menu_ALL = [
+            ['switchTimeoff', 'refined-leetcode sc-timer fuction', '拦截refined-leetcode计时器功能', true, true],
+            ['switchTea', '0x3f tea', '灵茶相关功能', true, true],
+            ['switchpbRepo', 'pbRepo function', '题库页面评分(不包括灵茶)', true, false],
+            ['switchpb', 'pb function', '题目页面评分和新版提交信息', true, true],
+            ['switchsearch', 'search function', '题目搜索页面评分', true, false],
+            ['switchtag', 'tag function', 'tag题单页面评分(动态规划等分类题库)', true, false],
+            ['switchcompany', 'company function', 'company题单页面评分(字节等公司题库)', true, false],
+            ['switchpblist', 'pbList function', 'pbList题单页面评分', true, false],
+            ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
+        ], menu_ID = [], menu_ID_Content = [];
+        for (const element of menu_ALL){ // 如果读取到的值为 null 就写入默认值
+            if (GM_getValue(element[0]) == null){GM_setValue(element[0], element[3])};
+        }
+        registerMenuCommand();
+
+        // 注册脚本菜单
+        function registerMenuCommand() {
+            if (menu_ID.length > menu_ALL.length){ // 如果菜单ID数组多于菜单数组，说明不是首次添加菜单，需要卸载所有脚本菜单
+                for (const element of menu_ID){
+                    GM_unregisterMenuCommand(element);
+                }
+            }
+            for (let i=0;i < menu_ALL.length;i++){ // 循环注册脚本菜单
+                menu_ALL[i][3] = GM_getValue(menu_ALL[i][0]);
+                let content = `${menu_ALL[i][3]?'✅':'❎'} ${ menu_ALL[i][2]}`
+                menu_ID[i] = GM_registerMenuCommand(content, function(){ menu_switch(`${menu_ALL[i][0]}`,`${menu_ALL[i][1]}`,`${menu_ALL[i][2]}`,`${menu_ALL[i][3]}`)});
+                menu_ID_Content[i] = content
+            }
+            menu_ID[menu_ID.length] = GM_registerMenuCommand(`🏁 当前版本 ${version}`, function () {window.GM_openInTab('https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86', {active: true,insert: true,setParent: true});});
+            menu_ID_Content[menu_ID_Content.length] = `🏁 当前版本 ${version}`
+        }
+
+        //切换选项
+        function menu_switch(name, ename, cname, value){
+            if(value == 'false'){
+                GM_setValue(`${name}`, true);
+                registerMenuCommand(); // 重新注册脚本菜单
+                location.reload(); // 刷新网页
+                GM_notification({text: `「${cname}」已开启\n`, timeout: 3500}); // 提示消息
+            } else {
+                GM_setValue(`${name}`, false);
+                registerMenuCommand(); // 重新注册脚本菜单
+                location.reload(); // 刷新网页
+                GM_notification({text: `「${cname}」已关闭\n`, timeout: 3500}); // 提示消息
+            }
+            registerMenuCommand(); // 重新注册脚本菜单
+        }
+    }
 
     // lc 基础req
     let baseReq = (query, variables, successFuc, type) => {
         //请求参数
-        var list = { "query":query, "variables":variables };
+        let list = { "query":query, "variables":variables };
         //
         $.ajax({
             // 请求方式
@@ -387,21 +414,32 @@
 
             // 灵茶题目渲染
             if (switchTea) {
-                if (arr.childNodes[0].childNodes[2].childNodes[0].childNodes[0].innerText != "题解") {
+                if (arr.childNodes[0].childNodes[2].textContent != "题解") {
                     let div = document.createElement('div')
                     div.setAttribute("role", "row")
                     div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
                     div.setAttribute("class", "odd:bg-layer-1 even:bg-overlay-1 dark:odd:bg-dark-layer-bg dark:even:bg-dark-fill-4")
-                    if (latestpb["url"]["url"] != "") {
-                        div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]["str"]}</div><div \
-                        role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">&nbsp近日灵茶</a></div></div></div></div></div><div \
+                    let teaUrl = latestpb["url"]["url"]
+                    let vo = ['cf题目', 'atcoder']
+                    let lst = ['codeforces', 'atcoder']
+                    let src = "未知来源";
+                    for (let index = 0; index < lst.length; index++) {
+                        const element = lst[index];
+                        if (teaUrl.includes(element)) {
+                            src = vo[index]
+                            break
+                        }
+                    }
+                    if ( teaUrl != "") {
+                        div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${src}</div><div \
+                        role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">${latestpb["date"]["str"]}&nbsp灵茶</a></div></div></div></div></div><div \
                         role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
                         role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
                         role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
                         role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
                     }else {
-                        div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${latestpb["date"]["str"]}</div><div \
-                        role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><p class="h-5">&nbsp近日灵茶</p></div></div></div></div></div><div \
+                        div.innerHTML = `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${src}</div><div \
+                        role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><p class="h-5">${latestpb["date"]["str"]}&nbsp灵茶</p></div></div></div></div></div><div \
                         role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
                         role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
                         role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str'].substr(0,4)}</span></div><div \
@@ -436,29 +474,32 @@
             
             if (switchpbRepo) {
                 let allpbHead = document.querySelector("div[role='row']")
-                let frepb = allpbHead.lastChild && allpbHead.lastChild.childNodes[0] && allpbHead.lastChild.childNodes[0].childNodes[0]
+                let i = 0
+                let rateRefresh = false
+                allpbHead.childNodes.forEach(e => {
+                    if (e.textContent === '难度') {
+                        rateIdx = i
+                    }
+                    if (e.textContent === '题目评分') rateRefresh = true
+                    i += 1
+                })
                 
-                // refine-leetcode相关
-                if (frepb && frepb.textContent == "题目评分") rateRefresh = true
-                else rateRefresh = false
 
                 let childs = arr.childNodes
                 let idx = switchTea ? 1 : 0
                 for (; idx < childs.length; idx++) {
                     let v = childs[idx]
-                    let length = v.childNodes.length
-                    let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                    let t = v.childNodes[1].textContent
                     let data = t.split(".")
                     let id = data[0].trim()
-                    let nd = v.childNodes[length - rateIdx].childNodes[0].innerHTML
-                    if (rateRefresh) { rateIdx = 3 } else rateIdx = 2
+                    let nd = v.childNodes[rateIdx].childNodes[0].innerHTML
                     if (t2rate[id] != undefined && !rateRefresh){
                         nd = t2rate[id]["Rating"]
-                        v.childNodes[length - rateIdx].childNodes[0].innerHTML = nd
+                        v.childNodes[rateIdx].childNodes[0].innerHTML = nd
                     } else {
                         let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                        let cls = v.childNodes[length - rateIdx].childNodes[0].getAttribute("class")
-                        v.childNodes[length - rateIdx].childNodes[0].innerHTML = nd2ch[cls]
+                        let cls = v.childNodes[rateIdx].childNodes[0].getAttribute("class")
+                        v.childNodes[rateIdx].childNodes[0].innerHTML = nd2ch[cls]
                     }
                 }
                 t = deepclone(arr.lastChild.innerHTML)
@@ -470,12 +511,6 @@
 
     function getTagData() {
         if (!GM_getValue("switchtag")) return;
-        if (!window.location.href.startsWith(tagUrl)) {
-            clearInterval(id2)
-            id3 = setInterval(getpb, 1)
-            GM_setValue("pb", id3)
-            return
-        }
         try {
             // 筛选更新
             let arr = document.querySelector(".ant-table-tbody")
@@ -516,12 +551,6 @@
 
     function getCompanyData() {
         if (!GM_getValue("switchcompany")) return;
-        if (!window.location.href.startsWith(companyUrl)) {
-            clearInterval(id4)
-            id3 = setInterval(getpb, 1)
-            GM_setValue("pb", id3)
-            return
-        }
         try {
             let arr = document.querySelector(".ant-table-tbody")
             let head = document.querySelector(".ant-table-thead")
@@ -562,12 +591,6 @@
 
     function getPblistData() {
         if (!GM_getValue("switchpblist")) return;
-        if (!window.location.href.startsWith(pblistUrl)) {
-            clearInterval(id5)
-            id3 = setInterval(getpb, 1)
-            GM_setValue("pb", id3)
-            return
-        }
         try {
             let arr = document.querySelector("div[role='rowgroup']")
             if (arr == undefined) return
@@ -599,26 +622,6 @@
 
     function getSearch() {
         if (!GM_getValue("switchsearch")) return
-        if (!window.location.href.startsWith(searchUrl)) {
-            clearInterval(id4)
-            if (window.location.href.startsWith(allUrl)){
-                id1 = setInterval(getData, 1)
-                GM_setValue("all", id1)
-            }else if (window.location.href.startsWith(tagUrl)) {
-                id2 = setInterval(getTagData, 1)
-                GM_setValue("tag", id2)
-            } else if (window.location.href.startsWith(pbUrl)) {
-                id3 = setInterval(getpb, 1)
-                GM_setValue("pb", id3)
-            } else if (window.location.href.startsWith(companyUrl)) {
-                id4 = setInterval(getCompanyData, 1)
-                GM_setValue("company", id4)
-            } else if (window.location.href.startsWith(pblistUrl)) {
-                id5 = setInterval(getPblistData, 1)
-                GM_setValue("pblist", id5)
-            }
-            return
-        }
         try {
             let arr = $("div[role='table']")
             if (arr.length == 0) return
@@ -656,26 +659,6 @@
     
     function getpb() {
         if(!GM_getValue("switchpb")) return
-        if (!window.location.href.startsWith(pbUrl)) {
-            clearInterval(id3)
-            if (window.location.href.startsWith(allUrl)){
-                id1 = setInterval(getData, 1)
-                GM_setValue("all", id1)
-            }else if (window.location.href.startsWith(tagUrl)) {
-                id2 = setInterval(getTagData, 1)
-                GM_setValue("tag", id2)
-            } else if (window.location.href.startsWith(searchUrl)) {
-                id6 = setInterval(getSearch, 1)
-                GM_setValue("search", id6)
-            } else if (window.location.href.startsWith(companyUrl)) {
-                id4 = setInterval(getCompanyData, 1)
-                GM_setValue("company", id4)
-            } else if (window.location.href.startsWith(pblistUrl)) {
-                id5 = setInterval(getPblistData, 1)
-                GM_setValue("pblist", id5)
-            }
-            return
-        }
 
         // 关闭计时器功能
         let switchTimeoff = GM_getValue("switchTimeoff")
@@ -968,16 +951,17 @@
         };
         next = true
         submissionLst = []
-        let cnt = 0
+        // 调试使用
+        // let cnt = 0
         while(next) {
             postReq(queryPbSubmission, variables, successFuc)
             variables.offset += 40
-            cnt += 1
+            // cnt += 1
             // console.log("第" + cnt + "步")
         }
     }
     // 监听
-    let addListener = () => {
+    let addPbListener = () => {
         // console.log("addListener....")
         XMLHttpRequest.prototype.send = function () {
             const _onreadystatechange = this.onreadystatechange;
@@ -1008,12 +992,12 @@
                 if (childs.length == 1 || childs.length == 0) return;
 
                 // 已经替换过就直接返回
-                var lastNode = childs[childs.length-2]
+                let lastNode = childs[childs.length-2]
                 if (!lastNode.hasChildNodes()) {
                     lastNode = childs[childs.length-3]
                 }
-                var lastIcon = lastNode.childNodes[0].childNodes[1]
-                var first = childs[0].childNodes[0].childNodes[1]
+                let lastIcon = lastNode.childNodes[0].childNodes[1]
+                let first = childs[0].childNodes[0].childNodes[1]
                 if (!updateFlag && lastIcon.childNodes.length > 1 && first.childNodes.length > 1) {
                     return
                 }
@@ -1091,45 +1075,35 @@
     }
 
 
-    function clearAndStart(start, func, timeout) {
-        let lst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
-        lst.forEach(each => {
-            if (each !== start) {
-                let tmp = GM_getValue(each, -1)
+    function clearAndStart(url, timeout) {
+        let start = ""
+        let targetIdx = -1
+        let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
+        let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl]
+        let funcLst = [getData, getTagData, getpb, getCompanyData, getPblistData, getSearch]
+        for (let index = 0; index < urlLst.length; index++) {
+            const element = urlLst[index];
+            if (url.match(element)) {
+                targetIdx = index
+                // console.log(targetIdx, url)
+            } else if (!url.match(element)) {
+                let tmp = GM_getValue(pageLst[index], -1)
                 clearInterval(tmp)
             }
-        })
-        if (start !== "") {
-            let cnt = lst.indexOf(start) + 1
-            switch (cnt) {
-                case 1:
-                    id1 = setInterval(func, timeout)
-                    GM_setValue(start, id1)
-                    break
-                case 2:
-                    id2 = setInterval(func, timeout)
-                    GM_setValue(start, id2)
-                    break
-                case 3:
-                    id3 = setInterval(func, timeout)
-                    GM_setValue(start, id3)
-                    break
-                case 4:
-                    id4 = setInterval(func, timeout)
-                    GM_setValue(start, id4)
-                    break
-                case 5:
-                    id5 = setInterval(func, timeout)
-                    GM_setValue(start, id5)
-                    break
-                case 6:
-                    id6 = setInterval(func, timeout)
-                    GM_setValue(start, id6)
-                    break
-            }
         }
+        if(targetIdx != -1) start = pageLst[targetIdx]
+        if (start != "") {
+            id = setInterval(funcLst[targetIdx], timeout)
+            GM_setValue(start, id)
+        }
+        window.addEventListener("urlchange", () => {
+            let newUrl = window.location.href
+            clearAndStart(newUrl, 100)
+        })
     }
-
+    
+    // 定时启动 
+    clearAndStart(window.location.href, 100)
     if (window.location.href.startsWith(allUrl)) {
         // 版本更新机制
         GM_xmlhttpRequest({
@@ -1191,21 +1165,7 @@
                 console.log(err)
             }
         });
-        clearAndStart('all', getData, 100)
-    } else if (window.location.href.startsWith(tagUrl)) {
-        clearAndStart('tag', getTagData, 100)
     } else if (window.location.href.startsWith(pbUrl)) {
-        clearAndStart('pb', getpb, 100)
-        addListener();
-        let id = setInterval(getData, 100)
-        GM_setValue("all", id)
-    } else if (window.location.href.startsWith(companyUrl)) {
-        clearAndStart('company', getCompanyData, 100)
-    } else if (window.location.href.startsWith(pblistUrl)) {
-        clearAndStart('pblist', getPblistData, 100)
-    } else if (window.location.href.startsWith(searchUrl)){
-        clearAndStart('search', getSearch, 100)
-    } else {
-        clearAndStart('', undefined, 1)
+        addPbListener();
     }
 })();
