@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.7.3
+// @version      1.7.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -94,12 +94,13 @@
 // @note         2023-01-25 1.6.10 修复若干bug，优化代码逻辑结构
 // @note         2023-01-25 1.7.0 修复页面url改变时，循环添加事件监听导致的页面宕机问题
 // @note         2023-02-01 1.7.3 拦截功能修改
+// @note         2023-02-01 1.7.4 增加题目页面新旧版ui切换，让没参加内测的伙伴一起测试
 // ==/UserScript==
 
 (function () {
     'use strict';
     
-    let version = "1.7.3"
+    let version = "1.7.4"
 
     // 用于延时函数的通用id
     let id = ""
@@ -230,6 +231,7 @@
             ['switchTea', '0x3f tea', '灵茶相关功能', true, true],
             ['switchpbRepo', 'pbRepo function', '题库页面评分(不包括灵茶)', true, false],
             ['switchpb', 'pb function', '题目页面评分和新版提交信息', true, true],
+            ['switchnewBeta', 'new function', '题目页面是否使用新版ui', true, true],
             ['switchsearch', 'search function', '题目搜索页面评分', true, false],
             ['switchtag', 'tag function', 'tag题单页面评分(动态规划等分类题库)', true, false],
             ['switchcompany', 'company function', 'company题单页面评分(字节等公司题库)', true, false],
@@ -273,6 +275,64 @@
             }
             registerMenuCommand(); // 重新注册脚本菜单
         }
+    }
+
+    if (GM_getValue("switchnewBeta")) {
+        fetch('https://leetcode.cn/graphql/noj-go', {
+          headers: {
+            accept: '*/*',
+            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+          },
+          referrer: location.href,
+          body: JSON.stringify({
+            operationName: 'setQdToBeta',
+            variables: {},
+            query: /* GraphQL */ `
+              mutation setQdToBeta {
+                authenticationSetBetaParticipation(
+                  participationType: NEW_QUESTION_DETAIL_PAGE
+                  optedIn: true
+                ) {
+                  inBeta
+                  hitBeta
+                  __typename
+                }
+              }
+            `,
+          }),
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'include',
+        })
+    } else {
+        fetch('https://leetcode.cn/graphql/noj-go', {
+          headers: {
+            accept: '*/*',
+            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+          },
+          referrer: location.href,
+          body: JSON.stringify({
+            variables: {
+                'participationType': 'NEW_QUESTION_DETAIL_PAGE'
+            },
+            query: /* GraphQL */ `
+              mutation setQdToOldVersion ($participationType: ParticipationTypeEnum!){
+                authenticationSetBetaParticipation(
+                  participationType: $participationType
+                  optedIn: false
+                ) {
+                  inBeta
+                  hitBeta
+                }
+              }
+            `,
+          }),
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'include',
+        })
     }
 
     // lc 基础req
