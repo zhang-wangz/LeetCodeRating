@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.7.4
+// @version      1.7.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -95,12 +95,13 @@
 // @note         2023-01-25 1.7.0 修复页面url改变时，循环添加事件监听导致的页面宕机问题
 // @note         2023-02-01 1.7.3 拦截功能修改
 // @note         2023-02-01 1.7.4 增加题目页面新旧版ui切换，让没参加内测的伙伴一起测试
+// @note         2023-02-01 1.7.5 修复:插件的新旧版ui切换不影响力扣官方的按钮切换
 // ==/UserScript==
 
 (function () {
     'use strict';
     
-    let version = "1.7.4"
+    let version = "1.7.5"
 
     // 用于延时函数的通用id
     let id = ""
@@ -279,59 +280,59 @@
 
     if (GM_getValue("switchnewBeta")) {
         fetch('https://leetcode.cn/graphql/noj-go', {
-          headers: {
-            accept: '*/*',
-            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-            'content-type': 'application/json',
-          },
-          referrer: location.href,
-          body: JSON.stringify({
-            operationName: 'setQdToBeta',
-            variables: {},
-            query: /* GraphQL */ `
-              mutation setQdToBeta {
-                authenticationSetBetaParticipation(
-                  participationType: NEW_QUESTION_DETAIL_PAGE
-                  optedIn: true
-                ) {
-                  inBeta
-                  hitBeta
-                  __typename
+            headers: {
+                accept: '*/*',
+                'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+                'content-type': 'application/json',
+            },
+            referrer: location.href,
+            body: JSON.stringify({
+                operationName: 'setQdToBeta',
+                variables: {},
+                query: /* GraphQL */ `
+                mutation setQdToBeta {
+                    authenticationSetBetaParticipation(
+                    participationType: NEW_QUESTION_DETAIL_PAGE
+                    optedIn: true
+                    ) {
+                    inBeta
+                    hitBeta
+                    __typename
+                    }
                 }
-              }
-            `,
-          }),
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'include',
+                `,
+            }),
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'include',
         })
     } else {
         fetch('https://leetcode.cn/graphql/noj-go', {
-          headers: {
-            accept: '*/*',
-            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-            'content-type': 'application/json',
-          },
-          referrer: location.href,
-          body: JSON.stringify({
-            variables: {
-                'participationType': 'NEW_QUESTION_DETAIL_PAGE'
+            headers: {
+                accept: '*/*',
+                'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+                'content-type': 'application/json',
             },
-            query: /* GraphQL */ `
-              mutation setQdToOldVersion ($participationType: ParticipationTypeEnum!){
-                authenticationSetBetaParticipation(
-                  participationType: $participationType
-                  optedIn: false
-                ) {
-                  inBeta
-                  hitBeta
+            referrer: location.href,
+            body: JSON.stringify({
+                variables: {
+                    'participationType': 'NEW_QUESTION_DETAIL_PAGE'
+                },
+                query: /* GraphQL */ `
+                mutation setQdToOldVersion ($participationType: ParticipationTypeEnum!){
+                    authenticationSetBetaParticipation(
+                    participationType: $participationType
+                    optedIn: false
+                    ) {
+                    inBeta
+                    hitBeta
+                    }
                 }
-              }
-            `,
-          }),
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'include',
+                `,
+            }),
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'include',
         })
     }
 
@@ -705,6 +706,30 @@
         }
     }
 
+    function switchUi() {
+        // 新版按钮切换
+        let newBtn = document.querySelector(".css-h6vf0p-card-Box")
+        if (newBtn && newBtn.getAttribute("name") && newBtn.getAttribute("name").includes("isadd")) {
+            // paas
+        } else if (newBtn) {
+            newBtn.setAttribute("name", "isadd")
+            newBtn.addEventListener('click', () => {
+                GM_setValue("switchnewBeta", true)
+            })
+        }
+
+        let oldBtn = document.querySelector(".rounded-lg")
+        if (oldBtn && oldBtn.getAttribute("name") && oldBtn.getAttribute("name").includes("isadd")) {
+            // paas
+        } else if (oldBtn) {
+            console.log(oldBtn.getAttribute("name"))
+            oldBtn.setAttribute("name", "isadd")
+            oldBtn.addEventListener('click', () => {
+                GM_setValue("switchnewBeta", false)
+            })
+        }
+    }
+
     function getSubmitBtn(isBeta) {
         if(!isBeta) {
             let subBtn = $(".submit__-6u9")
@@ -740,6 +765,7 @@
                 }
             }
         }
+    
 
         // 是否在提交页面
         let statusEle = window.location.href.match(regPbSubmission)
@@ -759,6 +785,10 @@
                 return;
             }
         }
+        // 切换onclik
+        switchUi()
+
+        // 题目页面
         try {
             // 旧版的标题位置
             let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
