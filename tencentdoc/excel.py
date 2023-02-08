@@ -2,12 +2,17 @@ from datetime import datetime, timedelta
 import json
 from openpyxl import Workbook
 import sys
+import time
 import download 
 
 def todate(day): 
     theDay = datetime.strptime("1899-12-31", "%Y-%m-%d").date()
     real = theDay + timedelta(days=int(day))
     return real.strftime("%Y-%m-%d")
+
+def day_time(days):
+    t = time.strftime("%Y-%m-%d", time.localtime(time.time() - days*60*60*24))  # 60秒*60分钟*24小时*days天
+    return t
 
 class pb(object):
     def __init__(self, s="", url=""):
@@ -81,4 +86,8 @@ if __name__ == '__main__':
     with open("./tencentdoc/tea.json", 'w') as file:
         json.dump(obj, file, cls=MyEncoder)
         print("save tea.json...")
+    day = day_time(0)
+    with open("./tencentdoc/tea/"+day+"-tea.json", 'w') as file:
+        json.dump(obj, file, cls=MyEncoder)
+        print("save"+day+"-tea.json...")
     print("下载完成，已保存与根目录")
