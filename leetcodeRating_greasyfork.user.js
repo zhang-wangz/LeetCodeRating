@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.7.5
+// @version      1.7.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -96,12 +96,13 @@
 // @note         2023-02-01 1.7.3 拦截功能修改
 // @note         2023-02-01 1.7.4 增加题目页面新旧版ui切换，让没参加内测的伙伴一起测试
 // @note         2023-02-01 1.7.5 修复:插件的新旧版ui切换不影响力扣官方的按钮切换
+// @note         2023-02-10 1.7.6 更新:插件拦截计时器功能默认不开启
 // ==/UserScript==
 
 (function () {
     'use strict';
     
-    let version = "1.7.5"
+    let version = "1.7.6"
 
     // 用于延时函数的通用id
     let id = ""
@@ -228,7 +229,7 @@
     // 菜单方法定义
     function Script_setting(){
         let menu_ALL = [
-            ['switchTimeoff', 'refined-leetcode sc-timer fuction', '拦截refined-leetcode计时器功能', true, true],
+            ['switchTimeoff', 'refined-leetcode sc-timer fuction', '拦截refined-leetcode计时器功能', false, true],
             ['switchTea', '0x3f tea', '灵茶相关功能', true, true],
             ['switchpbRepo', 'pbRepo function', '题库页面评分(不包括灵茶)', true, false],
             ['switchpb', 'pb function', '题目页面评分和新版提交信息', true, true],
@@ -337,7 +338,7 @@
     }
 
     // lc 基础req
-    let baseReq = (query, variables, successFuc, type) => {
+    let baseReq = (reqUrl, query, variables, successFuc, type) => {
         //请求参数
         let list = { "query":query, "variables":variables };
         //
@@ -347,7 +348,8 @@
             // 请求的媒体类型
             contentType: "application/json;charset=UTF-8",
             // 请求地址
-            url : "https://leetcode.cn/graphql/",
+            url: reqUrl,
+            // url : "https://leetcode.cn/graphql/",
             // 数据，json字符串
             data : JSON.stringify(list),
             // 同步方式
@@ -366,14 +368,17 @@
             }
         });
     };
+    // post请求
+    let postReq = (reqUrl, query, variables, successFuc) => {
+        baseReq(reqUrl, query, variables, successFuc, "POST")
+    }
+    
+    
+
+
     // 修改参数
     let submissionLst = []
     let next = true
-
-    let postReq = (query, variables, successFuc) => {
-        baseReq(query, variables, successFuc, "POST")
-    }
-    
 
     // 深拷贝
     function deepclone(obj) {
@@ -1041,7 +1046,7 @@
         // 调试使用
         // let cnt = 0
         while(next) {
-            postReq(queryPbSubmission, variables, successFuc)
+            postReq('https://leetcode.cn/graphql/', queryPbSubmission, variables, successFuc)
             variables.offset += 40
             // cnt += 1
             // console.log("第" + cnt + "步")
