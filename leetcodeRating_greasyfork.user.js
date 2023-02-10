@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.7.6
+// @version      1.7.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
 // @leetcodehomepage   https://leetcode.cn/u/runonline/
 // @homepageURL  https://github.com/zhang-wangz/LeetCodeRating
 // @contributionURL https://www.showdoc.com.cn/2069209189620830
+// @run-at       document-end
 // @match        *://*leetcode.cn/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
@@ -26,7 +27,6 @@
 // @require      https://gcore.jsdelivr.net/gh/andywang425/BLTH@4368883c643af57c07117e43785cd28adcb0cb3e/assets/js/library/layer.min.js
 // @resource css https://gcore.jsdelivr.net/gh/andywang425/BLTH@d25aa353c8c5b2d73d2217b1b43433a80100c61e/assets/css/layer.css
 // @grant        unsafeWindow
-// @run-at       document-end
 // @note         2022-09-07 1.1.0 支持tag页面和题库页面显示匹配的周赛分难度
 // @note         2022-09-07 1.1.0 分数数据出自零神项目
 // @note         2022-09-07 1.1.1 修改一些小bug
@@ -97,12 +97,13 @@
 // @note         2023-02-01 1.7.4 增加题目页面新旧版ui切换，让没参加内测的伙伴一起测试
 // @note         2023-02-01 1.7.5 修复:插件的新旧版ui切换不影响力扣官方的按钮切换
 // @note         2023-02-10 1.7.6 更新:插件拦截计时器功能默认不开启
+// @note         2023-02-10 1.7.7 更新:增加题库页面去除vip题目显示功能，解决各部分插件冲突并优化
 // ==/UserScript==
 
 (function () {
     'use strict';
     
-    let version = "1.7.6"
+    let version = "1.7.7"
 
     // 用于延时函数的通用id
     let id = ""
@@ -111,9 +112,6 @@
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     let latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     let preDate = GM_getValue("preDate", "")
-
-    // 难度那一列默认rateIdx是asc第5个
-    let rateIdx = 5
 
     // 刷新菜单
     Script_setting()
@@ -239,6 +237,7 @@
             ['switchcompany', 'company function', 'company题单页面评分(字节等公司题库)', true, false],
             ['switchpblist', 'pbList function', 'pbList题单页面评分', true, false],
             ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
+            ['switchdelvip', 'delvip function', '题库页去除vip题目显示', false, true],
         ], menu_ID = [], menu_ID_Content = [];
         for (const element of menu_ALL){ // 如果读取到的值为 null 就写入默认值
             if (GM_getValue(element[0]) == null){GM_setValue(element[0], element[3])};
@@ -336,7 +335,7 @@
             credentials: 'include',
         })
     }
-
+    
     // lc 基础req
     let baseReq = (reqUrl, query, variables, successFuc, type) => {
         //请求参数
@@ -372,8 +371,6 @@
     let postReq = (reqUrl, query, variables, successFuc) => {
         baseReq(reqUrl, query, variables, successFuc, "POST")
     }
-    
-    
 
 
     // 修改参数
@@ -455,12 +452,13 @@
         });
     }
 
-    let t  // all and tag
+    let t  // all 
     let t1, le // pb
 
     function getData() {
         let switchpbRepo = GM_getValue("switchpbRepo")
         let switchTea = GM_getValue("switchTea")
+        let switchdelvip = GM_getValue("switchdelvip")
         try {
             let arr = document.querySelector("div[role='rowgroup']")
             // pb页面加载时直接返回
@@ -538,66 +536,91 @@
             
             if (switchpbRepo) {
                 let allpbHead = document.querySelector("div[role='row']")
-                let i = 0
                 let rateRefresh = false
+                let headndidx, pbtitleidx
+                let i = 0
                 allpbHead.childNodes.forEach(e => {
-                    if (e.textContent === '难度') {
-                        rateIdx = i
+                    if (e.textContent.includes("难度")) {
+                        headndidx = i
                     }
-                    if (e.textContent === '题目评分') rateRefresh = true
+                    if (e.textContent.includes("题目")) pbtitleidx = i
+                    if (e.textContent.includes("题目评分")){
+                        rateRefresh = true
+                    }
                     i += 1
                 })
 
                 let childs = arr.childNodes
                 let idx = switchTea ? 1 : 0
-                for (; idx < childs.length; idx++) {
+                let childLength = childs.length
+                for (; idx < childLength;) {
                     let v = childs[idx]
+                    let vipJudge = v.childNodes[pbtitleidx].childNodes[0].childNodes[0].childNodes[0].childNodes.length > 1
+                    if (vipJudge && switchdelvip) {
+                        // console.log(v.childNodes[1].textContent)
+                        v.remove()
+                        childLength -= 1
+                        continue
+                    }
                     let t = v.childNodes[1].textContent
                     let data = t.split(".")
                     let id = data[0].trim()
-                    let nd = v.childNodes[rateIdx].childNodes[0].innerHTML
+                    let nd = v.childNodes[headndidx].childNodes[0].innerHTML
                     if (t2rate[id] != undefined && !rateRefresh){
                         nd = t2rate[id]["Rating"]
-                        v.childNodes[rateIdx].childNodes[0].innerHTML = nd
+                        v.childNodes[headndidx].childNodes[0].innerHTML = nd
                     } else {
                         let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                        let cls = v.childNodes[rateIdx].childNodes[0].getAttribute("class")
-                        v.childNodes[rateIdx].childNodes[0].innerHTML = nd2ch[cls]
+                        let cls = v.childNodes[headndidx].childNodes[0].getAttribute("class")
+                        v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[cls]
                     }
+                    idx++
                 }
-                t = deepclone(arr.lastChild.innerHTML)
+                t = arr.lastChild.innerHTML
             }
         } catch (e) {
             return
         }
     }
 
+    function delVip() {
+        // 题库页去除vip题目显示, 开启监听，返回的数据中取出vip数据
+        if (!GM_getValue("switchdelvip")) return;
+
+        
+    }
+
+    let tagt;
     function getTagData() {
         if (!GM_getValue("switchtag")) return;
         try {
             // 筛选更新
             let arr = document.querySelector(".ant-table-tbody")
-            let head = document.querySelector(".ant-table-thead")
-            if (t != undefined && t == arr.lastChild.innerHTML) {
+            let head = document.querySelector(".ant-table-cell").parentNode
+            if (tagt != undefined && tagt == arr.lastChild.innerHTML) {
                 return
             }
+            let rateRefresh = false
             // 确认难度序列
-            let headndidx = 3
+            let headndidx
             for (let i = 0; i < head.childNodes.length; i++) {
                 let headEle = head.childNodes[i]
-                if (headEle.textContent == "难度") {
+                // console.log(headEle.textContent)
+                if (headEle.textContent.includes("难度")) {
                     headndidx = i
-                    break
+                }
+                if (headEle.textContent.includes("题目评分")){
+                    rateRefresh = true
                 }
             }
             let childs = arr.childNodes
             for (const element of childs) {
                 let v = element
-                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                let t = v.childNodes[1].textContent
                 let data = t.split(".")
                 let id = data[0].trim()
                 let nd = v.childNodes[headndidx].childNodes[0].innerHTML
-                if (t2rate[id] != undefined) {
+                if (t2rate[id] != undefined && !rateRefresh) {
                     nd = t2rate[id]["Rating"]
                     v.childNodes[headndidx].childNodes[0].innerHTML = nd
                 } else {
@@ -606,38 +629,41 @@
                     v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
-            t = deepclone(arr.lastChild.innerHTML)
+            tagt = arr.lastChild.innerHTML
         } catch (e) {
             return
         }
     }
 
+    let companyt;
     function getCompanyData() {
         if (!GM_getValue("switchcompany")) return;
         try {
             let arr = document.querySelector(".ant-table-tbody")
-            let head = document.querySelector(".ant-table-thead")
-            if (t != undefined && t == arr.lastChild.innerHTML) {
+            let head = document.querySelector(".ant-table-cell").parentNode
+            if (companyt != undefined && companyt == arr.lastChild.innerHTML) {
                 return
             }
             // 确认难度序列
-            let headndidx = 3
+            let rateRefresh = false
+            let headndidx
             for (let i = 0; i < head.childNodes.length; i++) {
                 let headEle = head.childNodes[i]
-                if (headEle.textContent == "难度") {
+                if (headEle.textContent.includes("难度")) {
                     headndidx = i
-                    break
+                }
+                if (headEle.textContent.includes("题目评分")){
+                    rateRefresh = true
                 }
             }
-
             let childs = arr.childNodes
             for (const element of childs) {
                 let v = element
-                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                let t = v.childNodes[1].textContent
                 let data = t.split(".")
                 let id = data[0].trim()
                 let nd = v.childNodes[headndidx].childNodes[0].innerHTML
-                if (t2rate[id] != undefined) {
+                if (t2rate[id] != undefined && !rateRefresh) {
                     nd = t2rate[id]["Rating"]
                     v.childNodes[headndidx].childNodes[0].innerHTML = nd
                 } else {
@@ -646,38 +672,52 @@
                     v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
-            t = deepclone(arr.lastChild.innerHTML)
+            companyt = arr.lastChild.innerHTML
         } catch (e) {
             return
         }
     }
 
+    let pblistt;
     function getPblistData() {
         if (!GM_getValue("switchpblist")) return;
         try {
             let arr = document.querySelector("div[role='rowgroup']")
             if (arr == undefined) return
-            if (t != undefined && t == arr.lastChild.innerHTML) {
+            if (pblistt != undefined && pblistt == arr.lastChild.innerHTML) {
                 return
+            }
+            
+            let head = document.querySelector("div[role='row']")
+            // 确认难度序列
+            let rateRefresh = false
+            let headndidx;
+            for (let i = 0; i < head.childNodes.length; i++) {
+                let headEle = head.childNodes[i]
+                if (headEle.textContent.includes("难度")) {
+                    headndidx = i
+                }
+                if (headEle.textContent.includes("题目评分")){
+                    rateRefresh = true
+                }
             }
             let childs = arr.childNodes
             for (const element of childs) {
                 let v = element
-                let length = v.childNodes.length
-                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                let t = v.childNodes[1].textContent
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
-                if (t2rate[id] != undefined) {
+                let nd = v.childNodes[headndidx].childNodes[0].innerHTML
+                if (t2rate[id] != undefined && !rateRefresh) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+                    v.childNodes[headndidx].childNodes[0].innerHTML = nd
                 } else {
                     let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                    let cls = v.childNodes[length - 2].childNodes[0].getAttribute("class")
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[cls]
+                    let cls = v.childNodes[headndidx].childNodes[0].getAttribute("class")
+                    v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[cls]
                 }
             }
-            t = deepclone(arr.lastChild.innerHTML)
+            pblistt = arr.lastChild.innerHTML
         } catch (e) {
             return
         }
@@ -689,21 +729,36 @@
             let arr = $("div[role='table']")
             if (arr.length == 0) return
             arr = arr[0].childNodes[1]
+
+            let head = document.querySelector("div[role='row']")
+            // 确认难度序列
+            let rateRefresh = false
+            let headndidx
+            for (let i = 0; i < head.childNodes.length; i++) {
+                let headEle = head.childNodes[i]
+                if (headEle.textContent.includes("难度")) {
+                    headndidx = i
+                }
+                if (headEle.textContent.includes("题目评分")){
+                    rateRefresh = true
+                }
+            }
+    
             let childs = arr.childNodes
             for (const element of childs) {
                 let v = element
-                let length = v.childNodes.length
-                let t = v.childNodes[1].childNodes[0].childNodes[0].innerText
+                // let length = v.childNodes.length
+                let t = v.childNodes[1].textContent
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[length - 1].childNodes[0].innerHTML
-                if (t2rate[id] != undefined) {
+                let nd = v.childNodes[headndidx].childNodes[0].innerHTML
+                if (t2rate[id] != undefined && !rateRefresh) {
                     nd = t2rate[id]["Rating"]
-                    v.childNodes[length - 1].childNodes[0].innerHTML = nd
+                    v.childNodes[headndidx].childNodes[0].innerHTML = nd
                 } else {
                     let nd2ch = { "text-green-s": "简单", "text-yellow": "中等", "text-red-s": "困难" }
-                    let clr = v.childNodes[length - 1].childNodes[0].getAttribute("class")
-                    v.childNodes[length - 1].childNodes[0].innerHTML = nd2ch[clr]
+                    let clr = v.childNodes[headndidx].childNodes[0].getAttribute("class")
+                    v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[clr]
                 }
             }
         } catch (e) {
@@ -727,7 +782,7 @@
         if (oldBtn && oldBtn.getAttribute("name") && oldBtn.getAttribute("name").includes("isadd")) {
             // paas
         } else if (oldBtn) {
-            console.log(oldBtn.getAttribute("name"))
+            // console.log(oldBtn.getAttribute("name"))
             oldBtn.setAttribute("name", "isadd")
             oldBtn.addEventListener('click', () => {
                 GM_setValue("switchnewBeta", false)
@@ -896,9 +951,9 @@
                         pa.childNodes[le - 1].setAttribute("hidden", "true")
                     }
                 }
-                t1 = deepclone(id)
+                t1 = id
 
-            }else {
+            } else {
                 // 旧版逻辑，使用参数t和t1，分别代表标题的html和标题id
                 // 旧版题目左侧列表里面所有分数
                 let pbAll = document.querySelector("body > div.question-picker-detail__2A9V.show__GfjG > div.question-picker-detail-menu__3NQq.show__3hiR > div.lc-theme-dark.question-picker-questions-wrapper__13qM > div")
@@ -1007,7 +1062,7 @@
                     }
                 }
                 le = pa.childNodes.length
-                t1 = deepclone(id)
+                t1 = id
             }
         } catch (e) {
             return
@@ -1028,7 +1083,7 @@
             let submissions = data.submissions
             next = deepclone(data.hasNext)
             // console.log("req success: ", data)
-            submissionLst = deepclone(submissionLst.concat(submissions))
+            submissionLst = submissionLst.concat(submissions)
             saveData(key, submissionLst)
             console.log("update submission data: ", questiontag, langMap[lang], statusMap[statusQus])
         }
