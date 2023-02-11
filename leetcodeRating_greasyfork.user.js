@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.7.7
+// @version      1.7.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -98,12 +98,13 @@
 // @note         2023-02-01 1.7.5 修复:插件的新旧版ui切换不影响力扣官方的按钮切换
 // @note         2023-02-10 1.7.6 更新:插件拦截计时器功能默认不开启
 // @note         2023-02-10 1.7.7 更新:增加题库页面去除vip题目显示功能，解决各部分插件冲突并优化
+// @note         2023-02-10 1.7.8 更新:修复新功能去除vip题目显示缺陷，优化部分代码
 // ==/UserScript==
 
 (function () {
     'use strict';
     
-    let version = "1.7.7"
+    let version = "1.7.8"
 
     // 用于延时函数的通用id
     let id = ""
@@ -150,6 +151,45 @@
     const dummySend = XMLHttpRequest.prototype.send
     const regPbSubmission = 'https://leetcode.cn/problems/.*/submissions/.*';
     const queryPbSubmission ='\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: String, $status: SubmissionStatusEnum) {\n  submissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n    lang: $lang\n    status: $status\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      title\n      status\n      statusDisplay\n      lang\n      langName: langVerboseName\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      submissionComment {\n        comment\n      }\n    }\n  }\n}\n    '
+    const queryProblemsetQuestionList = `
+    query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
+        problemsetQuestionList(
+            categorySlug: $categorySlug
+            limit: $limit
+            skip: $skip
+            filters: $filters
+        ) {
+            hasMore
+            total
+            questions {
+            acRate
+            difficulty
+            freqBar
+            frontendQuestionId
+            isFavor
+            paidOnly
+            solutionNum
+            status
+            title
+            titleCn
+            titleSlug
+            topicTags {
+                name
+                nameTranslated
+                id
+                slug
+            }
+            extra {
+                hasVideoSolution
+                topCompanyTags {
+                imgUrl
+                slug
+                numSubscribed
+                }
+            }
+            }
+        }
+    }`
     const langMap = {
         "所有语言": null,
         "C++" : "cpp",
@@ -452,13 +492,81 @@
         });
     }
 
+    // 因为力扣未捕获错误信息，所以重写一下removechild方法
+    const removeChildFn = Node.prototype.removeChild;
+    Node.prototype.removeChild = function (n) {
+        let err = null;
+        try {
+            err = removeChildFn.call(this, n); // 正常删除
+        } catch(error) {
+            console.log("力扣api发生错误: ", error.toString().substr(0, 150))
+        }
+        return err
+    }
+
+    window.onerror = function(message, source, lineno, colno, error) {
+        message.preventDefault()
+        console.log("力扣api发生错误:", message.message)
+        return true
+    }
+
+    function callback(variables) {
+        let data;
+        // console.log(variables)
+        postReq('https://leetcode.cn/graphql/', queryProblemsetQuestionList, variables, (res) => {
+            // console.log(res.data)
+            res.data.problemsetQuestionList.questions = res.data.problemsetQuestionList.questions.filter(e => e.paidOnly == false)
+            data = res
+        })
+        return data
+    }
+
+    // 写一个拦截题库页面的工具
+    const originalOpen = XMLHttpRequest.prototype.open
+    function intercept() {
+        XMLHttpRequest.prototype.open = function newOpen(method, url, async, user, password, disbaleIntercept) {
+            if (!disbaleIntercept && method.toLocaleLowerCase() === 'post' && url === `/graphql/`) {
+                const originalSend = this.send
+                this.send = async str => {
+                    try {
+                        if (typeof str === 'string') {
+                            const body = JSON.parse(str)
+                            if ( body.query && body.query.includes('query problemsetQuestionList')) {
+                                for (const key of ['response', 'responseText']) {
+                                    Object.defineProperty(this, key, {
+                                        get: function() {
+                                            const data = callback(body.variables)
+                                            return JSON.stringify(data)
+                                        },
+                                        configurable: true,
+                                    })
+                                }
+                            }
+                            str = JSON.stringify(body)
+                        }
+                    } catch (error) {
+                        console.log(error)
+                    }
+                    return originalSend.call(this, str)
+                }
+            }
+            originalOpen.apply(this, [method, url, async, user, password])
+        }
+    }
+
+    function restore() {
+        XMLHttpRequest.prototype.open = originalOpen
+    }
+        
+    if(GM_getValue("switchdelvip")) intercept(); else restore()
+
+
     let t  // all 
     let t1, le // pb
 
     function getData() {
         let switchpbRepo = GM_getValue("switchpbRepo")
         let switchTea = GM_getValue("switchTea")
-        let switchdelvip = GM_getValue("switchdelvip")
         try {
             let arr = document.querySelector("div[role='rowgroup']")
             // pb页面加载时直接返回
@@ -537,31 +645,23 @@
             if (switchpbRepo) {
                 let allpbHead = document.querySelector("div[role='row']")
                 let rateRefresh = false
-                let headndidx, pbtitleidx
+                let headndidx, pbtitleidx = 1
                 let i = 0
                 allpbHead.childNodes.forEach(e => {
                     if (e.textContent.includes("难度")) {
                         headndidx = i
                     }
-                    if (e.textContent.includes("题目")) pbtitleidx = i
                     if (e.textContent.includes("题目评分")){
                         rateRefresh = true
                     }
                     i += 1
                 })
-
+                // console.log(pbtitleidx)
                 let childs = arr.childNodes
                 let idx = switchTea ? 1 : 0
                 let childLength = childs.length
-                for (; idx < childLength;) {
+                while (idx < childLength) {
                     let v = childs[idx]
-                    let vipJudge = v.childNodes[pbtitleidx].childNodes[0].childNodes[0].childNodes[0].childNodes.length > 1
-                    if (vipJudge && switchdelvip) {
-                        // console.log(v.childNodes[1].textContent)
-                        v.remove()
-                        childLength -= 1
-                        continue
-                    }
                     let t = v.childNodes[1].textContent
                     let data = t.split(".")
                     let id = data[0].trim()
@@ -581,13 +681,6 @@
         } catch (e) {
             return
         }
-    }
-
-    function delVip() {
-        // 题库页去除vip题目显示, 开启监听，返回的数据中取出vip数据
-        if (!GM_getValue("switchdelvip")) return;
-
-        
     }
 
     let tagt;
@@ -1108,17 +1201,18 @@
         }
     }
     // 监听
-    let addPbListener = () => {
+    let addListener = () => {
         // console.log("addListener....")
         XMLHttpRequest.prototype.send = function () {
             const _onreadystatechange = this.onreadystatechange;
             this.onreadystatechange = (...args) => {
-                if (this.readyState === this.DONE && this.responseURL == "https://leetcode.cn/graphql/noj-go/") {
+                if (this.readyState === this.DONE && this.responseURL.startsWith("https://leetcode.cn/graphql/noj-go/")) {
                     if (this.status === 200 || this.response.type === "application/json") {
                         // console.log("update list....")
-                        updateFlag = true
+                        if(window.location.href.startsWith(pbUrl)) updateFlag = true
                     }
                 }
+
                 if (_onreadystatechange) {
                     _onreadystatechange.apply(this, args);
                 }
@@ -1126,6 +1220,31 @@
             dummySend.apply(this, arguments);
         }
     }
+    addListener()
+
+    // 拦截力扣安全检测api
+    let xycApiListener = () => {
+        // console.log("addListener....")
+        XMLHttpRequest.prototype.send = function () {
+            const _onreadystatechange = this.onreadystatechange;
+            let judge = false
+            this.onreadystatechange = (...args) => {
+                // judge = this.responseURL.startsWith("https://sentry1.lingkou.xyz/api")
+                if (this.readyState === this.DONE && this.responseURL.startsWith("https://sentry1.lingkou.xyz/api")){
+                    if (this.status === 400 || this.response.type === "application/json") {
+                        // 如果检测机制不行的话，就拦截不发送
+                        judge = true
+                    }
+                    console.log("fetch request..")
+                }
+                if (_onreadystatechange && !judge) {
+                    _onreadystatechange.apply(this, args);
+                }
+            }
+            if(!judge) dummySend.apply(this, arguments);
+        }
+    }
+    xycApiListener()
 
     // 更新提交页数据列表
     let updateSubmissionLst = (statusEle, questiontag, lang, statusQus) => {
@@ -1315,6 +1434,7 @@
             }
         });
     } else if (window.location.href.startsWith(pbUrl)) {
-        addPbListener();
+        // do nothing
+        addListener()
     }
 })();
