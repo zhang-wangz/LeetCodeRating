@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.7.8
+// @version      1.7.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -104,7 +104,7 @@
 (function () {
     'use strict';
     
-    let version = "1.7.8"
+    let version = "1.7.9"
 
     // 用于延时函数的通用id
     let id = ""
