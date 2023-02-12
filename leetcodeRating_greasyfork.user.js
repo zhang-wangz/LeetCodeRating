@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.7.10
+// @version      1.8.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -100,12 +100,13 @@
 // @note         2023-02-10 1.7.7 更新:增加题库页面去除vip题目显示功能，解决各部分插件冲突并优化
 // @note         2023-02-11 1.7.8 更新:修复新功能去除vip题目显示缺陷，优化部分代码
 // @note         2023-02-12 1.7.10 更新:去除拦截力扣api安全检测机制的功能，修复更新操作
+// @note         2023-02-12 1.8.0 题库页面去除用户vip校验检查，不影响评分显示
 // ==/UserScript==
 
 (function () {
     'use strict';
     
-    let version = "1.7.10"
+    let version = "1.8.0"
 
     // 用于延时函数的通用id
     let id = ""
@@ -602,7 +603,8 @@
             let last = head.childNodes[l - 1]
 
             // 防止过多的无效操作
-            if ((!switchpbRepo || (t != undefined && t == arr.lastChild.innerHTML))
+            let first = switchTea ? 1 : 0
+            if ((!switchpbRepo || (t != undefined && t == arr.childNodes[first].innerHTML))
                 && (!switchTea || (last.childNodes[0].childNodes[1] instanceof Text && last.childNodes[0].childNodes[1].textContent == "灵茶の试炼"))) {
                 return
             }
@@ -689,8 +691,13 @@
                     let data = t.split(".")
                     let id = data[0].trim()
                     let nd = v.childNodes[headndidx].childNodes[0].innerHTML
+                    // if(idx == 1) {
+                    //     console.log(id)
+                    //     console.log(t)
+                    // }
                     if (t2rate[id] != undefined && !rateRefresh){
                         nd = t2rate[id]["Rating"]
+                        // console.log(nd)
                         v.childNodes[headndidx].childNodes[0].innerHTML = nd
                     } else {
                         let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
@@ -699,7 +706,7 @@
                     }
                     idx++
                 }
-                t = arr.lastChild.innerHTML
+                t = arr.childNodes[first].innerHTML
             }
         } catch (e) {
             return
