@@ -151,6 +151,7 @@
     const dummySend = XMLHttpRequest.prototype.send
     const regPbSubmission = 'https://leetcode.cn/problems/.*/submissions/.*';
     const queryPbSubmission ='\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: String, $status: SubmissionStatusEnum) {\n  submissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n    lang: $lang\n    status: $status\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      title\n      status\n      statusDisplay\n      lang\n      langName: langVerboseName\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      submissionComment {\n        comment\n      }\n    }\n  }\n}\n    '
+    const queryUser = '\n    query globalData {\n  userStatus {\n    isSignedIn\n    isPremium\n    username\n    realName\n    avatar\n    userSlug\n    isAdmin\n    checkedInToday\n    useTranslation\n    premiumExpiredAt\n    isTranslator\n    isSuperuser\n    isPhoneVerified\n    isVerified\n  }\n  jobsMyCompany {\n    nameSlug\n  }\n  commonNojPermissionTypes\n}\n    '
     const queryProblemsetQuestionList = `
     query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
         problemsetQuestionList(
@@ -510,14 +511,20 @@
         return true
     }
 
-    function callback(variables) {
+    function callback(tag, variables) {
         let data;
-        // console.log(variables)
-        postReq('https://leetcode.cn/graphql/', queryProblemsetQuestionList, variables, (res) => {
-            // console.log(res.data)
-            res.data.problemsetQuestionList.questions = res.data.problemsetQuestionList.questions.filter(e => e.paidOnly == false)
-            data = res
-        })
+        if (tag == 'query problemsetQuestionList') {
+            postReq('https://leetcode.cn/graphql/', queryProblemsetQuestionList, variables, (res) => {
+                res.data.problemsetQuestionList.questions = res.data.problemsetQuestionList.questions.filter(e => !e.paidOnly)
+                data = res
+            })
+        } else {
+            // postReq('https://leetcode.cn/graphql/', queryUser, variables, (res) => {
+            //     res.data.userStatus.isPremium = true
+            //     data = res
+            //     console.log(data)
+            // })
+        }
         return data
     }
 
@@ -530,18 +537,33 @@
                 this.send = async str => {
                     try {
                         if (typeof str === 'string') {
+                            let tag
                             const body = JSON.parse(str)
                             if ( body.query && body.query.includes('query problemsetQuestionList')) {
+                                tag = 'query problemsetQuestionList'
                                 for (const key of ['response', 'responseText']) {
                                     Object.defineProperty(this, key, {
                                         get: function() {
-                                            const data = callback(body.variables)
+                                            const data = callback(tag, body.variables)
                                             return JSON.stringify(data)
                                         },
                                         configurable: true,
                                     })
                                 }
                             }
+                            // if ( body.query && body.query.includes('query globalData')) {
+                            //     tag = 'query globalData'
+                            //     for (const key of ['response', 'responseText']) {
+                            //         Object.defineProperty(this, key, {
+                            //             get: function() {
+                            //                 const data = callback(tag, body.variables)
+                            //                 return JSON.stringify(data)
+                            //             },
+                            //             configurable: true,
+                            //         })
+                            //     }
+                            // }
+
                             str = JSON.stringify(body)
                         }
                     } catch (error) {
