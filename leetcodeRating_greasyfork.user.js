@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.7.9
+// @version      1.7.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -98,13 +98,14 @@
 // @note         2023-02-01 1.7.5 修复:插件的新旧版ui切换不影响力扣官方的按钮切换
 // @note         2023-02-10 1.7.6 更新:插件拦截计时器功能默认不开启
 // @note         2023-02-10 1.7.7 更新:增加题库页面去除vip题目显示功能，解决各部分插件冲突并优化
-// @note         2023-02-10 1.7.8 更新:修复新功能去除vip题目显示缺陷，优化部分代码
+// @note         2023-02-11 1.7.8 更新:修复新功能去除vip题目显示缺陷，优化部分代码
+// @note         2023-02-12 1.7.10 更新:去除拦截力扣api安全检测机制的功能，修复更新操作
 // ==/UserScript==
 
 (function () {
     'use strict';
     
-    let version = "1.7.9"
+    let version = "1.7.10"
 
     // 用于延时函数的通用id
     let id = ""
@@ -1266,7 +1267,7 @@
             if(!judge) dummySend.apply(this, arguments);
         }
     }
-    xycApiListener()
+    // xycApiListener()
 
     // 更新提交页数据列表
     let updateSubmissionLst = (statusEle, questiontag, lang, statusQus) => {
