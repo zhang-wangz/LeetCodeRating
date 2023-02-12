@@ -86,7 +86,7 @@ if __name__ == '__main__':
     with open("./tencentdoc/tea.json", 'w') as file:
         json.dump(obj, file, cls=MyEncoder)
         print("save tea.json...")
-    day = day_time(0)
+    day = obj["算法趣题"][1][0]["str"]
     with open("./tencentdoc/tea/"+day+"-tea.json", 'w') as file:
         json.dump(obj, file, cls=MyEncoder)
         print("save"+day+"-tea.json...")
