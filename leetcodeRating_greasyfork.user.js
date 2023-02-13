@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.8.0
+// @version      1.8.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -101,12 +101,13 @@
 // @note         2023-02-11 1.7.8 更新:修复新功能去除vip题目显示缺陷，优化部分代码
 // @note         2023-02-12 1.7.10 更新:去除拦截力扣api安全检测机制的功能，修复更新操作
 // @note         2023-02-12 1.8.0 题库页面去除用户vip校验检查，不影响评分显示
+// @note         2023-02-13 1.8.1 增加新功能模拟真实oj环境,去除拦截计时器功能
 // ==/UserScript==
 
 (function () {
     'use strict';
     
-    let version = "1.8.0"
+    let version = "1.8.1"
 
     // 用于延时函数的通用id
     let id = ""
@@ -132,9 +133,6 @@
 
     // 新版本判断
     let isBeta = document.getElementById("__NEXT_DATA__") != undefined
-
-    let time = $(".sc-gsDKAQ")
-    let subBtn = getSubmitBtn(isBeta)
 
     // 题目提交数据
     let pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
@@ -270,17 +268,17 @@
     // 菜单方法定义
     function Script_setting(){
         let menu_ALL = [
-            ['switchTimeoff', 'refined-leetcode sc-timer fuction', '拦截refined-leetcode计时器功能', false, true],
-            ['switchTea', '0x3f tea', '灵茶相关功能', true, true],
-            ['switchpbRepo', 'pbRepo function', '题库页面评分(不包括灵茶)', true, false],
-            ['switchpb', 'pb function', '题目页面评分和新版提交信息', true, true],
-            ['switchnewBeta', 'new function', '题目页面是否使用新版ui', true, true],
-            ['switchsearch', 'search function', '题目搜索页面评分', true, false],
-            ['switchtag', 'tag function', 'tag题单页面评分(动态规划等分类题库)', true, false],
-            ['switchcompany', 'company function', 'company题单页面评分(字节等公司题库)', true, false],
-            ['switchpblist', 'pbList function', 'pbList题单页面评分', true, false],
+            ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
+            ['switchpbRepo', 'pbRepo function', '题库页评分(不包括灵茶)', true, false],
+            ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
+            ['switchpb', 'pb function', '题目页评分和新版提交信息', true, true],
+            ['switchnewBeta', 'new function', '题目页是否使用新版ui', true, true],
+            ['switchsearch', 'search function', '题目搜索页评分', true, false],
+            ['switchtag', 'tag function', 'tag题单页评分(动态规划等分类题库)', true, false],
+            ['switchcompany', 'company function', 'company题单页评分(字节等公司题库)', true, false],
+            ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
             ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
-            ['switchdelvip', 'delvip function', '题库页去除vip题目显示', false, true],
+            ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
         ], menu_ID = [], menu_ID_Content = [];
         for (const element of menu_ALL){ // 如果读取到的值为 null 就写入默认值
             if (GM_getValue(element[0]) == null){GM_setValue(element[0], element[3])};
@@ -502,7 +500,7 @@
         try {
             err = removeChildFn.call(this, n); // 正常删除
         } catch(error) {
-            console.log("力扣api发生错误: ", error.toString().substr(0, 150))
+            if(!error.toString().includes("NotFoundError")) console.log("力扣api发生错误: ", error.toString().substr(0, 150))
         }
         return err
     }
@@ -591,6 +589,7 @@
     function getData() {
         let switchpbRepo = GM_getValue("switchpbRepo")
         let switchTea = GM_getValue("switchTea")
+        let switchrealoj = GM_getValue("switchrealoj")
         try {
             let arr = document.querySelector("div[role='rowgroup']")
             // pb页面加载时直接返回
@@ -600,12 +599,13 @@
 
             let head = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div.relative.flex.items-center.space-x-4.py-3.my-4.-ml-4.overflow-hidden.pl-4")
             let l = head.childNodes.length
-            let last = head.childNodes[l - 1]
-
+            let lasthead = head.childNodes[l - 1]
+            let lastchild = arr.lastChild
             // 防止过多的无效操作
             let first = switchTea ? 1 : 0
             if ((!switchpbRepo || (t != undefined && t == arr.childNodes[first].innerHTML))
-                && (!switchTea || (last.childNodes[0].childNodes[1] instanceof Text && last.childNodes[0].childNodes[1].textContent == "灵茶の试炼"))) {
+                && (!switchTea || (lasthead.childNodes[0].childNodes[1] instanceof Text && lasthead.childNodes[0].childNodes[1].textContent == "灵茶の试炼"))
+                && (!switchrealoj) || lastchild.childNodes[4].textContent == "隐藏") {
                 return
             }
             t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
@@ -656,7 +656,7 @@
                     arr.insertBefore(div, arr.childNodes[0])
                 }
                 // 试炼按钮渲染
-                if (last.childNodes[0].childNodes[1].textContent != "灵茶の试炼") {
+                if (lasthead.textContent != "灵茶の试炼") {
                     let tea = document.createElement("a")
                     tea.innerHTML = '<div class="flex items-center space-x-2 whitespace-nowrap rounded-full px-4 py-[10px] leading-tight pointer-event-none text-base bg-fill-3 dark:bg-dark-fill-3 text-label-2 dark:text-dark-label-2 hover:bg-fill-2 dark:hover:bg-dark-fill-2 hover:text-label-2 dark:hover:text-dark-label-2"><svg \
                                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="text-gray-9 dark:text-dark-gray-9 mr-2 hidden h-[18px] w-[18px] lg:block"><path fill-rule="evenodd" d="M12 22c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2zm6-6l2 2v1H4v-1l2-2v-5c0-3.08 1.64-5.64 4.5-6.32V4c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68C16.37 5.36 18 7.93 18 11v5zm-2 1v-6c0-2.48-1.51-4.5-4-4.5S8 8.52 8 11v6h8z" clip-rule="evenodd"></path> \
@@ -670,11 +670,14 @@
             if (switchpbRepo) {
                 let allpbHead = document.querySelector("div[role='row']")
                 let rateRefresh = false
-                let headndidx, pbtitleidx = 1
+                let headndidx, acrateidx
                 let i = 0
                 allpbHead.childNodes.forEach(e => {
                     if (e.textContent.includes("难度")) {
                         headndidx = i
+                    }
+                    if (e.textContent.includes("通过率")) {
+                        acrateidx = i
                     }
                     if (e.textContent.includes("题目评分")){
                         rateRefresh = true
@@ -685,16 +688,17 @@
                 let childs = arr.childNodes
                 let idx = switchTea ? 1 : 0
                 let childLength = childs.length
-                while (idx < childLength) {
+                for (;idx < childLength;idx++) {
                     let v = childs[idx]
                     let t = v.childNodes[1].textContent
                     let data = t.split(".")
                     let id = data[0].trim()
                     let nd = v.childNodes[headndidx].childNodes[0].innerHTML
-                    // if(idx == 1) {
-                    //     console.log(id)
-                    //     console.log(t)
-                    // }
+                    if (switchrealoj) {
+                        v.childNodes[acrateidx].textContent = "隐藏"
+                        v.childNodes[headndidx].textContent = "隐藏"
+                        continue
+                    }
                     if (t2rate[id] != undefined && !rateRefresh){
                         nd = t2rate[id]["Rating"]
                         // console.log(nd)
@@ -704,7 +708,6 @@
                         let cls = v.childNodes[headndidx].childNodes[0].getAttribute("class")
                         v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[cls]
                     }
-                    idx++
                 }
                 t = arr.childNodes[first].innerHTML
             }
@@ -924,32 +927,7 @@
     
     function getpb() {
         if(!GM_getValue("switchpb")) return
-
-        // 关闭计时器功能
-        let switchTimeoff = GM_getValue("switchTimeoff")
-        if (switchTimeoff) {
-            time = $(".sc-ksdxgE")
-            subBtn = getSubmitBtn(isBeta)
-            if (time) time.remove()
-            // 如果是去除最后空元素
-            if (subBtn && subBtn.attr('name') && subBtn.attr('name') === 'copyBtn') {
-                if (subBtn.parent().slice(-1).text() == 'nullele') {
-                    subBtn.parent().children().slice(-1).remove() 
-                }
-            } else {
-                if (subBtn) {
-                    subBtn.attr("name", 'copyBtn')
-                    if (!isBeta) subBtn.attr('class', 'submit__-6u8 css-r8ozcn-BaseButtonComponent ery7n2v0')
-                    else {
-                        let nullele = '<a">nullele</a>'
-                        subBtn.parent().append(nullele)
-                        subBtn.parent().children().slice(-1).hide()
-                    }
-                }
-            }
-        }
-    
-
+        let switchrealoj = GM_getValue("switchrealoj")
         // 是否在提交页面
         let statusEle = window.location.href.match(regPbSubmission)
         if(isBeta) {
@@ -992,8 +970,9 @@
                 // 新版统计难度分数并且修改
                 let nd = colorSpan.getAttribute("class")
                 let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                if (t2rate[id] != undefined) {
-                    colorSpan.innerHTML = t2rate[id]["Rating"]
+                if (switchrealoj || (t2rate[id] != undefined)) {
+                    if (switchrealoj) colorSpan.remove()
+                    else if(t2rate[id] != undefined) colorSpan.innerHTML = t2rate[id]["Rating"]
                 } else {
                     for (let item in nd2ch) {
                         if (nd.toString().includes(item)) {
@@ -1032,7 +1011,8 @@
 
                         abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
                         abody2.setAttribute("target", "_blank")
-                        abody2.removeAttribute("hidden")
+                        if(switchrealoj) abody2.setAttribute("hidden", true)
+                        else abody2.removeAttribute("hidden")
                     } else {
                         span.innerText = "对应周赛未知"
                         abody.setAttribute("href", "")
@@ -1061,7 +1041,8 @@
                         pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
                         pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
                         pa.childNodes[le - 1].setAttribute("target", "_blank")
-                        pa.childNodes[le - 1].removeAttribute("hidden")
+                        if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
+                        else pa.childNodes[le - 1].removeAttribute("hidden")
                     } else {
                         pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
                         pa.childNodes[le - 2].setAttribute("href", "")
@@ -1098,6 +1079,7 @@
                 // 旧版标题修改位置
                 let data = t.innerText.split(".")
                 let id = data[0].trim()
+                let ndtext = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(1)")
                 let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
                 let pa = colorSpan.parentNode
                 if ((t1 != undefined && t1 == id) && (le != undefined && le <= pa.childNodes.length)) {
@@ -1106,8 +1088,9 @@
                 // 统计难度分数
                 let nd = colorSpan.getAttribute("data-degree")
                 let nd2ch = { "easy": "简单", "medium": "中等", "hard": "困难" }
-                if (t2rate[id] != undefined) {
-                    colorSpan.innerHTML = t2rate[id]["Rating"]
+                if (switchrealoj || t2rate[id] != undefined) {
+                    if(switchrealoj) { colorSpan.remove(); ndtext.remove() }
+                    else colorSpan.innerHTML = t2rate[id]["Rating"]
                 } else {
                     colorSpan.innerHTML = nd2ch[nd]
                 }
@@ -1141,7 +1124,8 @@
 
                         abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
                         abody2.setAttribute("target", "_blank")
-                        abody2.removeAttribute("hidden")
+                        if(switchrealoj) abody2.setAttribute("hidden", "true")
+                        else abody2.removeAttribute("hidden")
                     } else {
                         span.innerText = "对应周赛未知"
                         abody.setAttribute("href", "")
@@ -1171,7 +1155,8 @@
                         pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
                         pa.childNodes[le - 1].childNodes[0].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
                         pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_blank")
-                        pa.childNodes[le - 1].childNodes[0].removeAttribute("hidden")
+                        if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
+                        else pa.childNodes[le - 1].childNodes[0].removeAttribute("hidden")
                     } else {
                         pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
                         pa.childNodes[le - 2].setAttribute("href", "")
@@ -1395,13 +1380,13 @@
         if (isAddEvent) {
             window.addEventListener("urlchange", () => {
                 let newUrl = window.location.href
-                clearAndStart(newUrl, 100, false)
+                clearAndStart(newUrl, 1, false)
             })
         }
     }
     
     // 定时启动 
-    clearAndStart(window.location.href, 100, true)
+    clearAndStart(window.location.href, 1, true)
     if (window.location.href.startsWith(allUrl)) {
         // 版本更新机制
         GM_xmlhttpRequest({
