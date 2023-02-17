@@ -1,4 +1,5 @@
-
+var isindex = true
+var visitor = "主人"
 //右键菜单
 jQuery(document).ready(function ($) {
     $("#spig").mousedown(function (e) {
@@ -15,8 +16,8 @@ $("#spig").bind("contextmenu", function(e) {
 //鼠标在消息上时
 jQuery(document).ready(function ($) {
     $("#message").hover(function () {
-       $("#message").fadeTo("100", 1);
-     });
+        $("#message").fadeTo("100", 1);
+    });
 });
 
 
@@ -24,9 +25,9 @@ jQuery(document).ready(function ($) {
 jQuery(document).ready(function ($) {
     //$(".mumu").jrumble({rangeX: 2,rangeY: 2,rangeRot: 1});
     $(".mumu").mouseover(function () {
-       $(".mumu").fadeTo("300", 0.3);
-       msgs = ["我隐身了，你看不到我", "我会隐身哦！嘿嘿！", "别动手动脚的，把手拿开！", "把手拿开我才出来！"];
-       var i = Math.floor(Math.random() * msgs.length);
+        $(".mumu").fadeTo("300", 0.3);
+        msgs = ["我隐身了，你看不到我", "我会隐身哦！嘿嘿！", "别动手动脚的，把手拿开！", "把手拿开我才出来！"];
+        var i = Math.floor(Math.random() * msgs.length);
         showMessage(msgs[i]);
     });
     $(".mumu").mouseout(function () {
