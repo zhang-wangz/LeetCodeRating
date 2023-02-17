@@ -1,0 +1,40 @@
+/*body {
+	font-size:12px;
+}*/
+
+.spig {
+	display:block;
+	width:150px;
+	height:190px;
+	position:absolute;
+	top: -200px;
+	left: 160px;
+	z-index:9999;
+}
+#message {
+	line-height:170%;
+	color :#191919;
+	border: 1px solid #c4c4c4;
+	background:#ddd;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	border-radius:5px;
+	min-height:1em;
+	padding:5px;
+	top:-30px;
+	position:absolute;
+	text-align:center;
+	width:auto !important;
+	z-index:10000;
+	-moz-box-shadow:0 0 15px #eeeeee;
+	-webkit-box-shadow:0 0 15px #eeeeee;
+	border-color:#eeeeee;
+	box-shadow:0 0 15px #eeeeee;
+	outline:none;
+}
+.mumu {
+	width:130px;
+	height:170px;
+	cursor: move;
+	background:url(https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/assets/spig.png) no-repeat;
+}
