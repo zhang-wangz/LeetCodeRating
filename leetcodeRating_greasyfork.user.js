@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.8.4
+// @version      1.8.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -103,14 +103,15 @@
 // @note         2023-02-12 1.8.0 题库页面去除用户vip校验检查，不影响评分显示
 // @note         2023-02-13 1.8.1 增加新功能模拟真实oj环境,去除拦截计时器功能
 // @note         2023-02-17 1.8.2 修复力扣ui变更失效的功能
-// @note         2023-02-17 1.8.3 增加力扣纸片人功能
+// @note         2023-02-20 1.8.3 增加力扣纸片人功能
 // @note         2023-02-20 1.8.4 油猴官方不允许引入github js文件, 集成纸片人js到脚本当中
+// @note         2023-02-20 1.8.5 修复引入js导致的bug
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.8.4"
+    let version = "1.8.5"
     // 用于延时函数的通用id
     let id = ""
 
@@ -369,14 +370,14 @@
 
     // 消息函数
     let showMessage = (a, b) => {
-        if (b == null) b = 5000;
-        // $("#mumu").css({"opacity":"0.5 !important"})
+        if (b == null) b = 10000;
+        $("#mumu").css({"opacity":"0.5 !important"})
         $("#message").hide().stop();
         $("#message").html(a);
         $("#message").fadeIn();
         $("#message").fadeTo("1", 1);
         $("#message").fadeOut(b);
-        // $("#mumu").css({"opacity":"1 !important"})
+        $("#mumu").css({"opacity":"1 !important"})
     };
 
     if (GM_getValue("switchnewBeta")) {
@@ -625,9 +626,8 @@
     if(GM_getValue("switchdelvip")) intercept(); else restore()
 
 
-    let t  // all
     let t1, le // pb
-
+    let tFirst, tLast  // all
     function getData() {
         let switchpbRepo = GM_getValue("switchpbRepo")
         let switchTea = GM_getValue("switchTea")
@@ -645,11 +645,12 @@
             let lastchild = arr.lastChild
             // 防止过多的无效操作
             let first = switchTea ? 1 : 0
-            if ((!switchpbRepo || (t != undefined && t == arr.childNodes[first].innerHTML))
+            if ((!switchpbRepo || (tFirst != undefined && tFirst == arr.childNodes[first].innerHTML && tLast != undefined && tLast == lastchild.innerHTML))
                 && (!switchTea || (lasthead.childNodes[0].childNodes[1] instanceof Text && lasthead.childNodes[0].childNodes[1].textContent == "灵茶の试炼"))
                 && (!switchrealoj) || lastchild.childNodes[4].textContent == "隐藏") {
                 return
             }
+
             t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
             latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
 
@@ -710,6 +711,8 @@
                 }
             }
 
+            // console.log(tFirst)
+            // console.log(tLast)
             if (switchpbRepo) {
                 let allpbHead = document.querySelector("div[role='row']")
                 let rateRefresh = false
@@ -734,6 +737,7 @@
                 for (;idx < childLength;idx++) {
                     let v = childs[idx]
                     let t = v.childNodes[1].textContent
+                    // console.log(t)
                     let data = t.split(".")
                     let id = data[0].trim()
                     let nd = v.childNodes[headndidx].childNodes[0].innerHTML
@@ -752,7 +756,8 @@
                         v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[cls]
                     }
                 }
-                t = arr.childNodes[first].innerHTML
+                tFirst = arr.childNodes[first].innerHTML
+                tLast = lastchild.innerHTML
             }
         } catch (e) {
             return
@@ -946,8 +951,8 @@
                 GM_setValue("switchnewBeta", true)
             })
         }
-
-        let oldBtn = document.querySelector(".rounded-lg")
+        
+        let oldBtn = document.querySelector("#editor > div.absolute.right-\\[25px\\].bottom-\\[84px\\].z-overlay > div > div")
         if (oldBtn && oldBtn.getAttribute("name") && oldBtn.getAttribute("name").includes("isadd")) {
             // paas
         } else if (oldBtn) {
@@ -1336,7 +1341,7 @@
 
     let now = getCurrentDate(1)
     preDate = GM_getValue("preDate", "")
-    if (t2rate["tagVersion3"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["tagVersion5"] == undefined || (preDate == "" || preDate != now)) {
         // 每天重置为空
         pbSubmissionInfo = JSON.parse("{}")
         GM_setValue("pbSubmissionInfo", JSON.stringify(pbSubmissionInfo))
@@ -1357,7 +1362,7 @@
                         t2rate[element.ID] = element
                         t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
                     }
-                    t2rate["tagVersion3"] = {}
+                    t2rate["tagVersion5"] = {}
                     console.log("everyday getdate once...")
                     preDate = now
                     GM_setValue("preDate", preDate)
@@ -1379,13 +1384,13 @@
         let targetIdx = -1
         let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
         let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl]
-        let msgs = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到分类题库页面，针对专题练习有利于进步哦～", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到公司题库，针对专门的公司题目练习有利于面试呢", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
+        let msgShow = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到分类题库页面，针对专题练习有利于进步哦～", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到公司题库，针对专门的公司题目练习有利于面试呢", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
         let funcLst = [getData, getTagData, getpb, getCompanyData, getPblistData, getSearch]
         for (let index = 0; index < urlLst.length; index++) {
             const element = urlLst[index];
             if (url.match(element)) {
                 targetIdx = index
-                showMessage(msgs[index])
+                showMessage(msgShow[index])
                 // console.log(targetIdx, url)
             } else if (!url.match(element)) {
                 let tmp = GM_getValue(pageLst[index], -1)
@@ -1477,6 +1482,7 @@
 {
     const isindex = true
     const visitor = "主人"
+    let msgs = []
 
     const spig = `<div id="spig" class="spig" hidden>
                             <div id="message">正在加载中……</div>
@@ -1490,8 +1496,7 @@
     //右键菜单
     jQuery(document).ready(function ($) {
         $("#spig").mousedown(function (e) {
-            if(e.which==3){
-                // <a href=\"http://www.yizhanzzw.com\" title=\"首页\">首页</a>
+            if(e.which == 3){
                 showMessage("秘密通道:<br /><a href=\"https://leetcode.cn/problemset/all/\" title=\"题库\">题库</a>  ",10000);
             }
     });
@@ -1543,8 +1548,8 @@
                     if (resp && resp.status_msg && resp.status_msg.includes("Accepted")) {
                         showMessage("恭喜主人成功提交， 当前分数为: " + score + ", 当前等级为: " + Math.round(level).toString())
                         console.log("恭喜主人成功提交， 当前分数为: " + score + ", 当前等级为: " + Math.round(level).toString())
-                    } else if (resp && resp.status_msg && resp.status_msg.includes("Accepted"))  {
-                        showMessage("很遗憾，主人提交失败，不过也不要气馁呀，加油! 当前分数为: " + score + ", 当前等级为: " + Math.round(level).toString())
+                    } else if (resp && resp.status_msg && !resp.status_msg.includes("Accepted"))  {
+                        showMessage("很遗憾，主人提交失败，不过也不要气馁呀，加油! <br/> 当前分数为: " + score + ", 当前等级为: " + Math.round(level).toString())
                         console.log("很遗憾，主人提交失败，不过也不要气馁呀，加油! 当前分数为: " + score + ", 当前等级为: " + Math.round(level).toString())
                     }
                 }
@@ -1566,11 +1571,10 @@
 
     //鼠标在上方时
     jQuery(document).ready(function ($) {
-        //$(".mumu").jrumble({rangeX: 2,rangeY: 2,rangeRot: 1});
         $(".mumu").mouseover(function () {
             $(".mumu").fadeTo("300", 0.3);
             msgs = ["我隐身了，你看不到我", "我会隐身哦！嘿嘿！", "别动手动脚的，把手拿开！", "把手拿开我才出来！"];
-            var i = Math.floor(Math.random() * msgs.length);
+            let i = Math.floor(Math.random() * msgs.length);
             showMessage(msgs[i]);
         });
         $(".mumu").mouseout(function () {
@@ -1620,14 +1624,14 @@
     // jQuery(document).ready(function($) {
     //     window.setInterval(function() {
     //         msgs = [$("#hitokoto").text()];
-    //         //if(weather.state)msgs.concat(weather.c);
+    //         //if(weather.state) msgs.concat(weather.c);
     //         var i = Math.floor(Math.random() * msgs.length);
-    //         s = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, -0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7, -0.75];
+    //         var s = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, -0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7, -0.75];
     //         var i1 = Math.floor(Math.random() * s.length);
     //         var i2 = Math.floor(Math.random() * s.length);
     //         $(".spig").animate({
     //             left: document.body.offsetWidth / 2 * (1 + s[i1]),
-    //             top: document.body.offsetheight / 2 * (1 + s[i1])
+    //             top: document.body.offsetheight / 2 * (1 + s[i2])
     //         },
     //         {
     //             duration: 2000,
@@ -1638,7 +1642,6 @@
     // });
 
 
-    let spig_top = 50;
     //滚动条移动
     jQuery(document).ready(function ($) {
         let f = $(".spig").offset().top;
@@ -1656,16 +1659,17 @@
     //鼠标点击时
     jQuery(document).ready(function ($) {
         let stat_click = 0;
+        let i = 0;
         $(".mumu").click(function () {
             if (!ismove) {
                 stat_click++;
                 if (stat_click > 4) {
-                    let msgs = ["你有完没完呀？", "你已经摸我" + stat_click + "次了", "非礼呀！救命！OH，My ladygaga"];
-                    let i = Math.floor(Math.random() * msgs.length);
+                    msgs = ["你有完没完呀？", "你已经摸我" + stat_click + "次了", "非礼呀！救命！OH，My ladygaga"];
+                    i = Math.floor(Math.random() * msgs.length);
                     showMessage(msgs[i]);
                 } else {
-                    let msgs = ["筋斗云！~我飞！", "我跑呀跑呀跑！~~", "别摸我，有什么好摸的！", "惹不起你，我还躲不起你么？", "不要摸我了，我会告诉你老婆来打你的！", "干嘛动我呀！小心我咬你！"];
-                    let i = Math.floor(Math.random() * msgs.length);
+                    msgs = ["筋斗云！~我飞！", "我跑呀跑呀跑！~~", "别摸我，有什么好摸的！", "惹不起你，我还躲不起你么？", "不要摸我了，我会告诉你老婆来打你的！", "干嘛动我呀！小心我咬你！"];
+                    i = Math.floor(Math.random() * msgs.length);
                     showMessage(msgs[i]);
                 }
             let s = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6,0.7,0.75,-0.1, -0.2, -0.3, -0.4, -0.5, -0.6,-0.7,-0.75];
@@ -1673,7 +1677,7 @@
             let i2 = Math.floor(Math.random() * s.length);
                 $(".spig").animate({
                 left: document.body.offsetWidth/2*(1+s[i1]),
-                top:  document.body.offsetHeight/2*(1+s[i1])
+                top:  document.body.offsetHeight/2*(1+s[i2])
                 },
                 {
                     duration: 500,
@@ -1684,18 +1688,6 @@
             }
         });
     });
-
-    //显示消息函数
-    // function showMessage(a, b) {
-    //     if (b == null) b = 5000;
-    //     // $("#mumu").css({"opacity":"0.5 !important"})
-    //     $("#message").hide().stop();
-    //     $("#message").html(a);
-    //     $("#message").fadeIn();
-    //     $("#message").fadeTo("1", 1);
-    //     $("#message").fadeOut(b);
-    //     // $("#mumu").css({"opacity":"1 !important"})
-    // };
 
     //拖动
     let _move = false;
@@ -1787,8 +1779,8 @@
     if (GM_getValue("switchperson")) {
         $("#spig").attr("hidden", false)
         let hitokotohtml = function() {
-            let msgs = [$("#hitokoto").text()];
-            showMessage(msgs[0]);
+            let msgShow = [$("#hitokoto").text()];
+            showMessage(msgShow[0]);
             setTimeout(hitokotohtml, 15000)
         }
         setTimeout(hitokotohtml, 6000)
@@ -1804,6 +1796,5 @@
         }
         setTimeout(getkoto, 5000);
     }
-
 
 })();

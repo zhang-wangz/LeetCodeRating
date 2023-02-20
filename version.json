@@ -1,4 +1,4 @@
 {
-  "version": "1.8.4",
-  "content": "油猴官方不允许引入github js文件, 集成纸片人js到脚本当中"
+  "version": "1.8.5",
+  "content": "修复引入js导致的bug"
 }
