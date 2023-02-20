@@ -4,10 +4,10 @@
 
 .spig {
 	display:block;
-	width:150px;
+	width:154px;
 	height:190px;
 	position:absolute;
-	top: -200px;
+	top: -150px;
 	left: 160px;
 	z-index:9999;
 }
@@ -31,10 +31,17 @@
 	border-color:#eeeeee;
 	box-shadow:0 0 15px #eeeeee;
 	outline:none;
+	opacity: 0.75 !important;
 }
 .mumu {
-	width:130px;
-	height:170px;
+	width:154px;
+	height:190px;
 	cursor: move;
 	background:url('https://i.ibb.co/89XdTMf/Spig.png') no-repeat;
+}
+
+#level {
+	text-align:center;
+	z-index:9999;
+	color :#191919;
 }
