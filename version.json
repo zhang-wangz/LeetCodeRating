@@ -1,4 +1,4 @@
 {
-  "version": "1.8.3",
-  "content": "增加力扣纸片人功能"
+  "version": "1.8.4",
+  "content": "油猴官方不允许引入github js文件, 集成纸片人js到脚本当中"
 }
