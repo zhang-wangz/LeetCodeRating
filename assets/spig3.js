@@ -68,6 +68,9 @@ let addListener = () => {
                 if (resp && resp.status_msg && resp.status_msg.includes("Accepted")) {
                     showMessage("恭喜主人成功提交， 当前分数为: " + score + ", 当前等级为: " + Math.round(level).toString())
                     console.log("恭喜主人成功提交， 当前分数为: " + score + ", 当前等级为: " + Math.round(level).toString())
+                } else if (resp && resp.status_msg && resp.status_msg.includes("Accepted"))  {
+                    showMessage("很遗憾，主人提交失败，不过也不要气馁呀，加油! 当前分数为: " + score + ", 当前等级为: " + Math.round(level).toString())
+                    console.log("很遗憾，主人提交失败，不过也不要气馁呀，加油! 当前分数为: " + score + ", 当前等级为: " + Math.round(level).toString())
                 }
             }
             if (_onreadystatechange) {
@@ -78,8 +81,6 @@ let addListener = () => {
     }
 }
 addListener()
-
-
 
 
 // 鼠标在消息上时
