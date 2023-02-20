@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.8.2
+// @version      1.8.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -24,8 +24,10 @@
 // @connect      raw.githubusercontents.com
 // @connect      raw.githubusercontent.com
 // @require      https://gcore.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js
+// @require      https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/assets/spig2.js
 // @require      https://gcore.jsdelivr.net/gh/andywang425/BLTH@4368883c643af57c07117e43785cd28adcb0cb3e/assets/js/library/layer.min.js
-// @resource css https://gcore.jsdelivr.net/gh/andywang425/BLTH@d25aa353c8c5b2d73d2217b1b43433a80100c61e/assets/css/layer.css
+// @resource css1 https://gcore.jsdelivr.net/gh/andywang425/BLTH@d25aa353c8c5b2d73d2217b1b43433a80100c61e/assets/css/layer.css
+// @resource css2 https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/assets/spig2.css
 // @grant        unsafeWindow
 // @note         2022-09-07 1.1.0 支持tag页面和题库页面显示匹配的周赛分难度
 // @note         2022-09-07 1.1.0 分数数据出自零神项目
@@ -90,7 +92,7 @@
 // @note         2023-01-05 1.6.5 修改更新时候打开的js地址，避免不能访问github的人无法更新插件
 // @note         2023-01-24 1.6.6 1.题单页面与refine-leetcode插件兼容性修复 2. 增加题目页面refine-leetcode的计时器功能拦截开关
 // @note         2023-01-24 1.6.7 删除无效打印
-// @note         2023-01-24 1.6.9 增加各页面功能开关，同时修复部分页面评分不显示的bug 
+// @note         2023-01-24 1.6.9 增加各页面功能开关，同时修复部分页面评分不显示的bug
 // @note         2023-01-25 1.6.10 修复若干bug，优化代码逻辑结构
 // @note         2023-01-25 1.7.0 修复页面url改变时，循环添加事件监听导致的页面宕机问题
 // @note         2023-02-01 1.7.3 拦截功能修改
@@ -103,16 +105,19 @@
 // @note         2023-02-12 1.8.0 题库页面去除用户vip校验检查，不影响评分显示
 // @note         2023-02-13 1.8.1 增加新功能模拟真实oj环境,去除拦截计时器功能
 // @note         2023-02-17 1.8.2 修复力扣ui变更失效的功能
+// @note         2023-02-17 1.8.3 增加力扣纸片人功能
 // ==/UserScript==
 
 (function () {
     'use strict';
-    
-    let version = "1.8.2"
 
+    let version = "1.8.3"
+
+    // 备份下本地路径
+    // file:/Users/zhang-wangz/Desktop/repo/LeetCodeRating/assets/spig1.js
     // 用于延时函数的通用id
     let id = ""
-
+    
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     let latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
@@ -152,7 +157,6 @@
     const dummySend = XMLHttpRequest.prototype.send
     const regPbSubmission = 'https://leetcode.cn/problems/.*/submissions/.*';
     const queryPbSubmission ='\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: String, $status: SubmissionStatusEnum) {\n  submissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n    lang: $lang\n    status: $status\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      title\n      status\n      statusDisplay\n      lang\n      langName: langVerboseName\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      submissionComment {\n        comment\n      }\n    }\n  }\n}\n    '
-    const queryUser = '\n    query globalData {\n  userStatus {\n    isSignedIn\n    isPremium\n    username\n    realName\n    avatar\n    userSlug\n    isAdmin\n    checkedInToday\n    useTranslation\n    premiumExpiredAt\n    isTranslator\n    isSuperuser\n    isPhoneVerified\n    isVerified\n  }\n  jobsMyCompany {\n    nameSlug\n  }\n  commonNojPermissionTypes\n}\n    '
     const queryProblemsetQuestionList = `
     query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
         problemsetQuestionList(
@@ -235,7 +239,9 @@
 
     // 如果有数据就会直接初始化，否则初始化为空
     pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
-    GM_addStyle(GM_getResourceText("css"));
+    GM_addStyle(GM_getResourceText("css1"));
+    GM_addStyle(GM_getResourceText("css2"));
+
 
     // 监听urlchange事件定义
     function initUrlChange() {
@@ -243,22 +249,22 @@
         const load = () => {
             if (isLoad) return
             isLoad = true
-        
+
             const oldPushState = history.pushState
             const oldReplaceState = history.replaceState
-        
+
             history.pushState = function pushState(...args) {
                 const res = oldPushState.apply(this, args)
                 window.dispatchEvent(new Event('urlchange'))
                 return res
             }
-        
+
             history.replaceState = function replaceState(...args) {
                 const res = oldReplaceState.apply(this, args)
                 window.dispatchEvent(new Event('urlchange'))
                 return res
             }
-        
+
             window.addEventListener('popstate', () => {
                 window.dispatchEvent(new Event('urlchange'))
             })
@@ -280,6 +286,7 @@
             ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
             ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
+            ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
         for (const element of menu_ALL){ // 如果读取到的值为 null 就写入默认值
             if (GM_getValue(element[0]) == null){GM_setValue(element[0], element[3])};
@@ -318,6 +325,39 @@
             }
             registerMenuCommand(); // 重新注册脚本菜单
         }
+    }
+
+    // 纸片人，待完善
+    if (GM_getValue("switchperson")) {
+        $("#spig").attr("hidden", false)
+        function showMessage(a, b) {
+            if (b == null) b = 5000;
+            // $("#mumu").css({"opacity":"0.5 !important"})
+            $("#message").hide().stop();
+            $("#message").html(a);
+            $("#message").fadeIn();
+            $("#message").fadeTo("1", 1);
+            $("#message").fadeOut(b);
+            // $("#mumu").css({"opacity":"1 !important"})
+        };
+
+        let hitokotohtml = function() {
+            let msgs = [$("#hitokoto").text()];
+            showMessage(msgs[0]);
+            setTimeout(hitokotohtml, 15000)
+        }
+        setTimeout(hitokotohtml, 6000)
+
+        function getkoto(){ 
+            $.get("https://api.uixsj.cn/hitokoto/get?type=fart&code=json").then(res => {echokoto(res);}).catch(xhr=>xhr)
+            setTimeout(getkoto, 6000)
+        } 
+        function echokoto(result){ 
+            let hc = eval(result);  
+            document.getElementById("hitokoto").textContent = hc.content;
+            // console.log(hc.content)
+        }
+        setTimeout(getkoto, 5000); 
     }
 
     if (GM_getValue("switchnewBeta")) {
@@ -377,7 +417,7 @@
             credentials: 'include',
         })
     }
-    
+
     // lc 基础req
     let baseReq = (reqUrl, query, variables, successFuc, type) => {
         //请求参数
@@ -409,6 +449,7 @@
             }
         });
     };
+
     // post请求
     let postReq = (reqUrl, query, variables, successFuc) => {
         baseReq(reqUrl, query, variables, successFuc, "POST")
@@ -519,12 +560,6 @@
                 res.data.problemsetQuestionList.questions = res.data.problemsetQuestionList.questions.filter(e => !e.paidOnly)
                 data = res
             })
-        } else {
-            // postReq('https://leetcode.cn/graphql/', queryUser, variables, (res) => {
-            //     res.data.userStatus.isPremium = true
-            //     data = res
-            //     console.log(data)
-            // })
         }
         return data
     }
@@ -552,19 +587,6 @@
                                     })
                                 }
                             }
-                            // if ( body.query && body.query.includes('query globalData')) {
-                            //     tag = 'query globalData'
-                            //     for (const key of ['response', 'responseText']) {
-                            //         Object.defineProperty(this, key, {
-                            //             get: function() {
-                            //                 const data = callback(tag, body.variables)
-                            //                 return JSON.stringify(data)
-                            //             },
-                            //             configurable: true,
-                            //         })
-                            //     }
-                            // }
-
                             str = JSON.stringify(body)
                         }
                     } catch (error) {
@@ -580,11 +602,11 @@
     function restore() {
         XMLHttpRequest.prototype.open = originalOpen
     }
-        
+
     if(GM_getValue("switchdelvip")) intercept(); else restore()
 
 
-    let t  // all 
+    let t  // all
     let t1, le // pb
 
     function getData() {
@@ -668,7 +690,7 @@
                     head.appendChild(tea)
                 }
             }
-            
+
             if (switchpbRepo) {
                 let allpbHead = document.querySelector("div[role='row']")
                 let rateRefresh = false
@@ -815,7 +837,7 @@
             if (pblistt != undefined && pblistt == arr.lastChild.innerHTML) {
                 return
             }
-            
+
             let head = document.querySelector("div[role='row']")
             // 确认难度序列
             let rateRefresh = false
@@ -871,7 +893,7 @@
                     rateRefresh = true
                 }
             }
-    
+
             let childs = arr.childNodes
             for (const element of childs) {
                 let v = element
@@ -926,7 +948,7 @@
             return $("button[class='px-3 py-1.5 font-medium items-center whitespace-nowrap transition-all focus:outline-none inline-flex text-label-r bg-green-s dark:bg-dark-green-s hover:bg-green-3 dark:hover:bg-dark-green-3 rounded-lg']")
         }
     }
-    
+
     function getpb() {
         if(!GM_getValue("switchpb")) return
         let switchrealoj = GM_getValue("switchrealoj")
@@ -1220,7 +1242,7 @@
     // 监听
     let addListener = () => {
         // console.log("addListener....")
-        XMLHttpRequest.prototype.send = function () {
+        XMLHttpRequest.prototype.send = function (str) {
             const _onreadystatechange = this.onreadystatechange;
             this.onreadystatechange = (...args) => {
                 if (this.readyState === this.DONE && this.responseURL.startsWith("https://leetcode.cn/graphql/noj-go/")) {
@@ -1229,39 +1251,14 @@
                         if(window.location.href.startsWith(pbUrl)) updateFlag = true
                     }
                 }
-
                 if (_onreadystatechange) {
                     _onreadystatechange.apply(this, args);
                 }
             }
-            dummySend.apply(this, arguments);
+            return dummySend.call(this, str);
         }
     }
     addListener()
-
-    // 拦截力扣安全检测api
-    let xycApiListener = () => {
-        // console.log("addListener....")
-        XMLHttpRequest.prototype.send = function () {
-            const _onreadystatechange = this.onreadystatechange;
-            let judge = false
-            this.onreadystatechange = (...args) => {
-                // judge = this.responseURL.startsWith("https://sentry1.lingkou.xyz/api")
-                if (this.readyState === this.DONE && this.responseURL.startsWith("https://sentry1.lingkou.xyz/api")){
-                    if (this.status === 400 || this.response.type === "application/json") {
-                        // 如果检测机制不行的话，就拦截不发送
-                        judge = true
-                    }
-                    console.log("fetch request..")
-                }
-                if (_onreadystatechange && !judge) {
-                    _onreadystatechange.apply(this, args);
-                }
-            }
-            if(!judge) dummySend.apply(this, arguments);
-        }
-    }
-    // xycApiListener()
 
     // 更新提交页数据列表
     let updateSubmissionLst = (statusEle, questiontag, lang, statusQus) => {
@@ -1363,11 +1360,13 @@
         let targetIdx = -1
         let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
         let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl]
+        let msgs = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到分类题库页面，针对专题练习有利于进步哦～", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到公司题库，针对专门的公司题目练习有利于面试呢", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
         let funcLst = [getData, getTagData, getpb, getCompanyData, getPblistData, getSearch]
         for (let index = 0; index < urlLst.length; index++) {
             const element = urlLst[index];
             if (url.match(element)) {
                 targetIdx = index
+                showMessage(msgs[index])
                 // console.log(targetIdx, url)
             } else if (!url.match(element)) {
                 let tmp = GM_getValue(pageLst[index], -1)
@@ -1386,8 +1385,8 @@
             })
         }
     }
-    
-    // 定时启动 
+
+    // 定时启动
     clearAndStart(window.location.href, 1, true)
     if (window.location.href.startsWith(allUrl)) {
         // 版本更新机制
