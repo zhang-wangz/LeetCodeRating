@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.8.5
+// @version      1.8.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -106,12 +106,47 @@
 // @note         2023-02-20 1.8.3 增加力扣纸片人功能
 // @note         2023-02-20 1.8.4 油猴官方不允许引入github js文件, 集成纸片人js到脚本当中
 // @note         2023-02-20 1.8.5 修复引入js导致的bug
+// @note         2023-02-21 1.8.6 使旧版题目页面NEW按钮可以移动避免遮挡其余页面元素，同时优化代码设计
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.8.5"
+    let version = "1.8.6"
+
+    let isGithub = false
+
+    // 访问相关url
+    let teaUrl, versionUrl, sciptUrl, rakingUrl
+    if (isGithub) {
+        teaUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
+        versionUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/version.json"
+        sciptUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
+        rakingUrl = "https://zerotrac.github.io/leetcode_problem_rating/data.json"
+    } else {
+        teaUrl = "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
+        versionUrl = "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/version.json"
+        sciptUrl = "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
+        rakingUrl = "https://raw.githubusercontents.com/zerotrac/leetcode_problem_rating/main/data.json"
+    }
+
+    // 页面相关url
+    const allUrl = "https://leetcode.cn/problemset/"
+    const tagUrl = "https://leetcode.cn/tag/"
+    const companyUrl = "https://leetcode.cn/company/"
+    const pblistUrl = "https://leetcode.cn/problem-list/"
+    const pbUrl = "https://leetcode.cn/problems/"
+    const searchUrl = "https://leetcode.cn/search/"
+    
+    // req相关url
+    const lcnojgo = "https://leetcode.cn/graphql/noj-go"
+    const lcgraphql = "https://leetcode.cn/graphql/"
+    const chContestUrl = "https://leetcode.cn/contest/"
+    const zhContestUrl = "https://leetcode.com/contest/"
+
+    // 灵茶相关url
+    const teaSheetUrl = "https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz"
+
     // 用于延时函数的通用id
     let id = ""
 
@@ -141,14 +176,6 @@
     let pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
     let questiontag = ""
     let updateFlag = false
-
-    // url相关数据
-    const allUrl = "https://leetcode.cn/problemset/"
-    const tagUrl = "https://leetcode.cn/tag/"
-    const companyUrl = "https://leetcode.cn/company/"
-    const pblistUrl = "https://leetcode.cn/problem-list/"
-    const pbUrl = "https://leetcode.cn/problems/"
-    const searchUrl = "https://leetcode.cn/search/"
 
     // 常量数据
     const dummySend = XMLHttpRequest.prototype.send
@@ -237,51 +264,6 @@
     // 如果有数据就会直接初始化，否则初始化为空
     pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
     GM_addStyle(GM_getResourceText("css1"));
-    GM_addStyle(`
-        .spig {
-            display:block;
-            width:154px;
-            height:190px;
-            position:absolute;
-            top: -150px;
-            left: 160px;
-            z-index:9999;
-        }
-        #message {
-            line-height:170%;
-            color :#191919;
-            border: 1px solid #c4c4c4;
-            background:#ddd;
-            -moz-border-radius:5px;
-            -webkit-border-radius:5px;
-            border-radius:5px;
-            min-height:1em;
-            padding:5px;
-            top:-30px;
-            position:absolute;
-            text-align:center;
-            width:auto !important;
-            z-index:10000;
-            -moz-box-shadow:0 0 15px #eeeeee;
-            -webkit-box-shadow:0 0 15px #eeeeee;
-            border-color:#eeeeee;
-            box-shadow:0 0 15px #eeeeee;
-            outline:none;
-            opacity: 0.75 !important;
-        }
-        .mumu {
-            width:154px;
-            height:190px;
-            cursor: move;
-            background:url('https://i.ibb.co/89XdTMf/Spig.png') no-repeat;
-        }
-
-        #level {
-            text-align:center;
-            z-index:9999;
-            color :#191919;
-        }
-    `)
 
 
     // 监听urlchange事件定义
@@ -367,21 +349,8 @@
             registerMenuCommand(); // 重新注册脚本菜单
         }
     }
-
-    // 消息函数
-    let showMessage = (a, b) => {
-        if (b == null) b = 10000;
-        $("#mumu").css({"opacity":"0.5 !important"})
-        $("#message").hide().stop();
-        $("#message").html(a);
-        $("#message").fadeIn();
-        $("#message").fadeTo("1", 1);
-        $("#message").fadeOut(b);
-        $("#mumu").css({"opacity":"1 !important"})
-    };
-
-    if (GM_getValue("switchnewBeta")) {
-        fetch('https://leetcode.cn/graphql/noj-go', {
+    let newbtnSwitch = () => {
+        fetch(lcnojgo, {
             headers: {
                 accept: '*/*',
                 'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
@@ -408,8 +377,10 @@
             mode: 'cors',
             credentials: 'include',
         })
-    } else {
-        fetch('https://leetcode.cn/graphql/noj-go', {
+    }
+
+    let oldbtnSwitch = () => {
+        fetch(lcnojgo, {
             headers: {
                 accept: '*/*',
                 'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
@@ -438,6 +409,12 @@
         })
     }
 
+    if (GM_getValue("switchnewBeta")) {
+        newbtnSwitch()
+    } else {
+        oldbtnSwitch()
+    }
+
     // lc 基础req
     let baseReq = (reqUrl, query, variables, successFuc, type) => {
         //请求参数
@@ -450,7 +427,6 @@
             contentType: "application/json;charset=UTF-8",
             // 请求地址
             url: reqUrl,
-            // url : "https://leetcode.cn/graphql/",
             // 数据，json字符串
             data : JSON.stringify(list),
             // 同步方式
@@ -576,7 +552,7 @@
     function callback(tag, variables) {
         let data;
         if (tag == 'query problemsetQuestionList') {
-            postReq('https://leetcode.cn/graphql/', queryProblemsetQuestionList, variables, (res) => {
+            postReq(lcgraphql, queryProblemsetQuestionList, variables, (res) => {
                 res.data.problemsetQuestionList.questions = res.data.problemsetQuestionList.questions.filter(e => !e.paidOnly)
                 data = res
             })
@@ -705,7 +681,7 @@
                     tea.innerHTML = '<div class="flex items-center space-x-2 whitespace-nowrap rounded-full px-4 py-[10px] leading-tight pointer-event-none text-base bg-fill-3 dark:bg-dark-fill-3 text-label-2 dark:text-dark-label-2 hover:bg-fill-2 dark:hover:bg-dark-fill-2 hover:text-label-2 dark:hover:text-dark-label-2"><svg \
                                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="text-gray-9 dark:text-dark-gray-9 mr-2 hidden h-[18px] w-[18px] lg:block"><path fill-rule="evenodd" d="M12 22c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2zm6-6l2 2v1H4v-1l2-2v-5c0-3.08 1.64-5.64 4.5-6.32V4c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68C16.37 5.36 18 7.93 18 11v5zm-2 1v-6c0-2.48-1.51-4.5-4-4.5S8 8.52 8 11v6h8z" clip-rule="evenodd"></path> \
                                         </svg>灵茶の试炼</div>'
-                    tea.setAttribute("href", "https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz")
+                    tea.setAttribute("href", teaSheetUrl)
                     tea.setAttribute("target", "_blank")
                     head.appendChild(tea)
                 }
@@ -939,28 +915,78 @@
             return
         }
     }
+    let clickFlag = true 
+    let startTime, endTime
+    let newisaddBtnClick = () => {
+        if (!clickFlag) return
+        GM_setValue("switchnewBeta", true)
+        newbtnSwitch()
+        location.reload()
+    }
+
+    function moveSupport(selector) {
+        // 拖动
+        let _move = false;
+        let ismove = false; // 移动标记
+        let _x, _y; // 鼠标离控件左上角的相对位置
+        jQuery(document).ready(function ($) {
+            $(selector).mousedown(function (e) {
+                _move = true;
+                startTime = new Date().getTime();
+                _x = e.pageX - parseInt($(selector).css("left"));
+                _y = e.pageY - parseInt($(selector).css("top"));
+            });
+            $(document).mousemove(function (e) {
+                if (_move) {
+                    let x = e.pageX - _x;
+                    let y = e.pageY - _y;
+                    let wx = $(window).width() - $(selector).width();
+                    let dy = $(document).height() - $(selector).height();
+                    if(x >= 0 && x <= wx && y > 0 && y <= dy) {
+                        $(selector).css({
+                            top: y,
+                            left: x
+                        }); //控件新位置
+                        ismove = true;
+                    }
+                }
+            }).mouseup(function () {
+                endTime = new Date().getTime();
+                clickFlag = endTime - startTime < 200;
+                _move = false;
+            });
+        });
+    }
+
 
     function switchUi() {
         // 新版按钮切换
+        let newcopyBtn = document.querySelector("[name='newisaddBtn']")
         let newBtn = document.querySelector(".css-h6vf0p-card-Box")
-        if (newBtn && newBtn.getAttribute("name") && newBtn.getAttribute("name").includes("isadd")) {
+        if (newcopyBtn) {
             // paas
-        } else if (newBtn) {
-            newBtn.setAttribute("name", "isadd")
-            newBtn.addEventListener('click', () => {
-                GM_setValue("switchnewBeta", true)
-            })
+        } else if(newBtn && newBtn.getAttribute("hidden") == null){
+            let cloneBtn = newBtn.cloneNode()
+            cloneBtn.textContent = newBtn.textContent
+            newBtn.setAttribute("hidden", "true")
+            newBtn.parentNode.appendChild(cloneBtn)
+
+            cloneBtn.setAttribute("name", "newisaddBtn")
+            cloneBtn.addEventListener('click', newisaddBtnClick)
+            moveSupport("[name='newisaddBtn']")
         }
         
-        let oldBtn = document.querySelector("#editor > div.absolute.right-\\[25px\\].bottom-\\[84px\\].z-overlay > div > div")
-        if (oldBtn && oldBtn.getAttribute("name") && oldBtn.getAttribute("name").includes("isadd")) {
-            // paas
-        } else if (oldBtn) {
-            // console.log(oldBtn.getAttribute("name"))
-            oldBtn.setAttribute("name", "isadd")
-            oldBtn.addEventListener('click', () => {
-                GM_setValue("switchnewBeta", false)
-            })
+        let oldBtn = document.querySelector("#editor > div.absolute.right-\\[25px\\].bottom-\\[84px\\].z-overlay > div")
+        if (oldBtn) {
+            if (oldBtn.getAttribute("name") && oldBtn.getAttribute("name").includes("isaddBtn")) {
+                // paas
+            } else {
+                // console.log(oldBtn.getAttribute("name"))
+                oldBtn.setAttribute("name", "isaddBtn")
+                oldBtn.addEventListener('click', () => {
+                    GM_setValue("switchnewBeta", false)
+                })
+            }
         }
     }
 
@@ -1030,8 +1056,8 @@
                     }
                 }
                 // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
-                let url = "https://leetcode.cn/contest/"
-                let zhUrl = "https://leetcode.com/contest/"
+                let url = chContestUrl
+                let zhUrl = zhContestUrl
                 let q = pa.lastChild
                 let le = pa.childNodes.length
                 if (q.textContent == "") {
@@ -1143,8 +1169,8 @@
                     colorSpan.innerHTML = nd2ch[nd]
                 }
                 // 准备做周赛链接,如果已经不存在组件就执行操作
-                let url = "https://leetcode.cn/contest/"
-                let zhUrl = "https://leetcode.com/contest/"
+                let url = chContestUrl
+                let zhUrl = zhContestUrl
                 if (le == undefined || le != pa.childNodes.length) {
                     let abody = document.createElement("a")
                     abody.setAttribute("data-small-spacing", "true")
@@ -1257,7 +1283,7 @@
         // 调试使用
         // let cnt = 0
         while(next) {
-            postReq('https://leetcode.cn/graphql/', queryPbSubmission, variables, successFuc)
+            postReq(lcgraphql, queryPbSubmission, variables, successFuc)
             variables.offset += 40
             // cnt += 1
             // console.log("第" + cnt + "步")
@@ -1269,7 +1295,7 @@
         XMLHttpRequest.prototype.send = function (str) {
             const _onreadystatechange = this.onreadystatechange;
             this.onreadystatechange = (...args) => {
-                if (this.readyState === this.DONE && this.responseURL.startsWith("https://leetcode.cn/graphql/noj-go/")) {
+                if (this.readyState === this.DONE && this.responseURL.startsWith(lcnojgo)) {
                     if (this.status === 200 || this.response.type === "application/json") {
                         // console.log("update list....")
                         if(window.location.href.startsWith(pbUrl)) updateFlag = true
@@ -1348,7 +1374,7 @@
 
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.githubusercontents.com/zerotrac/leetcode_problem_rating/main/data.json' + "?timeStamp=" + new Date().getTime(),
+            url: rakingUrl + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
@@ -1384,13 +1410,11 @@
         let targetIdx = -1
         let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
         let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl]
-        let msgShow = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到分类题库页面，针对专题练习有利于进步哦～", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到公司题库，针对专门的公司题目练习有利于面试呢", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
         let funcLst = [getData, getTagData, getpb, getCompanyData, getPblistData, getSearch]
         for (let index = 0; index < urlLst.length; index++) {
             const element = urlLst[index];
             if (url.match(element)) {
                 targetIdx = index
-                showMessage(msgShow[index])
                 // console.log(targetIdx, url)
             } else if (!url.match(element)) {
                 let tmp = GM_getValue(pageLst[index], -1)
@@ -1416,7 +1440,7 @@
         // 版本更新机制
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/version.json' + "?timeStamp=" + new Date().getTime(),
+            url: versionUrl + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
@@ -1431,7 +1455,7 @@
                         layer.open({
                             content: '<pre style="color:#000">更新通知: <br/>leetcodeRating难度分插件有新的版本啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
                             yes: function (index, layer0) {
-                                let c = window.open("https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js" + "?timeStamp=" + new Date().getTime())
+                                let c = window.open(sciptUrl + "?timeStamp=" + new Date().getTime())
                                 c.close()
                                 layer.close(index)
                             }
@@ -1450,7 +1474,7 @@
         // 获取茶数据
         GM_xmlhttpRequest({
             method: "get",
-            url: 'https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json' + "?timeStamp=" + new Date().getTime(),
+            url: teaUrl + "?timeStamp=" + new Date().getTime(),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
@@ -1478,13 +1502,70 @@
         addListener()
     }
 
-// spig js
-{
+// spig js 纸片人相关
+if (GM_getValue("switchperson")) {
+    // url数据
+    let imgUrl = "https://i.ibb.co/89XdTMf/Spig.png"
+//    let imgUrl = "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/assets/samplespig.png"
+    let checkUrl = "https://leetcode.cn/submissions/detail/.*/check/"
+
     const isindex = true
     const visitor = "主人"
     let msgs = []
+    
+    // 求等级用的数据
+    let userTag = null
+    let level = 0
+    let score = 0
+    const queryProcess = '\n    query userQuestionProgress($userSlug: String!) {\n  userProfileUserQuestionProgress(userSlug: $userSlug) {\n    numAcceptedQuestions {\n      difficulty\n      count\n    }\n    numFailedQuestions {\n      difficulty\n      count\n    }\n    numUntouchedQuestions {\n      difficulty\n      count\n    }\n  }\n}\n    '
+    const queryUser = '\n    query globalData {\n  userStatus {\n    isSignedIn\n    isPremium\n    username\n    realName\n    avatar\n    userSlug\n    isAdmin\n    checkedInToday\n    useTranslation\n    premiumExpiredAt\n    isTranslator\n    isSuperuser\n    isPhoneVerified\n    isVerified\n  }\n  jobsMyCompany {\n    nameSlug\n  }\n  commonNojPermissionTypes\n}\n    '
+    GM_addStyle(`
+        .spig {
+            display:block;
+            width:154px;
+            height:190px;
+            position:absolute;
+            top: -150px;
+            left: 160px;
+            z-index:9999;
+        }
+        #message {
+            line-height:170%;
+            color :#191919;
+            border: 1px solid #c4c4c4;
+            background:#ddd;
+            -moz-border-radius:5px;
+            -webkit-border-radius:5px;
+            border-radius:5px;
+            min-height:1em;
+            padding:5px;
+            top:-30px;
+            position:absolute;
+            text-align:center;
+            width:auto !important;
+            z-index:10000;
+            -moz-box-shadow:0 0 15px #eeeeee;
+            -webkit-box-shadow:0 0 15px #eeeeee;
+            border-color:#eeeeee;
+            box-shadow:0 0 15px #eeeeee;
+            outline:none;
+            opacity: 0.75 !important;
+        }
+        .mumu {
+            width:154px;
+            height:190px;
+            cursor: move;
+            background:url(${imgUrl}) no-repeat;
+        }
 
-    const spig = `<div id="spig" class="spig" hidden>
+        #level {
+            text-align:center;
+            z-index:9999;
+            color :#191919;
+        }
+    `)
+
+    const spig = `<div id="spig" class="spig">
                             <div id="message">正在加载中……</div>
                             <div style="height=80px"/>
                             <div id="mumu" class="mumu"></div>
@@ -1493,29 +1574,52 @@
     const hitokoto = `<span class="hitokoto" id="hitokoto" style="display:none">Loading...</span>`
     $("body").append(spig, hitokoto)
 
-    //右键菜单
+    // 消息函数
+    let showMessage = (a, b) => {
+        if (b == null) b = 10000;
+        $("#mumu").css({"opacity":"0.5 !important"})
+        $("#message").hide().stop();
+        $("#message").html(a);
+        $("#message").fadeIn();
+        $("#message").fadeTo("1", 1);
+        $("#message").fadeOut(b);
+        $("#mumu").css({"opacity":"1 !important"})
+    };
+
+    function msgPageWelcome(url, isAddEvent) {
+        let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl]
+        let msgShow = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到分类题库页面，针对专题练习有利于进步哦～", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到公司题库，针对专门的公司题目练习有利于面试呢", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
+        for (let index = 0; index < urlLst.length; index++) {
+            const element = urlLst[index];
+            if (url.match(element)) {
+                // console.log(msgShow[index])
+                showMessage(msgShow[index])
+            }
+        }
+        if (isAddEvent) {
+            window.addEventListener("urlchange", () => {
+                let newUrl = window.location.href
+                msgPageWelcome(newUrl, false)
+            })
+        }
+    }
+    msgPageWelcome(window.location.href, true)
+
+    // 右键菜单
     jQuery(document).ready(function ($) {
         $("#spig").mousedown(function (e) {
             if(e.which == 3){
-                showMessage("秘密通道:<br /><a href=\"https://leetcode.cn/problemset/all/\" title=\"题库\">题库</a>  ",10000);
+                showMessage(`秘密通道:<br/> <a href="${allUrl}" title="题库">题库</a>`,10000);
             }
+        });
+        $("#spig").bind("contextmenu", function(e) {
+            return false;
+        });
     });
-    $("#spig").bind("contextmenu", function(e) {
-        return false;
-    });
-    });
-
-
-    // 求等级
-    let userTag = ""
-    let level = 0
-    let score = 0
-    const queryProcess = '\n    query userQuestionProgress($userSlug: String!) {\n  userProfileUserQuestionProgress(userSlug: $userSlug) {\n    numAcceptedQuestions {\n      difficulty\n      count\n    }\n    numFailedQuestions {\n      difficulty\n      count\n    }\n    numUntouchedQuestions {\n      difficulty\n      count\n    }\n  }\n}\n    '
-    const queryUser = '\n    query globalData {\n  userStatus {\n    isSignedIn\n    isPremium\n    username\n    realName\n    avatar\n    userSlug\n    isAdmin\n    checkedInToday\n    useTranslation\n    premiumExpiredAt\n    isTranslator\n    isSuperuser\n    isPhoneVerified\n    isVerified\n  }\n  jobsMyCompany {\n    nameSlug\n  }\n  commonNojPermissionTypes\n}\n    '
 
     function getscore(userTag) {
         let list = { "query": queryProcess, "variables": { "userSlug" : userTag } };
-        $.ajax({ type :"POST", url : "https://leetcode.cn/graphql/", data: JSON.stringify(list), success: function(res) {
+        $.ajax({ type :"POST", url : lcgraphql, data: JSON.stringify(list), success: function(res) {
             let levelData = res.data.userProfileUserQuestionProgress.numAcceptedQuestions
             levelData.forEach(e => {
                 if (e.difficulty == "EASY")  score += e.count * 10
@@ -1524,25 +1628,27 @@
             });
             level = score / 1000
             $("#level").text("level: " + Math.round(level).toString())
-            console.log(level)
+            console.log("目前纸片人的等级是: " + Math.round(level).toString())
         }, async: false, xhrFields : { withCredentials: true }, contentType: "application/json;charset=UTF-8"})
     }
 
-    $.ajax({ type :"POST", url : "https://leetcode.cn/graphql/", data: JSON.stringify({"query" : queryUser, "variables": {}}), success: function(res) {
+    $.ajax({ type :"POST", url : lcgraphql, data: JSON.stringify({"query" : queryUser, "variables": {}}), success: function(res) {
         userTag = res.data.userStatus.userSlug
         // console.log(userTag)
     }, async: false, xhrFields : { withCredentials: true }, contentType: "application/json;charset=UTF-8"})
 
-    if (userTag != "") {
+    if (userTag != null) {
         getscore(userTag)
     } else {
+        // console.log(userTag)
         $("#level").text("请登录后再尝试获取level")
     }
+    // 监听分数提交
     let addListener2 = () => {
         XMLHttpRequest.prototype.send = function (str) {
             const _onreadystatechange = this.onreadystatechange;
             this.onreadystatechange = (...args) => {
-                if (this.readyState == this.DONE && this.responseURL.match("https://leetcode.cn/submissions/detail/.*/check/")) {
+                if (this.readyState == this.DONE && this.responseURL.match(checkUrl)) {
                     let resp = JSON.parse(this.response)
                     // console.log(resp)
                     if (resp && resp.status_msg && resp.status_msg.includes("Accepted")) {
@@ -1569,7 +1675,7 @@
         });
     });
 
-    //鼠标在上方时
+    // 鼠标在上方时
     jQuery(document).ready(function ($) {
         $(".mumu").mouseover(function () {
             $(".mumu").fadeTo("300", 0.3);
@@ -1581,16 +1687,6 @@
             $(".mumu").fadeTo("300", 1)
         });
     });
-
-    // jQuery(document).ready(function($) {
-
-    //     window.setInterval(function() {
-    //         // , weather.c[0], weather.c[2], weather.c[5], weather.c[7]
-    //         let msgs = [$("#hitokoto").text()];
-    //         // let i = Math.floor(Math.random() * msgs.length);
-    //         showMessage(msgs[0]);
-    //     }, 5000);
-    // });
 
     //开始
     jQuery(document).ready(function ($) {
@@ -1620,7 +1716,8 @@
             duration: 1000
         });
     });
-
+    
+    // 随时间自动漂浮，暂时不开启
     // jQuery(document).ready(function($) {
     //     window.setInterval(function() {
     //         msgs = [$("#hitokoto").text()];
@@ -1642,7 +1739,7 @@
     // });
 
 
-    //滚动条移动
+    // 随滚动条移动
     jQuery(document).ready(function ($) {
         let f = $(".spig").offset().top;
         $(window).scroll(function () {
@@ -1656,7 +1753,7 @@
         });
     });
 
-    //鼠标点击时
+    // 鼠标点击时
     jQuery(document).ready(function ($) {
         let stat_click = 0;
         let i = 0;
@@ -1689,10 +1786,11 @@
         });
     });
 
-    //拖动
+    // 拖动
     let _move = false;
-    let ismove = false; //移动标记
-    let _x, _y; //鼠标离控件左上角的相对位置
+    let ismove = false; // 移动标记
+    let _x, _y; // 鼠标离控件左上角的相对位置
+
     jQuery(document).ready(function ($) {
         $("#spig").mousedown(function (e) {
             _move = true;
@@ -1718,83 +1816,84 @@
         });
     });
 
+    // 纸片人一言api
+    // $("#spig").attr("hidden", false)
+    let hitokotohtml = function() {
+        let msgShow = [$("#hitokoto").text()];
+        showMessage(msgShow[0]);
+        setTimeout(hitokotohtml, 15000)
+    }
+    setTimeout(hitokotohtml, 6000)
 
-    function getCookie(name) {
-        let nameEQ = name + "=";
-        let ca = document.cookie.split(';');
-        for (const element of ca) {
-            let c = element;
-            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length)
-        }
-        return null;
+    function getkoto(){
+        $.get("https://api.uixsj.cn/hitokoto/get?type=fart&code=json").then(res => {echokoto(res);}).catch(xhr=>xhr)
+        setTimeout(getkoto, 6000)
     }
-    function setCookie(name, value, days) {
-        let expires
-        if (days) {
-            let date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            expires = "; expires=" + date.toGMTString()
-        } else {
-            expires = "";
-        }
-        document.cookie = name + "=" + value + expires + "; path=/"
+    function echokoto(result){
+        let hc = eval(result);
+        document.getElementById("hitokoto").textContent = hc.content;
+        // console.log(hc.content)
     }
-    let weather = Array();
-    weather.s = false;
-    jQuery(document).ready(function($) {
-        let date = new Date();
-        weather.d = "" + date.getFullYear() + date.getMonth() + date.getDay();
-        weather.ck = getCookie("weather");
-        if (weather.ck == null || weather.d != getCookie("wea_tstamp")) {
-            $.ajax({
-                dataType: "jsonp",
-                success: function(data) {
-                    if (data.success != 1) {
-                        return;
-                    }
-                    weather.s = true;
-                    weather.c = Array();
-                    weather.c[0] = "今天是" + data.result[0].days + "，" + data.result[0].week;
-                    weather.c[1] = data.result[0].citynm + "今天" + data.result[0].temp_high + "°C到" + data.result[0].temp_low + "°C";
-                    weather.c[2] = data.result[0].citynm + "今天" + data.result[0].weather;
-                    weather.c[3] = data.result[0].citynm + "今天" + data.result[0].winp + "，" + data.result[0].wind;
-                    weather.c[4] = data.result[0].citynm + "明天" + data.result[1].temp_high + "°C到" + data.result[1].temp_low + "°C";
-                    weather.c[5] = data.result[0].citynm + "明天" + data.result[1].weather;
-                    weather.c[6] = data.result[0].citynm + "后天" + data.result[2].temp_high + "°C到" + data.result[2].temp_low + "°C";
-                    weather.c[7] = data.result[0].citynm + "后天" + data.result[2].weather;
-                    setCookie("wea_tstamp", weather.d, 1);
-                    setCookie("weather", encodeURI(weather.c.join(",")), 1);
-                },
-                type: "GET",
-                url: "https://myhloliapi.sinaapp.com/weather/?callback=?"
-            });
-        } else {
-            weather.s = true;
-            weather.c = decodeURI(weather.ck).split(",");
-        }
-    });
+    setTimeout(getkoto, 5000);
+
+    // 求天气相关, 暂时关闭，没有适合的api
+    // function getCookie(name) {
+    //     let nameEQ = name + "=";
+    //     let ca = document.cookie.split(';');
+    //     for (const element of ca) {
+    //         let c = element;
+    //         while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+    //         if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length)
+    //     }
+    //     return null;
+    // }
+
+    // function setCookie(name, value, days) {
+    //     let expires
+    //     if (days) {
+    //         let date = new Date();
+    //         date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    //         expires = "; expires=" + date.toGMTString()
+    //     } else {
+    //         expires = "";
+    //     }
+    //     document.cookie = name + "=" + value + expires + "; path=/"
+    // }
+
+    // let weather = Array();
+    // weather.s = false;
+    // jQuery(document).ready(function($) {
+    //     let date = new Date();
+    //     weather.d = "" + date.getFullYear() + date.getMonth() + date.getDay();
+    //     weather.ck = getCookie("weather");
+    //     if (weather.ck == null || weather.d != getCookie("wea_tstamp")) {
+    //         $.ajax({
+    //             dataType: "jsonp",
+    //             success: function(data) {
+    //                 if (data.success != 1) {
+    //                     return;
+    //                 }
+    //                 weather.s = true;
+    //                 weather.c = Array();
+    //                 weather.c[0] = "今天是" + data.result[0].days + "，" + data.result[0].week;
+    //                 weather.c[1] = data.result[0].citynm + "今天" + data.result[0].temp_high + "°C到" + data.result[0].temp_low + "°C";
+    //                 weather.c[2] = data.result[0].citynm + "今天" + data.result[0].weather;
+    //                 weather.c[3] = data.result[0].citynm + "今天" + data.result[0].winp + "，" + data.result[0].wind;
+    //                 weather.c[4] = data.result[0].citynm + "明天" + data.result[1].temp_high + "°C到" + data.result[1].temp_low + "°C";
+    //                 weather.c[5] = data.result[0].citynm + "明天" + data.result[1].weather;
+    //                 weather.c[6] = data.result[0].citynm + "后天" + data.result[2].temp_high + "°C到" + data.result[2].temp_low + "°C";
+    //                 weather.c[7] = data.result[0].citynm + "后天" + data.result[2].weather;
+    //                 setCookie("wea_tstamp", weather.d, 1);
+    //                 setCookie("weather", encodeURI(weather.c.join(",")), 1);
+    //             },
+    //             type: "GET",
+    //             url: "https://myhloliapi.sinaapp.com/weather/?callback=?"
+    //         });
+    //     } else {
+    //         weather.s = true;
+    //         weather.c = decodeURI(weather.ck).split(",");
+    //     }
+    // });
 }
-    // 纸片人，待完善
-    if (GM_getValue("switchperson")) {
-        $("#spig").attr("hidden", false)
-        let hitokotohtml = function() {
-            let msgShow = [$("#hitokoto").text()];
-            showMessage(msgShow[0]);
-            setTimeout(hitokotohtml, 15000)
-        }
-        setTimeout(hitokotohtml, 6000)
-
-        function getkoto(){
-            $.get("https://api.uixsj.cn/hitokoto/get?type=fart&code=json").then(res => {echokoto(res);}).catch(xhr=>xhr)
-            setTimeout(getkoto, 6000)
-        }
-        function echokoto(result){
-            let hc = eval(result);
-            document.getElementById("hitokoto").textContent = hc.content;
-            // console.log(hc.content)
-        }
-        setTimeout(getkoto, 5000);
-    }
 
 })();
