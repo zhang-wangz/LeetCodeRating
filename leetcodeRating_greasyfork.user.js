@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.8.6
+// @version      1.8.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -107,6 +107,7 @@
 // @note         2023-02-20 1.8.4 油猴官方不允许引入github js文件, 集成纸片人js到脚本当中
 // @note         2023-02-20 1.8.5 修复引入js导致的bug
 // @note         2023-02-21 1.8.6 使旧版题目页面NEW按钮可以移动避免遮挡其余页面元素，同时优化代码设计
+// @note         2024-03-06 1.8.7 完善了一下灵茶页面和纸片人设计
 // ==/UserScript==
 
 (function () {
@@ -349,77 +350,8 @@
             registerMenuCommand(); // 重新注册脚本菜单
         }
     }
-    let newbtnSwitch = () => {
-        fetch(lcnojgo, {
-            headers: {
-                accept: '*/*',
-                'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-                'content-type': 'application/json',
-            },
-            referrer: location.href,
-            body: JSON.stringify({
-                operationName: 'setQdToBeta',
-                variables: {},
-                query: /* GraphQL */ `
-                mutation setQdToBeta {
-                    authenticationSetBetaParticipation(
-                    participationType: NEW_QUESTION_DETAIL_PAGE
-                    optedIn: true
-                    ) {
-                    inBeta
-                    hitBeta
-                    __typename
-                    }
-                }
-                `,
-            }),
-            method: 'POST',
-            mode: 'cors',
-            credentials: 'include',
-        })
-    }
 
-    let oldbtnSwitch = () => {
-        fetch(lcnojgo, {
-            headers: {
-                accept: '*/*',
-                'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-                'content-type': 'application/json',
-            },
-            referrer: location.href,
-            body: JSON.stringify({
-                variables: {
-                    'participationType': 'NEW_QUESTION_DETAIL_PAGE'
-                },
-                query: /* GraphQL */ `
-                mutation setQdToOldVersion ($participationType: ParticipationTypeEnum!){
-                    authenticationSetBetaParticipation(
-                    participationType: $participationType
-                    optedIn: false
-                    ) {
-                    inBeta
-                    hitBeta
-                    }
-                }
-                `,
-            }),
-            method: 'POST',
-            mode: 'cors',
-            credentials: 'include',
-        })
-    }
-
-    if (GM_getValue("switchnewBeta")) {
-        newbtnSwitch()
-    } else {
-        oldbtnSwitch()
-    }
-
-    // lc 基础req
-    let baseReq = (reqUrl, query, variables, successFuc, type) => {
-        //请求参数
-        let list = { "query":query, "variables":variables };
-        //
+    let ajaxReq = (type, reqUrl, headers, data, successFuc) => {
         $.ajax({
             // 请求方式
             type : type,
@@ -428,12 +360,13 @@
             // 请求地址
             url: reqUrl,
             // 数据，json字符串
-            data : JSON.stringify(list),
+            data : JSON.stringify(data),
             // 同步方式
             async: false,
             xhrFields: {
                 withCredentials: true
             },
+            headers: headers,
             // 请求成功
             success : function(result) {
                 successFuc(result)
@@ -444,11 +377,79 @@
                 console.log(e.responseText);
             }
         });
+    }
+
+
+    // lc 基础req
+    let baseReq = (type, reqUrl, query, variables, successFuc) => {
+        //请求参数
+        let list = {"query":query, "variables":variables };
+        //
+        ajaxReq(type, reqUrl, null, list, successFuc)
+        
     };
 
     // post请求
     let postReq = (reqUrl, query, variables, successFuc) => {
-        baseReq(reqUrl, query, variables, successFuc, "POST")
+        baseReq("POST", reqUrl, query, variables, successFuc)
+    }
+
+    let newbtnSwitch = () => {
+        let headers = {
+            accept: '*/*',
+            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+        }
+        let body = {
+            operationName: 'setQdToBeta',
+            variables: {},
+            query: /* GraphQL */ `
+            mutation setQdToBeta {
+                authenticationSetBetaParticipation(
+                participationType: NEW_QUESTION_DETAIL_PAGE
+                optedIn: true
+                ) {
+                inBeta
+                hitBeta
+                __typename
+                }
+            }
+            `,
+        }
+        ajaxReq("POST", lcnojgo, headers, body, ()=>{})
+    }
+
+    let oldbtnSwitch = () => {
+        let headers = {
+            accept: '*/*',
+            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+        }
+        let body = {
+            variables: {
+                'participationType': 'NEW_QUESTION_DETAIL_PAGE'
+            },
+            query: /* GraphQL */ `
+            mutation setQdToOldVersion ($participationType: ParticipationTypeEnum!){
+                authenticationSetBetaParticipation(
+                participationType: $participationType
+                optedIn: false
+                ) {
+                inBeta
+                hitBeta
+                }
+            }
+            `,
+        }
+        ajaxReq("POST", lcnojgo, headers, body, ()=>{})
+    }
+
+    if (GM_getValue("switchnewBeta")) {
+        newbtnSwitch()
+    } else {
+        oldbtnSwitch()
+        let s = document.querySelector("#__next")
+        if(s && location.href.match(pbUrl)) location.reload()
     }
 
 
@@ -494,6 +495,15 @@
         return time;
     }
 
+    GM_addStyle(`
+        .container {
+            background: rgba(233, 183, 33, 0.2);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: block;
+        }
+    `)
+
     function checksolve(){
         layer.open({
             type: 1 // Page 层类型
@@ -502,10 +512,10 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre style="padding:20px;color:#000;">${latestpb["solve"]['str']}</pre>`
+            ,content: `<pre class="container" style="padding:20px;color:#000;">${latestpb["solve"]['str']}</pre>`
         });
     }
-
+    
     function checkout(){
         layer.open({
             type: 1 // Page 层类型
@@ -514,7 +524,7 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre style="padding:20px;color:#000;">${latestpb["out"]["str"]}</pre>`
+            ,content: `<pre class="container" style="padding:20px;color:#000;">${latestpb["out"]["str"]}</pre>`
         });
     }
 
@@ -527,9 +537,10 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre style="padding:20px;color:#000;">${latestpb["pb"]["str"]}</pre>`
+            ,content: `<pre class="container" style="padding:20px;color:#000;">${latestpb["pb"]["str"]}</pre>`
         });
     }
+
 
     // 因为力扣未捕获错误信息，所以重写一下removechild方法
     const removeChildFn = Node.prototype.removeChild;
@@ -1500,8 +1511,8 @@
     } else if (window.location.href.startsWith(pbUrl)) {
         // do nothing
         addListener()
-    }
-
+    } 
+    
 // spig js 纸片人相关
 if (GM_getValue("switchperson")) {
     // url数据
@@ -1565,7 +1576,7 @@ if (GM_getValue("switchperson")) {
         }
     `)
 
-    const spig = `<div id="spig" class="spig">
+    const spig = `<div id="spig" class="spig" hidden>
                             <div id="message">正在加载中……</div>
                             <div style="height=80px"/>
                             <div id="mumu" class="mumu"></div>
@@ -1585,25 +1596,6 @@ if (GM_getValue("switchperson")) {
         $("#message").fadeOut(b);
         $("#mumu").css({"opacity":"1 !important"})
     };
-
-    function msgPageWelcome(url, isAddEvent) {
-        let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl]
-        let msgShow = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到分类题库页面，针对专题练习有利于进步哦～", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到公司题库，针对专门的公司题目练习有利于面试呢", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
-        for (let index = 0; index < urlLst.length; index++) {
-            const element = urlLst[index];
-            if (url.match(element)) {
-                // console.log(msgShow[index])
-                showMessage(msgShow[index])
-            }
-        }
-        if (isAddEvent) {
-            window.addEventListener("urlchange", () => {
-                let newUrl = window.location.href
-                msgPageWelcome(newUrl, false)
-            })
-        }
-    }
-    msgPageWelcome(window.location.href, true)
 
     // 右键菜单
     jQuery(document).ready(function ($) {
@@ -1688,9 +1680,27 @@ if (GM_getValue("switchperson")) {
         });
     });
 
-    //开始
+    function msgPageWelcome(url, isAddEvent) {
+        let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl]
+        let msgShow = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到分类题库页面，针对专题练习有利于进步哦～", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到公司题库，针对专门的公司题目练习有利于面试呢", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
+        for (let index = 0; index < urlLst.length; index++) {
+            const element = urlLst[index];
+            if (url.match(element)) {
+                // console.log(msgShow[index])
+                showMessage(msgShow[index])
+            }
+        }
+        if (isAddEvent) {
+            window.addEventListener("urlchange", () => {
+                let newUrl = window.location.href
+                msgPageWelcome(newUrl, false)
+            })
+        }
+    }
+
+    // 开始
     jQuery(document).ready(function ($) {
-        if (isindex) { //如果是主页
+        if (isindex) { // 如果是主页
             let now = (new Date()).getHours();
             if (now > 0 && now <= 6) {
                 showMessage(visitor + ' 你是夜猫子呀？还不睡觉，明天起的来么你？', 6000);
@@ -1703,18 +1713,23 @@ if (GM_getValue("switchperson")) {
             } else {
                 showMessage(visitor + ' 快来逗我玩吧！', 6000);
             }
+            msgPageWelcome(window.location.href, true)
         }
         else {
             showMessage('力扣欢迎你～', 6000);
         }
-        $(".spig").animate({
-            top: $(".spig").offset().top + 300,
-            left: document.body.offsetWidth - 160
-        },
-        {
-            queue: false,
-            duration: 1000
-        });
+        let top = $("#spig").offset().top + 150
+        let left = document.body.offsetWidth - 160
+        $("#spig").attr("hidden", false)
+        $("#spig").css({top : top, left : left})
+
+        // $("#spig").animate({
+        //     opacity: 1
+        // },
+        // {
+        //     queue: false,
+        //     duration: 1000
+        // });
     });
     
     // 随时间自动漂浮，暂时不开启
@@ -1744,7 +1759,7 @@ if (GM_getValue("switchperson")) {
         let f = $(".spig").offset().top;
         $(window).scroll(function () {
             $(".spig").animate({
-                top: $(window).scrollTop() + f +300
+                top: $(window).scrollTop() + f + 150
             },
             {
                 queue: false,
