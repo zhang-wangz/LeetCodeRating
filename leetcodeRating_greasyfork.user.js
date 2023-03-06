@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.8.8
+// @version      1.8.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -109,12 +109,13 @@
 // @note         2023-02-21 1.8.6 使旧版题目页面NEW按钮可以移动避免遮挡其余页面元素，同时优化代码设计
 // @note         2024-03-06 1.8.7 完善了一下灵茶页面和纸片人设计
 // @note         2024-03-06 1.8.8 (版本号忘记改了)
+// @note         2024-03-06 1.8.9 修复灵茶页面设计导致的竞赛页面异常
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.8.8"
+    let version = "1.8.9"
 
     let isGithub = false
 
@@ -497,7 +498,7 @@
     }
 
     GM_addStyle(`
-        .container {
+        .containerlingtea {
             background: rgba(233, 183, 33, 0.2);
             white-space: pre-wrap;
             word-wrap: break-word;
@@ -513,7 +514,7 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre class="container" style="padding:20px;color:#000;">${latestpb["solve"]['str']}</pre>`
+            ,content: `<pre class="containerlingtea" style="padding:20px;color:#000;">${latestpb["solve"]['str']}</pre>`
         });
     }
     
@@ -525,7 +526,7 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre class="container" style="padding:20px;color:#000;">${latestpb["out"]["str"]}</pre>`
+            ,content: `<pre class="containerlingtea" style="padding:20px;color:#000;">${latestpb["out"]["str"]}</pre>`
         });
     }
 
@@ -538,7 +539,7 @@
             ,shade: 0.6 // 遮罩透明度
             ,maxmin: true // 允许全屏最小化
             ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre class="container" style="padding:20px;color:#000;">${latestpb["pb"]["str"]}</pre>`
+            ,content: `<pre class="containerlingtea" style="padding:20px;color:#000;">${latestpb["pb"]["str"]}</pre>`
         });
     }
 
