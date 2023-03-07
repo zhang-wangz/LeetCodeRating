@@ -1,4 +1,4 @@
 {
-  "version": "1.8.9",
-  "content": "修复灵茶页面设计导致的竞赛页面异常"
+  "version": "1.8.10",
+  "content": "修复因cdn.jsdelivr.net被dns污染而导致部分地区无法加载灵茶页面的问题"
 }

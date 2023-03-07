@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.8.9
+// @version      1.8.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -23,9 +23,8 @@
 // @connect      raw.staticdn.net
 // @connect      raw.githubusercontents.com
 // @connect      raw.githubusercontent.com
-// @require      https://gcore.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js
-// @require      https://gcore.jsdelivr.net/gh/andywang425/BLTH@4368883c643af57c07117e43785cd28adcb0cb3e/assets/js/library/layer.min.js
-// @resource css1 https://gcore.jsdelivr.net/gh/andywang425/BLTH@d25aa353c8c5b2d73d2217b1b43433a80100c61e/assets/css/layer.css
+// @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js
+// @require      https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/layer.min.js
 // @grant        unsafeWindow
 // @note         2022-09-07 1.1.0 支持tag页面和题库页面显示匹配的周赛分难度
 // @note         2022-09-07 1.1.0 分数数据出自零神项目
@@ -110,14 +109,15 @@
 // @note         2024-03-06 1.8.7 完善了一下灵茶页面和纸片人设计
 // @note         2024-03-06 1.8.8 (版本号忘记改了)
 // @note         2024-03-06 1.8.9 修复灵茶页面设计导致的竞赛页面异常
+// @note         2024-03-07 1.8.10 修复因cdn.jsdelivr.net被dns污染而导致部分地区无法加载灵茶页面的问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.8.9"
+    let version = "1.8.10"
 
-    let isGithub = false
+    let isGithub = false  
 
     // 访问相关url
     let teaUrl, versionUrl, sciptUrl, rakingUrl
@@ -140,7 +140,7 @@
     const pblistUrl = "https://leetcode.cn/problem-list/"
     const pbUrl = "https://leetcode.cn/problems/"
     const searchUrl = "https://leetcode.cn/search/"
-    
+
     // req相关url
     const lcnojgo = "https://leetcode.cn/graphql/noj-go"
     const lcgraphql = "https://leetcode.cn/graphql/"
@@ -266,7 +266,8 @@
 
     // 如果有数据就会直接初始化，否则初始化为空
     pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
-    GM_addStyle(GM_getResourceText("css1"));
+    // css1
+    $(document.body).append(`<link href="https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/theme/default/layer.min.css" rel="stylesheet">`)
 
 
     // 监听urlchange事件定义
@@ -388,7 +389,7 @@
         let list = {"query":query, "variables":variables };
         //
         ajaxReq(type, reqUrl, null, list, successFuc)
-        
+
     };
 
     // post请求
@@ -517,7 +518,7 @@
             ,content: `<pre class="containerlingtea" style="padding:20px;color:#000;">${latestpb["solve"]['str']}</pre>`
         });
     }
-    
+
     function checkout(){
         layer.open({
             type: 1 // Page 层类型
@@ -689,7 +690,7 @@
                 }
                 // 试炼按钮渲染
                 // && head.childNodes.length == 5
-                if (!lasthead.textContent.includes("灵茶の试炼")) {
+                if (!lasthead.textContent.includes("灵茶の试炼") && head.childNodes.length == 5) {
                     let tea = document.createElement("a")
                     tea.innerHTML = '<div class="flex items-center space-x-2 whitespace-nowrap rounded-full px-4 py-[10px] leading-tight pointer-event-none text-base bg-fill-3 dark:bg-dark-fill-3 text-label-2 dark:text-dark-label-2 hover:bg-fill-2 dark:hover:bg-dark-fill-2 hover:text-label-2 dark:hover:text-dark-label-2"><svg \
                                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="text-gray-9 dark:text-dark-gray-9 mr-2 hidden h-[18px] w-[18px] lg:block"><path fill-rule="evenodd" d="M12 22c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2zm6-6l2 2v1H4v-1l2-2v-5c0-3.08 1.64-5.64 4.5-6.32V4c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68C16.37 5.36 18 7.93 18 11v5zm-2 1v-6c0-2.48-1.51-4.5-4-4.5S8 8.52 8 11v6h8z" clip-rule="evenodd"></path> \
@@ -928,7 +929,7 @@
             return
         }
     }
-    let clickFlag = true 
+    let clickFlag = true
     let startTime, endTime
     let newisaddBtnClick = () => {
         if (!clickFlag) return
@@ -988,7 +989,7 @@
             cloneBtn.addEventListener('click', newisaddBtnClick)
             moveSupport("[name='newisaddBtn']")
         }
-        
+
         let oldBtn = document.querySelector("#editor > div.absolute.right-\\[25px\\].bottom-\\[84px\\].z-overlay > div")
         if (oldBtn) {
             if (oldBtn.getAttribute("name") && oldBtn.getAttribute("name").includes("isaddBtn")) {
@@ -1513,8 +1514,8 @@
     } else if (window.location.href.startsWith(pbUrl)) {
         // do nothing
         addListener()
-    } 
-    
+    }
+
 // spig js 纸片人相关
 if (GM_getValue("switchperson")) {
     // url数据
@@ -1525,7 +1526,7 @@ if (GM_getValue("switchperson")) {
     const isindex = true
     const visitor = "主人"
     let msgs = []
-    
+
     // 求等级用的数据
     let userTag = null
     let level = 0
@@ -1733,7 +1734,7 @@ if (GM_getValue("switchperson")) {
         //     duration: 1000
         // });
     });
-    
+
     // 随时间自动漂浮，暂时不开启
     // jQuery(document).ready(function($) {
     //     window.setInterval(function() {
