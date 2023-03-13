@@ -533,7 +533,7 @@
     }
 
     function checktrans(){
-        latestpb["pb"]["str"] = latestpb["pb"]["str"].replace('<', "&lt;").replace('>', "&gt;")
+        latestpb["pb"]["str"] = latestpb["pb"]["str"].replaceAll('<', "&lt;").replaceAll('>', "&gt;")
         layer.open({
             type: 0
             ,area: ['650px', '450px']
