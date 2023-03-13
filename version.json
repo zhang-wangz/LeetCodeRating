@@ -1,4 +1,4 @@
 {
-  "version": "1.8.10",
-  "content": "修复因cdn.jsdelivr.net被dns污染而导致部分地区无法加载灵茶页面的问题"
+  "version": "1.9.0",
+  "content": "修复因为评分数据对应的cdn域名变化导致edge等部分类chrome浏览器无法加载数据的问题"
 }

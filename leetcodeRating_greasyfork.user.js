@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.8.10
+// @version      1.9.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名
@@ -20,7 +20,7 @@
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @connect      zerotrac.github.io
-// @connect      raw.staticdn.net
+// @connect      raw.gitmirror.com
 // @connect      raw.githubusercontents.com
 // @connect      raw.githubusercontent.com
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js
@@ -106,16 +106,17 @@
 // @note         2023-02-20 1.8.4 油猴官方不允许引入github js文件, 集成纸片人js到脚本当中
 // @note         2023-02-20 1.8.5 修复引入js导致的bug
 // @note         2023-02-21 1.8.6 使旧版题目页面NEW按钮可以移动避免遮挡其余页面元素，同时优化代码设计
-// @note         2024-03-06 1.8.7 完善了一下灵茶页面和纸片人设计
-// @note         2024-03-06 1.8.8 (版本号忘记改了)
-// @note         2024-03-06 1.8.9 修复灵茶页面设计导致的竞赛页面异常
-// @note         2024-03-07 1.8.10 修复因cdn.jsdelivr.net被dns污染而导致部分地区无法加载灵茶页面的问题
+// @note         2023-03-06 1.8.7 完善了一下灵茶页面和纸片人设计
+// @note         2023-03-06 1.8.8 (版本号忘记改了)
+// @note         2023-03-06 1.8.9 修复灵茶页面设计导致的竞赛页面异常
+// @note         2023-03-07 1.8.10 修复因cdn.jsdelivr.net被dns污染而导致部分地区无法加载灵茶页面的问题
+// @note         2023-03-13 1.9.0 修复因为评分数据对应的cdn域名变化导致edge等部分类chrome浏览器无法加载数据的问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.8.10"
+    let version = "1.9.0"
 
     let isGithub = false  
 
@@ -127,10 +128,10 @@
         sciptUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
         rakingUrl = "https://zerotrac.github.io/leetcode_problem_rating/data.json"
     } else {
-        teaUrl = "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
-        versionUrl = "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/version.json"
-        sciptUrl = "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
-        rakingUrl = "https://raw.githubusercontents.com/zerotrac/leetcode_problem_rating/main/data.json"
+        teaUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
+        versionUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/version.json"
+        sciptUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
+        rakingUrl = "https://raw.gitmirror.com/zerotrac/leetcode_problem_rating/main/data.json"
     }
 
     // 页面相关url
@@ -557,11 +558,11 @@
         return err
     }
 
-    // window.onerror = function(message, source, lineno, colno, error) {
-    //     message.preventDefault()
-    //     console.log("力扣api发生错误:", message.message)
-    //     return true
-    // }
+     window.onerror = function(message, source, lineno, colno, error) {
+         message.preventDefault()
+         console.log("力扣api发生错误:", message.message)
+         return true
+     }
 
     function callback(tag, variables) {
         let data;
