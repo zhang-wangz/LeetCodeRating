@@ -1,4 +1,4 @@
 {
-  "version": "1.9.0",
-  "content": "修复因为评分数据对应的cdn域名变化导致edge等部分类chrome浏览器无法加载数据的问题"
+  "version": "1.9.1",
+  "content": "不再屏蔽user报错信息展示, 方便提issue时提供截图快速排查问题"
 }
