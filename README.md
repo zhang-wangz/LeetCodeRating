@@ -80,21 +80,31 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 
 #### 💡 脚本效果 (求star ヾ(≧▽≦*)o)
+![image8](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/8.png)
 
-![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1.png)
+![image1](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/1.png)
 
-![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/2.png)
+![image2](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/2.png)
 
-![image5.png](https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/images/5.png)
+![image5](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/5.png)
 
-![image-20220912001243159](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220912001243159.png)
+![image-20220912001243159](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images//image-20220912001243159.png)
 
-![image-20221008121311231](https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/images/4.png)
+![image4](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/4.png)
 
-![image6.png](https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/images/6.png)
+![image6](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/6.png)
 
-![image7.png](https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/images/7.png)
+![image7](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/7.png)
 
+![image9](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/9.png)
+
+![image10](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/10.png)
+
+![image11](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/11.png)
+
+![image12](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/12.png)
+
+![image13](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/13.png)
 <br/>
 
 ### :rocket: 贡献
