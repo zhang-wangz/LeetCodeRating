@@ -1,4 +1,4 @@
 {
-  "version": "1.9.1",
-  "content": "不再屏蔽user报错信息展示, 方便提issue时提供截图快速排查问题"
+  "version": "1.9.2",
+  "content": "增加早8晚8自动切换lc dark模式功能"
 }

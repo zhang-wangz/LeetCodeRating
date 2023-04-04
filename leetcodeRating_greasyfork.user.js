@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.9.1
+// @version      1.9.2
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名)
@@ -112,12 +112,13 @@
 // @note         2023-03-07 1.8.10 修复因cdn.jsdelivr.net被dns污染而导致部分地区无法加载灵茶页面的问题
 // @note         2023-03-13 1.9.0 修复因为评分数据对应的cdn域名变化导致edge等部分类chrome浏览器无法加载数据的问题
 // @note         2023-03-14 1.9.1 不再屏蔽user报错信息展示，方便提issue时提供截图快速排查问题
+// @note         2023-04-04 1.9.2 增加早8晚8自动切换lc dark模式功能
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.1"
+    let version = "1.9.2"
 
     let isGithub = false  
 
@@ -315,6 +316,7 @@
             ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
             ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
+            ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
             ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
         for (const element of menu_ALL){ // 如果读取到的值为 null 就写入默认值
@@ -399,6 +401,36 @@
         baseReq("POST", reqUrl, query, variables, successFuc)
     }
 
+    let lcTheme = (mode) => {
+        let headers = {
+            accept: '*/*',
+            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+        }
+        let body = {
+            operationName: 'setTheme',
+            query: '\n    mutation setTheme($darkMode: String!) {\n  setDarkSide(darkMode: $darkMode)\n}\n    ',
+            variables: {
+                'darkMode': mode
+            },
+        }
+        ajaxReq("POST", lcnojgo, headers, body, ()=>{})
+    }
+
+    if(GM_getValue("switchdark")) {
+        let h = new Date().getHours()
+        if (h >= 8 && h < 20) {
+            lcTheme('light')
+            localStorage.setItem("lc-dark-side", "light")
+            console.log("修改至light mode...")
+        }
+        else {
+            lcTheme('dark')
+            localStorage.setItem("lc-dark-side", "dark")
+            console.log("修改至dark mode...")
+        }
+    }
+
     let newbtnSwitch = () => {
         let headers = {
             accept: '*/*',
@@ -448,6 +480,7 @@
         }
         ajaxReq("POST", lcnojgo, headers, body, ()=>{})
     }
+
 
     if (GM_getValue("switchnewBeta")) {
         newbtnSwitch()
@@ -559,11 +592,12 @@
         return err
     }
 
-    // window.onerror = function(message, source, lineno, colno, error) {
-    //     message.preventDefault()
-    //     console.log("力扣api发生错误:", message.message)
-    //     return true
-    // }
+
+    window.onerror = function(message, source, lineno, colno, error) {
+        message.preventDefault()
+        console.log("力扣api发生错误:", message.message)
+        return true
+    }
 
     function callback(tag, variables) {
         let data;
@@ -637,7 +671,7 @@
         // 防止过多的无效操作
         let first = switchTea ? 1 : 0
         if ((!switchpbRepo || (tFirst && tFirst == arr.childNodes[first].textContent && tLast && tLast == lastchild.textContent))
-            && (!switchTea || (lasthead && lasthead.textContent.includes("灵茶の试炼")))
+            && (!switchTea || (lasthead && lasthead.textContent.includes("灵茶の试炼")) || head.childNodes.length > 6)
             && (!switchrealoj) || lastchild.childNodes[4].textContent == "隐藏") {
             return
         }
