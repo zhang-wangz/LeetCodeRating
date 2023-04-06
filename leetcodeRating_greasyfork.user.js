@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.9.3
+// @version      1.9.4
 // @license      MIT
-// @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
+// @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
 // @leetcodehomepage   https://leetcode.cn/u/runonline/
 // @homepageURL  https://github.com/zhang-wangz/LeetCodeRating
@@ -114,12 +114,13 @@
 // @note         2023-03-14 1.9.1 不再屏蔽user报错信息展示，方便提issue时提供截图快速排查问题
 // @note         2023-04-04 1.9.2 增加早8晚8自动切换lc dark模式功能
 // @note         2023-04-06 1.9.3 增加新版学习计划的评分显示
+// @note         2023-04-06 1.9.4 修复新版学习计划的评分显示，增加学习计划侧边栏评分显示
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.3"
+    let version = "1.9.4"
 
     let isGithub = false  
 
@@ -599,11 +600,11 @@
     }
 
 
-    window.onerror = function(message, source, lineno, colno, error) {
-        message.preventDefault()
-        console.log("力扣api发生错误:", message.message)
-        return true
-    }
+    // window.onerror = function(message, source, lineno, colno, error) {
+    //     message.preventDefault()
+    //     console.log("力扣api发生错误:", message.message)
+    //     return true
+    // }
 
     function callback(tag, variables) {
         let data;
@@ -918,6 +919,7 @@
             if (headEle.textContent.includes("题目评分")){
                 rateRefresh = true
             }
+
         }
         let childs = arr.childNodes
         for (const element of childs) {
@@ -982,9 +984,9 @@
     }
 
     let studyf;
-    function getStudyData() {
+    function getStudyData(cs_selector) {
         if (!GM_getValue("switchstudy")) return;
-        let totArr = document.querySelector("#__next > div > div > div.mx-auto.w-full.grow.md\\:mt-0.mt-\\[50px\\].flex.justify-center.overflow-hidden.p-0.md\\:max-w-none.md\\:p-0.lg\\:max-w-none > div > div.flex.w-full.justify-center > div > div.flex.flex-1 > div > div.flex.w-full.flex-col.gap-4")
+        let totArr = document.querySelector(cs_selector)
         if (totArr == undefined) return;
         let first = totArr.firstChild.childNodes[0].textContent
         if (studyf && studyf == first) {
@@ -999,12 +1001,11 @@
                 let id = pbName2Id[pbName]
                 if (id && t2rate[id]) {
                     let ndRate = t2rate[id]["Rating"]
-                    console.log(ndRate)
                     nd.textContent = ndRate 
                 } else {
+                    if (!nd) break 
                     let nd2ch = {"font-size: 14px; color: rgb(21, 189, 102);": "简单", "font-size: 14px; color: rgb(255, 184, 0);": "中等", "font-size: 14px; color: rgb(255, 51, 75);": "困难" }
                     let clr = nd.getAttribute("style")
-                    console.log(nd)
                     nd.innerHTML = nd2ch[clr]
                 }
             }
@@ -1100,6 +1101,7 @@
     function getpb() {
         if(!GM_getValue("switchpb")) return
         let switchrealoj = GM_getValue("switchrealoj")
+        
         // 是否在提交页面
         let statusEle = location.href.match(regPbSubmission)
         if(isBeta) {
@@ -1121,6 +1123,14 @@
         }
         // 切换onclik
         switchUi()
+
+        // 新版学习计划左侧栏分数显示
+        let css_selector = "#chakra-modal--body-\\:ra\\: > div > div.flex.w-full.flex-col.gap-4"
+        let studyplan = document.querySelector(css_selector);
+        if(!studyplan) studyf = undefined
+        if(GM_getValue("switchstudy") && studyplan) {
+            getStudyData(css_selector)
+        }
 
         // 题目页面
         // 旧版的标题位置
@@ -1517,7 +1527,9 @@
         }
         if(targetIdx != -1) start = pageLst[targetIdx]
         if (start != "") {
-            id = setInterval(funcLst[targetIdx], timeout)
+            let css_selector = "#__next > div > div > div.mx-auto.w-full.grow.md\\:mt-0.mt-\\[50px\\].flex.justify-center.overflow-hidden.p-0.md\\:max-w-none.md\\:p-0.lg\\:max-w-none > div > div.flex.w-full.justify-center > div > div.flex.flex-1 > div > div.flex.w-full.flex-col.gap-4"
+            if(start == 'study') id = setInterval(getStudyData, timeout, css_selector)
+            else id = setInterval(funcLst[targetIdx], timeout)
             GM_setValue(start, id)
         }
         if (isAddEvent) {
