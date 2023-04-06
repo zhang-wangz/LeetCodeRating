@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.9.2
+// @version      1.9.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，目前支持tag页面,题库页面,company页面,problem_list页面和题目页面
 // @author       小东是个阳光蛋(力扣名)
@@ -113,12 +113,13 @@
 // @note         2023-03-13 1.9.0 修复因为评分数据对应的cdn域名变化导致edge等部分类chrome浏览器无法加载数据的问题
 // @note         2023-03-14 1.9.1 不再屏蔽user报错信息展示，方便提issue时提供截图快速排查问题
 // @note         2023-04-04 1.9.2 增加早8晚8自动切换lc dark模式功能
+// @note         2023-04-06 1.9.3 增加新版学习计划的评分显示
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.2"
+    let version = "1.9.3"
 
     let isGithub = false  
 
@@ -143,6 +144,7 @@
     const pblistUrl = "https://leetcode.cn/problem-list/"
     const pbUrl = "https://leetcode.cn/problems/"
     const searchUrl = "https://leetcode.cn/search/"
+    const studyUrl = "https://leetcode.cn/studyplan/"
 
     // req相关url
     const lcnojgo = "https://leetcode.cn/graphql/noj-go"
@@ -158,6 +160,9 @@
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+    // 题目名称-id ContestID_zh-ID
+    let pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
+    // 茶数据
     let latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     let preDate = GM_getValue("preDate", "")
 
@@ -314,6 +319,7 @@
             ['switchtag', 'tag function', 'tag题单页评分(动态规划等分类题库)', true, false],
             ['switchcompany', 'company function', 'company题单页评分(字节等公司题库)', true, false],
             ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
+            ['switchstudy', 'studyplan function', 'studyplan评分(仅限新版)', true, false],
             ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
@@ -975,6 +981,38 @@
         }
     }
 
+    let studyf;
+    function getStudyData() {
+        if (!GM_getValue("switchstudy")) return;
+        let totArr = document.querySelector("#__next > div > div > div.mx-auto.w-full.grow.md\\:mt-0.mt-\\[50px\\].flex.justify-center.overflow-hidden.p-0.md\\:max-w-none.md\\:p-0.lg\\:max-w-none > div > div.flex.w-full.justify-center > div > div.flex.flex-1 > div > div.flex.w-full.flex-col.gap-4")
+        if (totArr == undefined) return;
+        let first = totArr.firstChild.childNodes[0].textContent
+        if (studyf && studyf == first) {
+            return
+        }
+        let childs = totArr.childNodes
+        for (const arr of childs) {
+            for (let pbidx = 1; pbidx < arr.childNodes.length; pbidx++) {
+                let pb = arr.childNodes[pbidx]
+                let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
+                let nd = pb.childNodes[0].childNodes[1].childNodes[1]
+                let id = pbName2Id[pbName]
+                if (id && t2rate[id]) {
+                    let ndRate = t2rate[id]["Rating"]
+                    console.log(ndRate)
+                    nd.textContent = ndRate 
+                } else {
+                    let nd2ch = {"font-size: 14px; color: rgb(21, 189, 102);": "简单", "font-size: 14px; color: rgb(255, 184, 0);": "中等", "font-size: 14px; color: rgb(255, 51, 75);": "困难" }
+                    let clr = nd.getAttribute("style")
+                    console.log(nd)
+                    nd.innerHTML = nd2ch[clr]
+                }
+            }
+        }
+        if(totArr.firstChild.childNodes[0]) studyf = totArr.firstChild.childNodes[0].textContent
+        console.log("has refreshed...")
+    }
+
     let clickFlag = true
     let startTime, endTime
     let newisaddBtnClick = () => {
@@ -1421,10 +1459,9 @@
 
     let now = getCurrentDate(1)
     preDate = GM_getValue("preDate", "")
-    if (t2rate["tagVersion5"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["tagVersion6"] == undefined || (preDate == "" || preDate != now)) {
         // 每天重置为空
-        pbSubmissionInfo = JSON.parse("{}")
-        GM_setValue("pbSubmissionInfo", JSON.stringify(pbSubmissionInfo))
+        GM_setValue("pbSubmissionInfo", "{}")
 
         GM_xmlhttpRequest({
             method: "get",
@@ -1436,19 +1473,22 @@
                 if (res.status === 200) {
                     // 保留唯一标识
                     t2rate = {}
+                    pbName2Id = {}
                     let dataStr = res.response
                     let json = eval(dataStr)
                     for (const element of json) {
                         t2rate[element.ID] = element
                         t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
+                        pbName2Id[element.TitleZH] = element.ID
                     }
-                    t2rate["tagVersion5"] = {}
+                    t2rate["tagVersion6"] = {}
                     console.log("everyday getdate once...")
                     preDate = now
                     GM_setValue("preDate", preDate)
                     GM_setValue("t2ratedb", JSON.stringify(t2rate))
-                    t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
-                    preDate = GM_getValue("preDate", "")
+                    GM_setValue("pbName2Id", JSON.stringify(pbName2Id))
+                    // t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+                    // preDate = GM_getValue("preDate", "")
                 }
             },
             onerror: function (err) {
@@ -1462,9 +1502,9 @@
     function clearAndStart(url, timeout, isAddEvent) {
         let start = ""
         let targetIdx = -1
-        let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
-        let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl]
-        let funcLst = [getData, getTagData, getpb, getCompanyData, getPblistData, getSearch]
+        let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search', 'study']
+        let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl, studyUrl]
+        let funcLst = [getData, getTagData, getpb, getCompanyData, getPblistData, getSearch, getStudyData]
         for (let index = 0; index < urlLst.length; index++) {
             const element = urlLst[index];
             if (url.match(element)) {
