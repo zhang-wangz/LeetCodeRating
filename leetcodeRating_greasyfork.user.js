@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.9.4
+// @version      1.9.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -115,27 +115,30 @@
 // @note         2023-04-04 1.9.2 增加早8晚8自动切换lc dark模式功能
 // @note         2023-04-06 1.9.3 增加新版学习计划的评分显示
 // @note         2023-04-06 1.9.4 修复新版学习计划的评分显示，增加学习计划侧边栏评分显示
+// @note         2023-04-11 1.9.5 修复因灵茶试炼文档变更导致的错误
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.4"
+    let version = "1.9.5"
 
     let isGithub = false  
 
     // 访问相关url
-    let teaUrl, versionUrl, sciptUrl, rakingUrl
+    let teaUrl, versionUrl, sciptUrl, rakingUrl, levelUrl
     if (isGithub) {
         teaUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
         versionUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/version.json"
         sciptUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
         rakingUrl = "https://zerotrac.github.io/leetcode_problem_rating/data.json"
+        levelUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
     } else {
         teaUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
         versionUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/version.json"
         sciptUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
         rakingUrl = "https://raw.gitmirror.com/zerotrac/leetcode_problem_rating/main/data.json"
+        levelUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
     }
 
     // 页面相关url
@@ -166,6 +169,8 @@
     // 茶数据
     let latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     let preDate = GM_getValue("preDate", "")
+    // level数据
+    let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
 
     // 刷新菜单
     Script_setting()
@@ -986,6 +991,7 @@
     let studyf;
     function getStudyData(cs_selector) {
         if (!GM_getValue("switchstudy")) return;
+        levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
         let totArr = document.querySelector(cs_selector)
         if (totArr == undefined) return;
         let first = totArr.firstChild.childNodes[0].textContent
@@ -999,6 +1005,7 @@
                 let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
                 let id = pbName2Id[pbName]
+                
                 if (id && t2rate[id]) {
                     let ndRate = t2rate[id]["Rating"]
                     nd.textContent = ndRate 
@@ -1472,7 +1479,6 @@
     if (t2rate["tagVersion6"] == undefined || (preDate == "" || preDate != now)) {
         // 每天重置为空
         GM_setValue("pbSubmissionInfo", "{}")
-
         GM_xmlhttpRequest({
             method: "get",
             url: rakingUrl + "?timeStamp=" + new Date().getTime(),
@@ -1499,6 +1505,36 @@
                     GM_setValue("pbName2Id", JSON.stringify(pbName2Id))
                     // t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
                     // preDate = GM_getValue("preDate", "")
+                }
+            },
+            onerror: function (err) {
+                console.log('error')
+                console.log(err)
+            }
+        });
+    }
+
+    // 更新level数据
+    let week = new Date().getDay()
+    if (levelData["tagVersion6"] == undefined || week == 1) {
+        GM_xmlhttpRequest({
+            method: "get",
+            url: levelUrl + "?timeStamp=" + new Date().getTime(),
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            onload: function (res) {
+                if (res.status === 200) {
+
+                    levelData = {}
+                    let dataStr = res.response
+                    let json = eval(dataStr)
+                    for (const element of json) {
+                        t2rate[element.TitleZH] = element
+                    }
+                    t2rate["tagVersion6"] = {}
+                    console.log("every Monday get level once...")
+                    GM_setValue("levelData", JSON.stringify(levelData))
                 }
             },
             onerror: function (err) {
@@ -1540,15 +1576,6 @@
         }
     }
 
-    // 定时启动
-    clearAndStart(location.href, 1, true)
-    GM_addStyle(`
-        .versioncontent {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            display: block;
-        }    
-    `)
     if (location.href.startsWith(allUrl)) {
         // 版本更新机制
         GM_xmlhttpRequest({
@@ -1598,7 +1625,7 @@
                     latestpb = {}
                     let dataStr = res.response
                     let json = JSON.parse(dataStr)
-                    let al = json["算法趣题"][1]
+                    let al = json["🎈算法趣题"][1]
                     latestpb["date"] = al[0] || {'str':''};latestpb["pb"] = al[1] || {'str':''};latestpb["url"] = al[1] || {'url':''};
                     latestpb["out"] = al[2] || {'str':''};latestpb["nd"] = al[3] || {'str':''};latestpb["solve"] = al[4] || {'str':''};
                     latestpb["blank"] = al[5] || {'str':''};
@@ -1615,6 +1642,16 @@
         // do nothing
         addListener()
     }
+
+    // 定时启动
+    clearAndStart(location.href, 1, true)
+    GM_addStyle(`
+        .versioncontent {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: block;
+        }
+    `)
 
 // spig js 纸片人相关
 if (GM_getValue("switchperson")) {
