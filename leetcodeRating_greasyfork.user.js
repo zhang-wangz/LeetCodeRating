@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.9.5
+// @version      1.9.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -116,12 +116,13 @@
 // @note         2023-04-06 1.9.3 增加新版学习计划的评分显示
 // @note         2023-04-06 1.9.4 修复新版学习计划的评分显示，增加学习计划侧边栏评分显示
 // @note         2023-04-11 1.9.5 修复因灵茶试炼文档变更导致的错误
+// @note         2023-04-21 1.9.6 1.增加javascript分类之后将灵茶表格链接移动至灵茶题目中状态那一框 2.学习计划页面增加storm的算术评级字段
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.5"
+    let version = "1.9.6"
 
     let isGithub = false  
 
@@ -326,6 +327,7 @@
             ['switchcompany', 'company function', 'company题单页评分(字节等公司题库)', true, false],
             ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
             ['switchstudy', 'studyplan function', 'studyplan评分(仅限新版)', true, false],
+            ['switchstudylevel', 'studyplan level function', 'studyplan算术评级(仅限新版测评)', true, false],
             ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
@@ -678,12 +680,13 @@
 
         let head = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div.relative.flex.items-center.space-x-4.py-3.my-4.-ml-4.overflow-hidden.pl-4")
         if (head == undefined) return
-        let lasthead = head.lastChild
+        // let lasthead = head.lastChild
         let lastchild = arr.lastChild
         // 防止过多的无效操作
+        // (lasthead && lasthead.textContent.includes("灵茶の试炼")) || head.childNodes.length > 6
         let first = switchTea ? 1 : 0
         if ((!switchpbRepo || (tFirst && tFirst == arr.childNodes[first].textContent && tLast && tLast == lastchild.textContent))
-            && (!switchTea || (lasthead && lasthead.textContent.includes("灵茶の试炼")) || head.childNodes.length > 6)
+            && (!switchTea || arr.childNodes[0].childNodes[2].textContent == "题解")
             && (!switchrealoj) || lastchild.childNodes[4].textContent == "隐藏") {
             return
         }
@@ -718,7 +721,7 @@
                     console.log("难度分错误...")
                     return
                 }
-                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]">${src}</div>`
+                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><a href=${teaSheetUrl} target='_blank'>${src}</a</div>`
                 if (teaUrl != "") {
                     div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">${latestpb["date"]["str"]}&nbsp灵茶</a></div></div></div></div></div>`
                 }else {
@@ -747,16 +750,16 @@
 
             // 试炼按钮渲染
             // && head.childNodes.length == 5
-            if (!lasthead.textContent.includes("灵茶の试炼") && head.childNodes.length == 5) {
-                let tea = document.createElement("a")
-                tea.innerHTML = '<div class="flex items-center space-x-2 whitespace-nowrap rounded-full px-4 py-[10px] leading-tight pointer-event-none text-base bg-fill-3 dark:bg-dark-fill-3 text-label-2 dark:text-dark-label-2 hover:bg-fill-2 dark:hover:bg-dark-fill-2 hover:text-label-2 dark:hover:text-dark-label-2"><svg \
-                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="text-gray-9 dark:text-dark-gray-9 mr-2 hidden h-[18px] w-[18px] lg:block"><path fill-rule="evenodd" d="M12 22c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2zm6-6l2 2v1H4v-1l2-2v-5c0-3.08 1.64-5.64 4.5-6.32V4c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68C16.37 5.36 18 7.93 18 11v5zm-2 1v-6c0-2.48-1.51-4.5-4-4.5S8 8.52 8 11v6h8z" clip-rule="evenodd"></path> \
-                                    </svg>灵茶の试炼</div>'
-                tea.setAttribute("href", teaSheetUrl)
-                tea.setAttribute("target", "_blank")
-                head.appendChild(tea)
-                console.log("has refreshed teaBtn...")
-            }
+            // if (!lasthead.textContent.includes("灵茶の试炼") && head.childNodes.length == 6) {
+            //     let tea = document.createElement("a")
+            //     tea.innerHTML = '<div class="flex items-center space-x-2 whitespace-nowrap rounded-full px-4 py-[10px] leading-tight pointer-event-none text-base bg-fill-3 dark:bg-dark-fill-3 text-label-2 dark:text-dark-label-2 hover:bg-fill-2 dark:hover:bg-dark-fill-2 hover:text-label-2 dark:hover:text-dark-label-2"><svg \
+            //                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="text-gray-9 dark:text-dark-gray-9 mr-2 hidden h-[18px] w-[18px] lg:block"><path fill-rule="evenodd" d="M12 22c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2zm6-6l2 2v1H4v-1l2-2v-5c0-3.08 1.64-5.64 4.5-6.32V4c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68C16.37 5.36 18 7.93 18 11v5zm-2 1v-6c0-2.48-1.51-4.5-4-4.5S8 8.52 8 11v6h8z" clip-rule="evenodd"></path> \
+            //                         </svg>灵茶の试炼</div>'
+            //     tea.setAttribute("href", teaSheetUrl)
+            //     tea.setAttribute("target", "_blank")
+            //     head.appendChild(tea)
+            //     console.log("has refreshed teaBtn...")
+            // }
         }
 
         // console.log(tFirst)
@@ -1005,15 +1008,29 @@
                 let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
                 let id = pbName2Id[pbName]
-                
+                pbName = pbName.split(" ").join("") //去除中间的空格
+                let level = levelData[pbName]
+                let hit = false
+                let nd2ch = {"font-size: 14px; color: rgb(21, 189, 102);": "简单", "font-size: 14px; color: rgb(255, 184, 0);": "中等", "font-size: 14px; color: rgb(255, 51, 75);": "困难" }
+                // rating
                 if (id && t2rate[id]) {
                     let ndRate = t2rate[id]["Rating"]
                     nd.textContent = ndRate 
+                    hit = true
                 } else {
                     if (!nd) break 
-                    let nd2ch = {"font-size: 14px; color: rgb(21, 189, 102);": "简单", "font-size: 14px; color: rgb(255, 184, 0);": "中等", "font-size: 14px; color: rgb(255, 51, 75);": "困难" }
                     let clr = nd.getAttribute("style")
                     nd.innerHTML = nd2ch[clr]
+                }
+
+                // level渲染 
+                if (level && GM_getValue("switchstudylevel")) {
+                    let text = document.createElement('span')
+                    text.style = nd.getAttribute("style")
+                    text.innerHTML = "算术评级: " + level["Level"].toString()
+                    if (hit) text.style.paddingRight = "75px" // 命中之后宽度是4个
+                    else text.style.paddingRight = "80px" // 命中之后宽度是2个
+                    nd.parentNode.insertBefore(text, nd)
                 }
             }
         }
@@ -1514,9 +1531,40 @@
         });
     }
 
+    function clearAndStart(url, timeout, isAddEvent) {
+            let start = ""
+            let targetIdx = -1
+            let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search', 'study']
+            let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl, studyUrl]
+            let funcLst = [getData, getTagData, getpb, getCompanyData, getPblistData, getSearch, getStudyData]
+            for (let index = 0; index < urlLst.length; index++) {
+                const element = urlLst[index];
+                if (url.match(element)) {
+                    targetIdx = index
+                    // console.log(targetIdx, url)
+                } else if (!url.match(element)) {
+                    let tmp = GM_getValue(pageLst[index], -1)
+                    clearInterval(tmp)
+                }
+            }
+            if(targetIdx != -1) start = pageLst[targetIdx]
+            if (start != "") {
+                let css_selector = "#__next > div > div > div.mx-auto.w-full.grow.md\\:mt-0.mt-\\[50px\\].flex.justify-center.overflow-hidden.p-0.md\\:max-w-none.md\\:p-0.lg\\:max-w-none > div > div.flex.w-full.justify-center > div > div.flex.flex-1 > div > div.flex.w-full.flex-col.gap-4"
+                if(start == 'study') id = setInterval(getStudyData, timeout, css_selector)
+                else id = setInterval(funcLst[targetIdx], timeout)
+                GM_setValue(start, id)
+            }
+            if (isAddEvent) {
+                window.addEventListener("urlchange", () => {
+                    let newUrl = location.href
+                    clearAndStart(newUrl, 1, false)
+                })
+            }
+        }
+
     // 更新level数据
     let week = new Date().getDay()
-    if (levelData["tagVersion6"] == undefined || week == 1) {
+    if (levelData["tagVersion20"] == undefined || week == 1) {
         GM_xmlhttpRequest({
             method: "get",
             url: levelUrl + "?timeStamp=" + new Date().getTime(),
@@ -1525,14 +1573,16 @@
             },
             onload: function (res) {
                 if (res.status === 200) {
-
                     levelData = {}
                     let dataStr = res.response
                     let json = eval(dataStr)
                     for (const element of json) {
-                        t2rate[element.TitleZH] = element
+                        if (typeof element.TitleZH == 'string') {
+                            let title = element.TitleZH.split(" ").join("")
+                            levelData[title] = element
+                        }
                     }
-                    t2rate["tagVersion6"] = {}
+                    levelData["tagVersion20"] = {}
                     console.log("every Monday get level once...")
                     GM_setValue("levelData", JSON.stringify(levelData))
                 }
@@ -1542,38 +1592,6 @@
                 console.log(err)
             }
         });
-    }
-
-
-    function clearAndStart(url, timeout, isAddEvent) {
-        let start = ""
-        let targetIdx = -1
-        let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search', 'study']
-        let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl, studyUrl]
-        let funcLst = [getData, getTagData, getpb, getCompanyData, getPblistData, getSearch, getStudyData]
-        for (let index = 0; index < urlLst.length; index++) {
-            const element = urlLst[index];
-            if (url.match(element)) {
-                targetIdx = index
-                // console.log(targetIdx, url)
-            } else if (!url.match(element)) {
-                let tmp = GM_getValue(pageLst[index], -1)
-                clearInterval(tmp)
-            }
-        }
-        if(targetIdx != -1) start = pageLst[targetIdx]
-        if (start != "") {
-            let css_selector = "#__next > div > div > div.mx-auto.w-full.grow.md\\:mt-0.mt-\\[50px\\].flex.justify-center.overflow-hidden.p-0.md\\:max-w-none.md\\:p-0.lg\\:max-w-none > div > div.flex.w-full.justify-center > div > div.flex.flex-1 > div > div.flex.w-full.flex-col.gap-4"
-            if(start == 'study') id = setInterval(getStudyData, timeout, css_selector)
-            else id = setInterval(funcLst[targetIdx], timeout)
-            GM_setValue(start, id)
-        }
-        if (isAddEvent) {
-            window.addEventListener("urlchange", () => {
-                let newUrl = location.href
-                clearAndStart(newUrl, 1, false)
-            })
-        }
     }
 
     if (location.href.startsWith(allUrl)) {
