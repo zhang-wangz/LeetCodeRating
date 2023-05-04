@@ -25,3 +25,6 @@ for d in data:
     arr.append(v)
 with open("./stormlevel/data.json", 'w') as f:
     f.write(json.dumps(arr))
+with open("./stormlevel/exist.txt", 'w', encoding = "utf-8") as file:
+        time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        file.write(time)
