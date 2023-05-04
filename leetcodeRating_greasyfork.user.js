@@ -117,12 +117,13 @@
 // @note         2023-04-06 1.9.4 修复新版学习计划的评分显示，增加学习计划侧边栏评分显示
 // @note         2023-04-11 1.9.5 修复因灵茶试炼文档变更导致的错误
 // @note         2023-04-21 1.9.6 1.增加javascript分类之后将灵茶表格链接移动至灵茶题目中状态那一框 2.学习计划页面增加storm的算术评级字段
+// @note         2023-05-04 1.9.7 修复新版学习计划因为黑暗模式切换导致的错误
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.6"
+    let version = "1.9.7"
 
     let isGithub = false  
 
@@ -1011,7 +1012,8 @@
                 pbName = pbName.split(" ").join("") //去除中间的空格
                 let level = levelData[pbName]
                 let hit = false
-                let nd2ch = {"font-size: 14px; color: rgb(21, 189, 102);": "简单", "font-size: 14px; color: rgb(255, 184, 0);": "中等", "font-size: 14px; color: rgb(255, 51, 75);": "困难" }
+                let darkn2c = {"font-size: 14px; color: rgb(63, 202, 125);": "简单", "font-size: 14px; color: rgb(255, 201, 38);": "中等", "font-size: 14px; color: rgb(255, 89, 103);": "困难" }
+                let lightn2c = {"font-size: 14px; color: rgb(21, 189, 102);": "简单", "font-size: 14px; color: rgb(255, 184, 0);": "中等", "font-size: 14px; color: rgb(255, 51, 75);": "困难" }
                 // rating
                 if (id && t2rate[id]) {
                     let ndRate = t2rate[id]["Rating"]
@@ -1020,7 +1022,7 @@
                 } else {
                     if (!nd) break 
                     let clr = nd.getAttribute("style")
-                    nd.innerHTML = nd2ch[clr]
+                    nd.innerHTML = lightn2c[clr] == undefined? darkn2c[clr]:lightn2c[clr]
                 }
 
                 // level渲染 
