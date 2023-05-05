@@ -33,6 +33,9 @@ jobs:
     - name: Add Diff
       run: git add .
 
+    - name: ADD PULL
+      run: git pull
+
     - name: Commit files
       run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
