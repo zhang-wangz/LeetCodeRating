@@ -131,3 +131,10 @@ LeetCodeRating遵循 [Contributor Covenant](http://contributor-covenant.org/vers
 
 ### 🍬最后
 **如果有帮助到你，请给repo点个star，让更多的人看到 ~ ("▔□▔)/**
+
+### License
+[MIT License](/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
+
+
+### Supported by
+[![JetBrains Logo (Main) logo](https://camo.githubusercontent.com/5075c80d56620267702a3808e7a926ff51235b2ecd986441c092e3b6b821af83/68747470733a2f2f7265736f75726365732e6a6574627261696e732e636f6d2f73746f726167652f70726f64756374732f636f6d70616e792f6272616e642f6c6f676f732f6a625f6265616d2e737667)](https://jb.gg/OpenSourceSupport)
