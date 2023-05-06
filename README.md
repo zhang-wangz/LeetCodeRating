@@ -133,7 +133,7 @@ LeetCodeRating遵循 [Contributor Covenant](http://contributor-covenant.org/vers
 **如果有帮助到你，请给repo点个star，让更多的人看到 ~ ("▔□▔)/**
 
 ### License
-[MIT License](/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
+[MIT License](https://github.com/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
 
 
 ### Supported by
