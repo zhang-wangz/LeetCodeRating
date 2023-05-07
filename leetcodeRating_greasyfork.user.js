@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.9.7
+// @version      1.9.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -118,12 +118,13 @@
 // @note         2023-04-11 1.9.5 修复因灵茶试炼文档变更导致的错误
 // @note         2023-04-21 1.9.6 1.增加javascript分类之后将灵茶表格链接移动至灵茶题目中状态那一框 2.学习计划页面增加storm的算术评级字段
 // @note         2023-05-04 1.9.7 修复新版学习计划因为黑暗模式切换导致的错误
+// @note         2023-05-07 1.9.8 去除官方新版题目提交新增的备注按钮(太丑了),恢复插件原样
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.7"
+    let version = "1.9.8"
 
     let isGithub = false  
 
@@ -1123,7 +1124,7 @@
             return $("button[class='px-3 py-1.5 font-medium items-center whitespace-nowrap transition-all focus:outline-none inline-flex text-label-r bg-green-s dark:bg-dark-green-s hover:bg-green-3 dark:hover:bg-dark-green-3 rounded-lg']")
         }
     }
-
+    // var lang, statusQus
     function getpb() {
         if(!GM_getValue("switchpb")) return
         let switchrealoj = GM_getValue("switchrealoj")
@@ -1139,11 +1140,12 @@
                 if (data[data.length-2] != "submissions") questiontag = data[data.length-4]
                 let statusOrlangPa = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div.sticky.top-0.w-full.bg-layer-1.dark\\:bg-dark-layer-1 > div")
                 if (statusOrlangPa == undefined) return;
-                let statusQus = statusOrlangPa.childNodes[0].childNodes[0].childNodes[0]
-                let lang = statusOrlangPa.childNodes[1].childNodes[0].childNodes[0]
-                if (lang == undefined || statusQus == undefined) return;
-                updateSubmissionLst(statusEle, questiontag, lang.innerText, statusQus.innerText);
-                console.log("has refreshed...")
+                let statusQu = statusOrlangPa.childNodes[0].childNodes[0].childNodes[0]
+                let lan = statusOrlangPa.childNodes[1].childNodes[0].childNodes[0]
+                if (lan == undefined || statusQu == undefined) return;
+                // if (lan.innerText == lang && statusQu.innerText == statusQus) return;
+                // lang = lan.innerText; statusQus = statusQu.innerText;
+                updateSubmissionLst(statusEle, questiontag, lan.innerText, statusQu.innerText);
                 return;
             }
         }
@@ -1447,7 +1449,7 @@
         // 数据替换操作
         let key = questiontag + langMap[lang] + statusMap[statusQus]
         if (questiontag != "" && statusEle) {
-            let arr = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div.h-full.w-full")
+            let arr = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto.rounded-b > div > div.h-full")
             if (arr == undefined) return
             let childs = arr.childNodes
             if (childs.length == 1 || childs.length == 0) return;
@@ -1463,15 +1465,26 @@
                 return
             }
             if (updateFlag) updateFlag = false
+            console.log("has refreshed...")
             QuerySubmissionUpdate(questiontag, lang, statusQus)
             pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
             let subLst = pbSubmissionInfo[key]
+            // console.log(childs)
             // console.log("替换数据: ", subLst)
             if (subLst == undefined || subLst.length == 0) return
             for (let i = 0; i < childs.length; i++) {
                 let v = childs[i]
-                let icon = v.childNodes[0].childNodes[1].childNodes[0]
+                let icon
+                try {
+                    icon = v.childNodes[0].childNodes[1].childNodes[0]
+                } catch(err) {
+                    return
+                }
+                let iconLen = v.childNodes[0].childNodes.length
+                if (iconLen > 2) v.childNodes[0].childNodes[iconLen-1].remove() // 把官方的备注按钮去除，太丑了
+                // console.log(v)
                 let pa = icon.parentNode
+                $(pa).removeClass("w-[120px]")
                 let copy1 = icon.cloneNode(true);
                 copy1.innerText = subLst[i]["runtime"]
                 let copy2 = icon.cloneNode(true);
