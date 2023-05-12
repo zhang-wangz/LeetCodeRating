@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.9.8
+// @version      1.9.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -119,12 +119,13 @@
 // @note         2023-04-21 1.9.6 1.增加javascript分类之后将灵茶表格链接移动至灵茶题目中状态那一框 2.学习计划页面增加storm的算术评级字段
 // @note         2023-05-04 1.9.7 修复新版学习计划因为黑暗模式切换导致的错误
 // @note         2023-05-07 1.9.8 去除官方新版题目提交新增的备注按钮(太丑了),恢复插件原样
+// @note         2023-05-12 1.9.9 增加新版在题目提交页面的时候自动切换tab title与题目描述页一致
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.8"
+    let version = "1.9.9"
 
     let isGithub = false  
 
@@ -1124,6 +1125,61 @@
             return $("button[class='px-3 py-1.5 font-medium items-center whitespace-nowrap transition-all focus:outline-none inline-flex text-label-r bg-green-s dark:bg-dark-green-s hover:bg-green-3 dark:hover:bg-dark-green-3 rounded-lg']")
         }
     }
+
+    let getTitleByPbTagInSubmission = (titleTag) => {
+        if (document.title != "力扣（LeetCode）官网 - 全球极客挚爱的技术成长平台") {
+            return
+        }
+        let titlech, titleid
+        let headers = {
+            accept: '*/*',
+            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+        }
+        let body = {
+            operationName: 'questionTranslations',
+            variables: {
+                'titleSlug': titleTag
+            },
+            query: /* GraphQL */ `
+            query questionTranslations($titleSlug: String!) {
+                question(titleSlug: $titleSlug) {
+                translatedTitle
+                translatedContent
+                }
+            }     
+            `,
+        }
+        ajaxReq("POST", lcgraphql, headers, body, (res)=>{
+            titlech = res.data.question.translatedTitle
+        })
+        body = {
+            operationName: 'questionTitle',
+            variables: {
+                'titleSlug': titleTag
+            },
+            query: /* GraphQL */ `
+            query questionTitle($titleSlug: String!) {
+                question(titleSlug: $titleSlug) {
+                questionId
+                questionFrontendId
+                title
+                titleSlug
+                isPaidOnly
+                difficulty
+                likes
+                dislikes
+                }
+            }
+            `,
+        }
+        ajaxReq('POST', lcgraphql, headers, body, (res)=> {
+            titleid = res.data.question.questionFrontendId
+        })
+        document.title = titleid + ". " + titlech
+    }
+
+
     // var lang, statusQus
     function getpb() {
         if(!GM_getValue("switchpb")) return
@@ -1143,9 +1199,10 @@
                 let statusQu = statusOrlangPa.childNodes[0].childNodes[0].childNodes[0]
                 let lan = statusOrlangPa.childNodes[1].childNodes[0].childNodes[0]
                 if (lan == undefined || statusQu == undefined) return;
-                // if (lan.innerText == lang && statusQu.innerText == statusQus) return;
-                // lang = lan.innerText; statusQus = statusQu.innerText;
+                // 方法里面有判断如果重复则直接返回
                 updateSubmissionLst(statusEle, questiontag, lan.innerText, statusQu.innerText);
+                // 在提交页面的时候顺便修改tab title
+                getTitleByPbTagInSubmission(questiontag)
                 return;
             }
         }
