@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.9.9
+// @version      1.9.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -120,30 +120,13 @@
 // @note         2023-05-04 1.9.7 修复新版学习计划因为黑暗模式切换导致的错误
 // @note         2023-05-07 1.9.8 去除官方新版题目提交新增的备注按钮(太丑了),恢复插件原样
 // @note         2023-05-12 1.9.9 增加新版在题目提交页面的时候自动切换tab title与题目描述页一致
+// @note         2023-05-12 1.9.10 1.鉴于经常有dns被污染导致cdn访问不了的情况，开放vpn开关，如果开了vpn使用原生地址更好 2.题目提交页面去除插件使用的备注，保留官方的，遵守策略
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.9"
-
-    let isGithub = false  
-
-    // 访问相关url
-    let teaUrl, versionUrl, sciptUrl, rakingUrl, levelUrl
-    if (isGithub) {
-        teaUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
-        versionUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/version.json"
-        sciptUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
-        rakingUrl = "https://zerotrac.github.io/leetcode_problem_rating/data.json"
-        levelUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
-    } else {
-        teaUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
-        versionUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/version.json"
-        sciptUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
-        rakingUrl = "https://raw.gitmirror.com/zerotrac/leetcode_problem_rating/main/data.json"
-        levelUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
-    }
+    let version = "1.9.10"
 
     // 页面相关url
     const allUrl = "https://leetcode.cn/problemset/"
@@ -196,7 +179,7 @@
     // 题目提交数据
     let pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
     let questiontag = ""
-    let updateFlag = false
+    let updateFlag = true
 
     // 常量数据
     const dummySend = XMLHttpRequest.prototype.send
@@ -320,6 +303,7 @@
     // 菜单方法定义
     function Script_setting(){
         let menu_ALL = [
+            ['switchvpn', 'vpn', '是否使用cdn访问数据', true, true],
             ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
             ['switchpbRepo', 'pbRepo function', '题库页评分(不包括灵茶)', true, false],
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
@@ -373,6 +357,23 @@
             }
             registerMenuCommand(); // 重新注册脚本菜单
         }
+    }
+
+    let isVpn = !GM_getValue("switchvpn")
+    // 访问相关url
+    let teaUrl, versionUrl, sciptUrl, rakingUrl, levelUrl
+    if (isVpn) {
+        teaUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
+        versionUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/version.json"
+        sciptUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
+        rakingUrl = "https://zerotrac.github.io/leetcode_problem_rating/data.json"
+        levelUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
+    } else {
+        teaUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
+        versionUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/version.json"
+        sciptUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
+        rakingUrl = "https://raw.gitmirror.com/zerotrac/leetcode_problem_rating/main/data.json"
+        levelUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
     }
 
     let ajaxReq = (type, reqUrl, headers, data, successFuc) => {
@@ -1488,8 +1489,10 @@
             this.onreadystatechange = (...args) => {
                 if (this.readyState === this.DONE && this.responseURL.startsWith(lcnojgo)) {
                     if (this.status === 200 || this.response.type === "application/json") {
-                        // console.log("update list....")
-                        if(location.href.startsWith(pbUrl)) updateFlag = true
+                        if(location.href.startsWith(pbUrl)) {
+                            updateFlag = true
+                            // console.log("update list hit....")
+                        }
                     }
                 }
                 if (_onreadystatechange) {
@@ -1518,6 +1521,7 @@
             }
             let lastIcon = lastNode.childNodes[0].childNodes[1]
             let first = childs[0].childNodes[0].childNodes[1]
+            // && lastIcon.childNodes.length > 1 && first.childNodes.length > 1
             if (!updateFlag && lastIcon.childNodes.length > 1 && first.childNodes.length > 1) {
                 return
             }
@@ -1537,8 +1541,6 @@
                 } catch(err) {
                     return
                 }
-                let iconLen = v.childNodes[0].childNodes.length
-                if (iconLen > 2) v.childNodes[0].childNodes[iconLen-1].remove() // 把官方的备注按钮去除，太丑了
                 // console.log(v)
                 let pa = icon.parentNode
                 $(pa).removeClass("w-[120px]")
@@ -1546,17 +1548,12 @@
                 copy1.innerText = subLst[i]["runtime"]
                 let copy2 = icon.cloneNode(true);
                 copy2.innerText = subLst[i]["memory"]
-                let copy3 = icon.cloneNode(true);
-                copy3.innerText = subLst[i]["submissionComment"] == null ? "无备注" : subLst[i]["submissionComment"]["comment"]
                 if (pa.childNodes.length > 1) {
-                    // console.log("replace", copy1, copy2)
                     pa.replaceChild(copy1, pa.childNodes[1])
                     pa.replaceChild(copy2, pa.childNodes[2])
-                    pa.replaceChild(copy3, pa.childNodes[3])
                 } else {
                     pa.appendChild(copy1);
                     pa.appendChild(copy2);
-                    pa.appendChild(copy3);
                 }
             }
         }
