@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.9.10
+// @version      1.10.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -121,12 +121,13 @@
 // @note         2023-05-07 1.9.8 去除官方新版题目提交新增的备注按钮(太丑了),恢复插件原样
 // @note         2023-05-12 1.9.9 增加新版在题目提交页面的时候自动切换tab title与题目描述页一致
 // @note         2023-05-12 1.9.10 1.鉴于经常有dns被污染导致cdn访问不了的情况，开放vpn开关，如果开了vpn使用原生地址更好 2.题目提交页面去除插件使用的备注，保留官方的，遵守策略
+// @note         2023-05-16 1.10.0 修复因官方ui变化新版ui不显示分数的问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.9.10"
+    let version = "1.10.0 "
 
     // 页面相关url
     const allUrl = "https://leetcode.cn/problemset/"
@@ -751,19 +752,7 @@
                 arr.insertBefore(div, arr.childNodes[0])
                 console.log("has refreshed tea pb...")
             }
-
-            // 试炼按钮渲染
-            // && head.childNodes.length == 5
-            // if (!lasthead.textContent.includes("灵茶の试炼") && head.childNodes.length == 6) {
-            //     let tea = document.createElement("a")
-            //     tea.innerHTML = '<div class="flex items-center space-x-2 whitespace-nowrap rounded-full px-4 py-[10px] leading-tight pointer-event-none text-base bg-fill-3 dark:bg-dark-fill-3 text-label-2 dark:text-dark-label-2 hover:bg-fill-2 dark:hover:bg-dark-fill-2 hover:text-label-2 dark:hover:text-dark-label-2"><svg \
-            //                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="text-gray-9 dark:text-dark-gray-9 mr-2 hidden h-[18px] w-[18px] lg:block"><path fill-rule="evenodd" d="M12 22c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2zm6-6l2 2v1H4v-1l2-2v-5c0-3.08 1.64-5.64 4.5-6.32V4c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68C16.37 5.36 18 7.93 18 11v5zm-2 1v-6c0-2.48-1.51-4.5-4-4.5S8 8.52 8 11v6h8z" clip-rule="evenodd"></path> \
-            //                         </svg>灵茶の试炼</div>'
-            //     tea.setAttribute("href", teaSheetUrl)
-            //     tea.setAttribute("target", "_blank")
-            //     head.appendChild(tea)
-            //     console.log("has refreshed teaBtn...")
-            // }
+            
         }
 
         // console.log(tFirst)
@@ -1220,17 +1209,22 @@
 
         // 题目页面
         // 旧版的标题位置
-        let t = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > h4 > a")
+        let t = document.querySelector("[data-cypress='QuestionTitle']")
         if (t == undefined){
             // 新版逻辑
-            t = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div:nth-child(1) > div.flex-1 > div > div > span")
+            t = document.querySelector(".text-xl")
             if (t == undefined) {
                 t1 = "unknown"
                 return
             }
             let data = t.innerText.split(".")
             let id = data[0].trim()
-            let colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div.mt-3.flex.space-x-4 > div:nth-child(1)")
+            let colorA = ['.bg-olive','.bg-yellow', '.bg-pink']
+            let colorSpan;
+            for (const color of colorA) {
+                colorSpan = document.querySelector(color)
+                if (colorSpan) break
+            }
             let pa = colorSpan.parentNode
             if (t1 != undefined && t1 == id) {
                 return
@@ -1328,7 +1322,7 @@
         } else {
             // 旧版逻辑，使用参数t和t1，分别代表标题的html和标题id
             // 旧版题目左侧列表里面所有分数
-            let pbAll = document.querySelector("body > div.question-picker-detail__2A9V.show__GfjG > div.question-picker-detail-menu__3NQq.show__3hiR > div.lc-theme-dark.question-picker-questions-wrapper__13qM > div")
+            let pbAll = document.querySelector(".question-list__1Kev")
             if (pbAll != undefined) {
                 let childs = pbAll.childNodes
                 for (const element of childs) {
@@ -1345,7 +1339,7 @@
                 }
             }
             // 旧版标题修改位置
-            let data = t.innerText.split(".")
+            let data = t.textContent.split(".")
             let id = data[0].trim()
             let ndtext = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(1)")
             let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
