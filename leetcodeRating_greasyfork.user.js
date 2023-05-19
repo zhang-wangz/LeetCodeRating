@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.0
+// @version      1.10.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -122,12 +122,13 @@
 // @note         2023-05-12 1.9.9 增加新版在题目提交页面的时候自动切换tab title与题目描述页一致
 // @note         2023-05-12 1.9.10 1.鉴于经常有dns被污染导致cdn访问不了的情况，开放vpn开关，如果开了vpn使用原生地址更好 2.题目提交页面去除插件使用的备注，保留官方的，遵守策略
 // @note         2023-05-16 1.10.0 修复因官方ui变化新版ui不显示分数的问题
+// @note         2023-05-19 1.10.1 修复因官方ui变化新版ui不显示分数的问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.10.0 "
+    let version = "1.10.1"
 
     // 页面相关url
     const allUrl = "https://leetcode.cn/problemset/"
@@ -184,7 +185,8 @@
 
     // 常量数据
     const dummySend = XMLHttpRequest.prototype.send
-    const regPbSubmission = 'https://leetcode.cn/problems/.*/submissions/.*';
+    const regPbSubmission = '.*//leetcode.cn/problems/.*/submissions/.*';
+    const regPbDes = '.*//leetcode.cn/problems/.*/description/.*'
     const queryPbSubmission ='\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: String, $status: SubmissionStatusEnum) {\n  submissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n    lang: $lang\n    status: $status\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      title\n      status\n      statusDisplay\n      lang\n      langName: langVerboseName\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      submissionComment {\n        comment\n      }\n    }\n  }\n}\n    '
     const queryProblemsetQuestionList = `
     query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
@@ -1116,6 +1118,39 @@
         }
     }
 
+    let getQusId = (titleTag) => {
+        let id
+        let headers = {
+            accept: '*/*',
+            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+        }
+        let body = {
+            operationName: 'questionTitle',
+            variables: {
+                'titleSlug': titleTag
+            },
+            query: /* GraphQL */ `
+            query questionTitle($titleSlug: String!) {
+                question(titleSlug: $titleSlug) {
+                questionId
+                questionFrontendId
+                title
+                titleSlug
+                isPaidOnly
+                difficulty
+                likes
+                dislikes
+                }
+            }
+            `,
+        }
+        ajaxReq('POST', lcgraphql, headers, body, (res)=> {
+            id = res.data.question.questionFrontendId
+        })
+        return id
+    }
+
     let getTitleByPbTagInSubmission = (titleTag) => {
         if (document.title != "力扣（LeetCode）官网 - 全球极客挚爱的技术成长平台") {
             return
@@ -1143,31 +1178,10 @@
         ajaxReq("POST", lcgraphql, headers, body, (res)=>{
             titlech = res.data.question.translatedTitle
         })
-        body = {
-            operationName: 'questionTitle',
-            variables: {
-                'titleSlug': titleTag
-            },
-            query: /* GraphQL */ `
-            query questionTitle($titleSlug: String!) {
-                question(titleSlug: $titleSlug) {
-                questionId
-                questionFrontendId
-                title
-                titleSlug
-                isPaidOnly
-                difficulty
-                likes
-                dislikes
-                }
-            }
-            `,
-        }
-        ajaxReq('POST', lcgraphql, headers, body, (res)=> {
-            titleid = res.data.question.questionFrontendId
-        })
+        titleid = getQusId(titleTag)
         document.title = titleid + ". " + titlech
     }
+
 
 
     // var lang, statusQus
@@ -1212,18 +1226,24 @@
         let t = document.querySelector("[data-cypress='QuestionTitle']")
         if (t == undefined){
             // 新版逻辑
-            t = document.querySelector(".text-xl")
+            t = document.querySelector(".text-lg")
             if (t == undefined) {
                 t1 = "unknown"
                 return
             }
-            let data = t.innerText.split(".")
+            // let pb = location.href
+            // let titleTag = pb.substring(pb.indexOf("problems")+9, pb.indexOf("description")-1)
+            let data = t.textContent.split(".")
             let id = data[0].trim()
             let colorA = ['.bg-olive','.bg-yellow', '.bg-pink']
             let colorSpan;
             for (const color of colorA) {
                 colorSpan = document.querySelector(color)
                 if (colorSpan) break
+            }
+            if (!colorSpan) {
+                console.log("color ele not found")
+                return
             }
             let pa = colorSpan.parentNode
             if (t1 != undefined && t1 == id) {
