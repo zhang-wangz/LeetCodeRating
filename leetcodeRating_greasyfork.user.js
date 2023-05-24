@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.2
+// @version      1.10.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -124,12 +124,13 @@
 // @note         2023-05-16 1.10.0 修复因官方ui变化新版ui不显示分数的问题
 // @note         2023-05-19 1.10.1 修复因官方ui变化新版ui不显示分数的问题
 // @note         2023-05-24 1.10.2 修复界面不一致导致的一些问题
+// @note         2023-05-24 1.10.3 修复界面不一致导致的一些问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.10.2"
+    let version = "1.10.3"
 
     // 页面相关url
     const allUrl = "https://leetcode.cn/problemset/"
@@ -186,9 +187,10 @@
 
     // 常量数据
     const dummySend = XMLHttpRequest.prototype.send
+    const regDiss = '.*//leetcode.cn/problems/.*/discussion/.*'
+    const regSovle = '.*//leetcode.cn/problems/.*/solutions/.*'
     const regPbSubmission = '.*//leetcode.cn/problems/.*/submissions/.*';
-    const regPbDes1 = '.*//leetcode.cn/problems/.*/description/.*'
-    const regPbDes2 = '.*//leetcode.cn/problems/.*/'
+    // const regPbDes = '.*//leetcode.cn/problems/.*/description/.*'
     const queryPbSubmission ='\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: String, $status: SubmissionStatusEnum) {\n  submissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n    lang: $lang\n    status: $status\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      title\n      status\n      statusDisplay\n      lang\n      langName: langVerboseName\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      submissionComment {\n        comment\n      }\n    }\n  }\n}\n    '
     const queryProblemsetQuestionList = `
     query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
@@ -1225,7 +1227,9 @@
 
         // 题目页面
         // 旧版的标题位置
-        if (location.href.match(regPbDes1) || location.href.match(regPbDes2)) {
+        let curUrl = location.href
+        let isDescript = !curUrl.match(regDiss) && !curUrl.match(regSovle) && !curUrl.match(regPbSubmission)
+        if (isDescript) {
             let t = document.querySelector("[data-cypress='QuestionTitle']")
             if (t == undefined){
                 // 新版逻辑
