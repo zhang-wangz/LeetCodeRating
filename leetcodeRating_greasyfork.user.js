@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.3
+// @version      1.10.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -125,12 +125,13 @@
 // @note         2023-05-19 1.10.1 修复因官方ui变化新版ui不显示分数的问题
 // @note         2023-05-24 1.10.2 修复界面不一致导致的一些问题
 // @note         2023-05-24 1.10.3 修复界面不一致导致的一些问题
+// @note         2023-05-29 1.10.4 解决新版ui提交备注页面ui覆盖问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.10.3"
+    let version = "1.10.4"
 
     // 页面相关url
     const allUrl = "https://leetcode.cn/problemset/"
@@ -310,7 +311,7 @@
     // 菜单方法定义
     function Script_setting(){
         let menu_ALL = [
-            ['switchvpn', 'vpn', '是否使用cdn访问数据', true, true],
+            ['switchvpn', 'vpn', '是否使用cdn访问数据', true, false],
             ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
             ['switchpbRepo', 'pbRepo function', '题库页评分(不包括灵茶)', true, false],
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
@@ -1565,7 +1566,8 @@
                 }
                 // console.log(v)
                 let pa = icon.parentNode
-                $(pa).removeClass("w-[120px]")
+                $(pa).removeClass("w-[100px]")
+                $(pa).addClass("w-[230px]")
                 let copy1 = icon.cloneNode(true);
                 copy1.innerText = subLst[i]["runtime"]
                 let copy2 = icon.cloneNode(true);
