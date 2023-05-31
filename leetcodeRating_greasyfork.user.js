@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.4
+// @version      1.10.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -126,6 +126,7 @@
 // @note         2023-05-24 1.10.2 修复界面不一致导致的一些问题
 // @note         2023-05-24 1.10.3 修复界面不一致导致的一些问题
 // @note         2023-05-29 1.10.4 解决新版ui提交备注页面ui覆盖问题
+// @note         2023-05-31 1.10.5 解决新版ui学习计划获取rating分数未击中题目难度显示undefined问题
 // ==/UserScript==
 
 (function () {
@@ -1012,17 +1013,17 @@
                 pbName = pbName.split(" ").join("") //去除中间的空格
                 let level = levelData[pbName]
                 let hit = false
-                let darkn2c = {"font-size: 14px; color: rgb(63, 202, 125);": "简单", "font-size: 14px; color: rgb(255, 201, 38);": "中等", "font-size: 14px; color: rgb(255, 89, 103);": "困难" }
-                let lightn2c = {"font-size: 14px; color: rgb(21, 189, 102);": "简单", "font-size: 14px; color: rgb(255, 184, 0);": "中等", "font-size: 14px; color: rgb(255, 51, 75);": "困难" }
+                let darkn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
+                let lightn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
                 // rating
                 if (id && t2rate[id]) {
                     let ndRate = t2rate[id]["Rating"]
-                    nd.textContent = ndRate 
+                    nd.textContent = ndRate
                     hit = true
                 } else {
-                    if (!nd) break 
-                    let clr = nd.getAttribute("style")
-                    nd.innerHTML = lightn2c[clr] == undefined? darkn2c[clr]:lightn2c[clr]
+                    if (!nd) break
+                    let clr = nd.getAttribute("class")
+                    nd.innerHTML = lightn2c[clr] == undefined ? darkn2c[clr]:lightn2c[clr]
                 }
 
                 // level渲染 
