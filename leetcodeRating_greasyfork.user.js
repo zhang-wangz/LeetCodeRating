@@ -132,7 +132,7 @@
 (function () {
     'use strict';
 
-    let version = "1.10.4"
+    let version = "1.10.5"
 
 
     // 页面相关url

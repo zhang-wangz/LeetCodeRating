@@ -1,4 +1,4 @@
 {
-  "version": "1.10.4",
-  "content": "解决新版ui提交备注页面的ui覆盖问题"
+  "version": "1.10.5",
+  "content": "解决新版ui学习计划获取rating分数未击中题目难度显示undefined问题"
 }
