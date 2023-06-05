@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.5
+// @version      1.10.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -127,12 +127,13 @@
 // @note         2023-05-24 1.10.3 修复界面不一致导致的一些问题
 // @note         2023-05-29 1.10.4 解决新版ui提交备注页面ui覆盖问题
 // @note         2023-05-31 1.10.5 解决新版ui学习计划获取rating分数未击中题目难度显示undefined问题
+// @note         2023-06-05 1.10.6 将dark模式修改为跟随浏览器主题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.10.5"
+    let version = "1.10.6"
 
 
     // 页面相关url
@@ -327,7 +328,7 @@
             ['switchstudylevel', 'studyplan level function', 'studyplan算术评级(仅限新版测评)', true, false],
             ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
-            ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
+            ['switchdark', 'dark function', '自动切换白天黑夜模式(跟随浏览器主题)', false, true],
             ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
         for (const element of menu_ALL){ // 如果读取到的值为 null 就写入默认值
@@ -446,16 +447,14 @@
     }
 
     if(GM_getValue("switchdark")) {
-        let h = new Date().getHours()
-        if (h >= 8 && h < 20) {
-            lcTheme('light')
-            localStorage.setItem("lc-dark-side", "light")
-            console.log("修改至light mode...")
-        }
-        else {
-            lcTheme('dark')
-            localStorage.setItem("lc-dark-side", "dark")
-            console.log("修改至dark mode...")
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            lcTheme('dark');
+            localStorage.setItem("lc-dark-side", "dark");
+            console.log("修改至dark mode...");
+        } else {
+            lcTheme('light');
+            localStorage.setItem("lc-dark-side", "light");
+            console.log("修改至light mode...");
         }
     }
 
