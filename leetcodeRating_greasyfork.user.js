@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.5
+// @version      1.10.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -127,12 +127,13 @@
 // @note         2023-05-24 1.10.3 修复界面不一致导致的一些问题
 // @note         2023-05-29 1.10.4 解决新版ui提交备注页面ui覆盖问题
 // @note         2023-05-31 1.10.5 解决新版ui学习计划获取rating分数未击中题目难度显示undefined问题
+// @note         2023-06-07 1.10.6 阻止新版题目页面输入代码时候的自动联想，因为有些实在不符合规则但还是会跳联想
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.10.5"
+    let version = "1.10.6"
 
 
     // 页面相关url
@@ -313,7 +314,7 @@
     // 菜单方法定义
     function Script_setting(){
         let menu_ALL = [
-            ['switchvpn', 'vpn', '是否使用cdn访问数据', true, false],
+            ['switchvpn', 'vpn', '是否使用cdn访问数据', false, false],
             ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
             ['switchpbRepo', 'pbRepo function', '题库页评分(不包括灵茶)', true, false],
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
@@ -327,6 +328,7 @@
             ['switchstudylevel', 'studyplan level function', 'studyplan算术评级(仅限新版测评)', true, false],
             ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
+            ['switchcode', 'switchcode function', '新版ui阻止代码联想', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
             ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
@@ -1240,6 +1242,9 @@
                 if (t == undefined) {
                     t1 = "unknown"
                     return
+                }
+                if (GM_getValue("switchcode")) {
+                    document.querySelector('.overflowingContentWidgets').remove()
                 }
                 // let pb = location.href
                 // let titleTag = pb.substring(pb.indexOf("problems")+9, pb.indexOf("description")-1)
