@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.6
+// @version      1.10.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -25,6 +25,7 @@
 // @connect      raw.githubusercontent.com
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js
 // @require      https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/layer.min.js
+// @require      https://gist.github.com/raw/2625891/waitForKeyElements.js
 // @grant        unsafeWindow
 // @note         2022-09-07 1.1.0 支持tag页面和题库页面显示匹配的周赛分难度
 // @note         2022-09-07 1.1.0 分数数据出自零神项目
@@ -128,12 +129,13 @@
 // @note         2023-05-29 1.10.4 解决新版ui提交备注页面ui覆盖问题
 // @note         2023-05-31 1.10.5 解决新版ui学习计划获取rating分数未击中题目难度显示undefined问题
 // @note         2023-06-07 1.10.6 阻止新版题目页面输入代码时候的自动联想，因为有些实在不符合规则但还是会跳联想
+// @note         2023-06-07 1.10.7 修复新bug
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.10.6"
+    let version = "1.10.7"
 
 
     // 页面相关url
@@ -1194,6 +1196,15 @@
 
 
     // var lang, statusQus
+    let eventhappend = function() {
+        let key = document.querySelector('.inputarea')
+        key.setAttribute('aria-autocomplete','both')
+        key.setAttribute('aria-haspopup',false)
+        key.removeAttribute('data-focus-visible-added')
+        key.removeAttribute('aria-activedescendant')
+        // console.log(key)
+    }
+    // let f = false
     function getpb() {
         if(!GM_getValue("switchpb")) return
         let switchrealoj = GM_getValue("switchrealoj")
@@ -1243,9 +1254,7 @@
                     t1 = "unknown"
                     return
                 }
-                if (GM_getValue("switchcode")) {
-                    document.querySelector('.overflowingContentWidgets').remove()
-                }
+                
                 // let pb = location.href
                 // let titleTag = pb.substring(pb.indexOf("problems")+9, pb.indexOf("description")-1)
                 let data = t.textContent.split(".")
@@ -1264,6 +1273,18 @@
                 if (t1 != undefined && t1 == id) {
                     return
                 }
+                if (GM_getValue("switchcode")) {
+                    waitForKeyElements(".overflowingContentWidgets", ()=>{
+                        $('.overflowingContentWidgets').remove()
+                    });
+                    let div = document.querySelector('div.h-full.w-full')
+                    div.onkeydown = function(event) {
+                        if (event.keyCode >= 65 && event.keyCode <= 90 || event.keyCode == 13) {
+                            eventhappend()
+                        }
+                    }
+                } 
+
                 // 新版统计难度分数并且修改
                 let nd = colorSpan.getAttribute("class")
                 let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
