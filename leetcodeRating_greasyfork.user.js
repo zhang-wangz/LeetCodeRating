@@ -25,7 +25,6 @@
 // @connect      raw.githubusercontent.com
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js
 // @require      https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/layer.min.js
-// @require      https://gist.github.com/raw/2625891/waitForKeyElements.js
 // @grant        unsafeWindow
 // @note         2022-09-07 1.1.0 支持tag页面和题库页面显示匹配的周赛分难度
 // @note         2022-09-07 1.1.0 分数数据出自零神项目
@@ -181,6 +180,45 @@
                 e.stopPropagation();
             }
         });
+    }
+    // 同步函数
+    function waitForKeyElements (selectorTxt, actionFunction, bWaitOnce, iframeSelector) {
+        let targetNodes, btargetsFound;
+        if (typeof iframeSelector == "undefined")
+            targetNodes = $(selectorTxt);
+        else
+            targetNodes = $(iframeSelector).contents().find (selectorTxt);
+
+        if (targetNodes  &&  targetNodes.length > 0) {
+            btargetsFound   = true;
+            targetNodes.each (function(){
+                let jThis           = $(this);
+                let alreadyFound = jThis.data ('alreadyFound')  ||  false;
+                if (!alreadyFound) {
+                    let cancelFound = actionFunction (jThis);
+                    if (cancelFound) btargetsFound = false;
+                    else jThis.data ('alreadyFound', true);
+                }
+            });
+        } else {
+            btargetsFound = false;
+        }
+        let controlObj      = waitForKeyElements.controlObj  ||  {};
+        let controlKey      = selectorTxt.replace (/[^\w]/g, "_");
+        let timeControl     = controlObj [controlKey];
+        if (btargetsFound  &&  bWaitOnce  &&  timeControl) {
+            clearInterval (timeControl);
+            delete controlObj [controlKey]
+        }
+        else {
+            if (!timeControl) {
+                timeControl = setInterval (function() {
+                        waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector);
+                    },300);
+                controlObj[controlKey] = timeControl;
+            }
+        }
+        waitForKeyElements.controlObj = controlObj;
     }
 
     // 新版本判断
