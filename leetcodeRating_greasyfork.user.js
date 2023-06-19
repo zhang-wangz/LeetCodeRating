@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.7
+// @version      1.10.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -129,12 +129,13 @@
 // @note         2023-05-31 1.10.5 解决新版ui学习计划获取rating分数未击中题目难度显示undefined问题
 // @note         2023-06-07 1.10.6 阻止新版题目页面输入代码时候的自动联想，因为有些实在不符合规则但还是会跳联想
 // @note         2023-06-07 1.10.7 修复新bug
+// @note         2023-06-19 1.10.8 修复新旧版切换ui更新导致的问题，更新纸片人一言api
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.10.7"
+    let version = "1.10.8"
 
 
     // 页面相关url
@@ -463,7 +464,6 @@
         let list = {"query":query, "variables":variables };
         //
         ajaxReq(type, reqUrl, null, list, successFuc)
-
     };
 
     // post请求
@@ -1083,77 +1083,39 @@
         console.log("has refreshed...")
     }
 
-    let clickFlag = true
-    let startTime, endTime
     let newisaddBtnClick = () => {
-        if (!clickFlag) return
         GM_setValue("switchnewBeta", true)
         newbtnSwitch()
         location.reload()
     }
 
-    function moveSupport(selector) {
-        // 拖动
-        let _move = false;
-        var ismove = false; // 移动标记
-        let _x, _y; // 鼠标离控件左上角的相对位置
-        jQuery(document).ready(function ($) {
-            $(selector).mousedown(function (e) {
-                _move = true;
-                startTime = new Date().getTime();
-                _x = e.pageX - parseInt($(selector).css("left"));
-                _y = e.pageY - parseInt($(selector).css("top"));
-            });
-            $(document).mousemove(function (e) {
-                if (_move) {
-                    let x = e.pageX - _x;
-                    let y = e.pageY - _y;
-                    let wx = $(window).width() - $(selector).width();
-                    let dy = $(document).height() - $(selector).height();
-                    if(x >= 0 && x <= wx && y > 0 && y <= dy) {
-                        $(selector).css({
-                            top: y,
-                            left: x
-                        }); //控件新位置
-                        ismove = true;
-                    }
-                }
-            }).mouseup(function () {
-                endTime = new Date().getTime();
-                clickFlag = endTime - startTime < 200;
-                _move = false;
-            });
-        });
+    let oldisaddBtnClick = () => {
+        GM_setValue("switchnewBeta", false)
+        oldbtnSwitch()
+        location.reload()
     }
-
 
     function switchUi() {
         // 新版按钮切换
-        let newcopyBtn = document.querySelector("[name='newisaddBtn']")
-        let newBtn = document.querySelector(".css-h6vf0p-card-Box")
-        if (newcopyBtn) {
-            // paas
-        } else if(newBtn && newBtn.getAttribute("hidden") == null){
-            let cloneBtn = newBtn.cloneNode()
-            cloneBtn.textContent = newBtn.textContent
-            newBtn.setAttribute("hidden", "true")
-            newBtn.parentNode.appendChild(cloneBtn)
-
-            cloneBtn.setAttribute("name", "newisaddBtn")
-            cloneBtn.addEventListener('click', newisaddBtnClick)
-            moveSupport("[name='newisaddBtn']")
+        let newBtn = document.querySelector(".css-1a1f5nv-Box")
+        if (newBtn) {
+            if (newBtn.getAttribute("name") && newBtn.getAttribute("name").includes("isaddBtn")) {
+                // paas
+            } else {
+                // console.log(oldBtn.getAttribute("name"))
+                newBtn.setAttribute("name", "isaddBtn")
+                newBtn.addEventListener('click', newisaddBtnClick)
+            }
         }
 
-        let oldBtn = document.querySelector("#editor > div.absolute.right-\\[25px\\].bottom-\\[84px\\].z-overlay > div")
+        let oldBtn = document.querySelector("#__next > div > div > div > nav > div > div > div.relative.ml-4.flex.items-center.space-x-4 > div.flex.cursor-pointer.items-center.justify-center.rounded-\\[5px\\].px-2.py-\\[5px\\].bg-lc-fill-01.dark\\:bg-dark-lc-fill-01.hover\\:bg-lc-fill-02.hover\\:dark\\:bg-dark-lc-fill-02.text-lc-text-secondary.dark\\:text-dark-lc-text-secondary")
         if (oldBtn) {
             if (oldBtn.getAttribute("name") && oldBtn.getAttribute("name").includes("isaddBtn")) {
                 // paas
             } else {
                 // console.log(oldBtn.getAttribute("name"))
                 oldBtn.setAttribute("name", "isaddBtn")
-                oldBtn.addEventListener('click', () => {
-                    GM_setValue("switchnewBeta", false)
-                })
+                oldBtn.addEventListener('click', oldisaddBtnClick)
             }
         }
     }
@@ -2162,12 +2124,12 @@ if (GM_getValue("switchperson")) {
     setTimeout(hitokotohtml, 6000)
 
     function getkoto(){
-        $.get("https://api.uixsj.cn/hitokoto/get?type=fart&code=json").then(res => {echokoto(res);}).catch(xhr=>xhr)
+        $.get("https://v1.hitokoto.cn/?c=j&encode=json").then(res => {echokoto(res);}).catch(xhr=>xhr)
         setTimeout(getkoto, 6000)
     }
     function echokoto(result){
         let hc = eval(result);
-        document.getElementById("hitokoto").textContent = hc.content;
+        document.getElementById("hitokoto").textContent = hc.hitokoto;
         // console.log(hc.content)
     }
     setTimeout(getkoto, 5000);
