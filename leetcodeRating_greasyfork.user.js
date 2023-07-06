@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.9
+// @version      1.10.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -131,12 +131,13 @@
 // @note         2023-06-07 1.10.7 修复新bug
 // @note         2023-06-19 1.10.8 修复新旧版切换ui更新导致的问题，更新纸片人一言api
 // @note         2023-07-06 1.10.9 修复新旧版切换ui更新导致的问题
+// @note         2023-07-06 1.10.10 不再强行控制新旧ui切换,导入leetcode自身切换机制
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.10.9"
+    let version = "1.10.10"
 
 
     // 页面相关url
@@ -169,11 +170,6 @@
     let preDate = GM_getValue("preDate", "")
     // level数据
     let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
-
-    // 刷新菜单
-    Script_setting()
-    // urlchange事件
-    initUrlChange()
 
     // 去除复制时候的事件
     if (GM_getValue("switchcopy")) {
@@ -223,8 +219,96 @@
         waitForKeyElements.controlObj = controlObj;
     }
 
+
+    let ajaxReq = (type, reqUrl, headers, data, successFuc) => {
+        $.ajax({
+            // 请求方式
+            type : type,
+            // 请求的媒体类型
+            contentType: "application/json;charset=UTF-8",
+            // 请求地址
+            url: reqUrl,
+            // 数据，json字符串
+            data : JSON.stringify(data),
+            // 同步方式
+            async: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            headers: headers,
+            // 请求成功
+            success : function(result) {
+                successFuc(result)
+            },
+            // 请求失败，包含具体的错误信息
+            error : function(e){
+                console.log(e.status);
+                console.log(e.responseText);
+            }
+        });
+    }
+
+    let newbtnSwitch = () => {
+        let headers = {
+            accept: '*/*',
+            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+        }
+        let body = {
+            operationName: 'setQdToBeta',
+            variables: {},
+            query: /* GraphQL */ `
+            mutation setQdToBeta {
+                authenticationSetBetaParticipation(
+                participationType: NEW_QUESTION_DETAIL_PAGE
+                optedIn: true
+                ) {
+                inBeta
+                hitBeta
+                __typename
+                }
+            }
+            `,
+        }
+        ajaxReq("POST", lcnojgo, headers, body, ()=>{})
+    }
+
+    let oldbtnSwitch = () => {
+        let headers = {
+            accept: '*/*',
+            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+        }
+        let body = {
+            variables: {
+                'participationType': 'NEW_QUESTION_DETAIL_PAGE'
+            },
+            query: /* GraphQL */ `
+            mutation setQdToOldVersion ($participationType: ParticipationTypeEnum!){
+                authenticationSetBetaParticipation(
+                participationType: $participationType
+                optedIn: false
+                ) {
+                inBeta
+                hitBeta
+                }
+            }
+            `,
+        }
+        ajaxReq("POST", lcnojgo, headers, body, ()=>{})
+    }
+
     // 新版本判断
-    let isBeta = document.getElementById("__NEXT_DATA__") != undefined
+    let isBeta
+    waitForKeyElements("body", ()=> {
+        isBeta = document.getElementById("__NEXT_DATA__") != undefined
+    })
+    GM_setValue("switchnewBeta", isBeta)
+
+    // 刷新菜单
+    Script_setting()
+    // urlchange事件
+    initUrlChange()
 
     // 题目提交数据
     let pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
@@ -361,7 +445,7 @@
             ['switchpbRepo', 'pbRepo function', '题库页评分(不包括灵茶)', true, false],
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
             ['switchpb', 'pb function', '题目页评分和新版提交信息', true, true],
-            ['switchnewBeta', 'new function', '题目页是否使用新版ui', true, true],
+            ['switchnewBeta', 'new function', '当前页使用新版ui', true, true],
             ['switchsearch', 'search function', '题目搜索页评分', true, false],
             ['switchtag', 'tag function', 'tag题单页评分(动态规划等分类题库)', true, false],
             ['switchcompany', 'company function', 'company题单页评分(字节等公司题库)', true, false],
@@ -400,11 +484,17 @@
         function menu_switch(name, ename, cname, value){
             if(value == 'false'){
                 GM_setValue(`${name}`, true);
+                if (name == "switchnewBeta") {
+                    newbtnSwitch()
+                }
                 registerMenuCommand(); // 重新注册脚本菜单
                 location.reload(); // 刷新网页
                 GM_notification({text: `「${cname}」已开启\n`, timeout: 3500}); // 提示消息
             } else {
                 GM_setValue(`${name}`, false);
+                if (name == "switchnewBeta") {
+                    oldbtnSwitch()
+                }
                 registerMenuCommand(); // 重新注册脚本菜单
                 location.reload(); // 刷新网页
                 GM_notification({text: `「${cname}」已关闭\n`, timeout: 3500}); // 提示消息
@@ -429,35 +519,6 @@
         rakingUrl = "https://raw.gitmirror.com/zerotrac/leetcode_problem_rating/main/data.json"
         levelUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
     }
-
-    let ajaxReq = (type, reqUrl, headers, data, successFuc) => {
-        $.ajax({
-            // 请求方式
-            type : type,
-            // 请求的媒体类型
-            contentType: "application/json;charset=UTF-8",
-            // 请求地址
-            url: reqUrl,
-            // 数据，json字符串
-            data : JSON.stringify(data),
-            // 同步方式
-            async: false,
-            xhrFields: {
-                withCredentials: true
-            },
-            headers: headers,
-            // 请求成功
-            success : function(result) {
-                successFuc(result)
-            },
-            // 请求失败，包含具体的错误信息
-            error : function(e){
-                console.log(e.status);
-                console.log(e.responseText);
-            }
-        });
-    }
-
 
     // lc 基础req
     let baseReq = (type, reqUrl, query, variables, successFuc) => {
@@ -502,64 +563,13 @@
         }
     }
 
-    let newbtnSwitch = () => {
-        let headers = {
-            accept: '*/*',
-            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-            'content-type': 'application/json',
-        }
-        let body = {
-            operationName: 'setQdToBeta',
-            variables: {},
-            query: /* GraphQL */ `
-            mutation setQdToBeta {
-                authenticationSetBetaParticipation(
-                participationType: NEW_QUESTION_DETAIL_PAGE
-                optedIn: true
-                ) {
-                inBeta
-                hitBeta
-                __typename
-                }
-            }
-            `,
-        }
-        ajaxReq("POST", lcnojgo, headers, body, ()=>{})
-    }
 
-    let oldbtnSwitch = () => {
-        let headers = {
-            accept: '*/*',
-            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-            'content-type': 'application/json',
-        }
-        let body = {
-            variables: {
-                'participationType': 'NEW_QUESTION_DETAIL_PAGE'
-            },
-            query: /* GraphQL */ `
-            mutation setQdToOldVersion ($participationType: ParticipationTypeEnum!){
-                authenticationSetBetaParticipation(
-                participationType: $participationType
-                optedIn: false
-                ) {
-                inBeta
-                hitBeta
-                }
-            }
-            `,
-        }
-        ajaxReq("POST", lcnojgo, headers, body, ()=>{})
-    }
-
-
-    if (GM_getValue("switchnewBeta")) {
-        newbtnSwitch()
-    } else {
-        oldbtnSwitch()
-        let s = document.querySelector("#__next")
-        if(s && location.href.match(pbUrl)) location.reload()
-    }
+    // console.log(GM_getValue("switchnewBeta"))
+    // if (GM_getValue("switchnewBeta")) {
+    //     newbtnSwitch()
+    // } else {
+    //     oldbtnSwitch()
+    // }
 
 
     // 修改参数
@@ -804,7 +814,7 @@
                 arr.insertBefore(div, arr.childNodes[0])
                 console.log("has refreshed tea pb...")
             }
-            
+
         }
 
         // console.log(tFirst)
@@ -867,7 +877,7 @@
         let head = document.querySelector(".ant-table-cell")
         if(head == undefined) return
         head = head.parentNode
-        if (tagt && arr.lastChild && tagt == arr.lastChild.textContent 
+        if (tagt && arr.lastChild && tagt == arr.lastChild.textContent
             && tagf && arr.firstChild && tagf == arr.firstChild.textContent) {
             return
         }
@@ -956,7 +966,7 @@
         if (!GM_getValue("switchpblist")) return;
         let arr = document.querySelector("div[role='rowgroup']")
         if (arr == undefined) return
-        if (pblistt != undefined && arr.lastChild && pblistt == arr.lastChild.textContent 
+        if (pblistt != undefined && arr.lastChild && pblistt == arr.lastChild.textContent
             && arr.firstChild && pblistf == arr.firstChild.textContent) {
             return
         }
@@ -1016,7 +1026,7 @@
                 rateRefresh = true
             }
         }
-        if (!arr) return 
+        if (!arr) return
         let childs = arr.childNodes
         for (const element of childs) {
             let v = element
@@ -1069,7 +1079,7 @@
                     nd.innerHTML = lightn2c[clr] == undefined ? darkn2c[clr]:lightn2c[clr]
                 }
 
-                // level渲染 
+                // level渲染
                 if (level && GM_getValue("switchstudylevel")) {
                     let text = document.createElement('span')
                     text.style = nd.getAttribute("style")
@@ -1084,56 +1094,7 @@
         console.log("has refreshed...")
     }
 
-    let newisaddBtnClick = () => {
-        GM_setValue("switchnewBeta", true)
-        newbtnSwitch()
-        // location.reload()
-    }
 
-    let oldisaddBtnClick = () => {
-        GM_setValue("switchnewBeta", false)
-        oldbtnSwitch()
-        // location.reload()
-    }
-
-    function switchUi() {
-        // 新版按钮切换
-        let newBtn = $(":contains(体验新版)")
-        newBtn = newBtn[0]
-        if (newBtn) {
-            if (newBtn.getAttribute("name") && newBtn.getAttribute("name").includes("isaddBtn")) {
-                // paas
-            } else {
-                // console.log(oldBtn.getAttribute("name"))
-                newBtn.setAttribute("name", "isaddBtn")
-                newBtn.addEventListener('click', newisaddBtnClick)
-            }
-        }
-
-        let oldBtn = $(":contains(返回旧版)")
-        oldBtn = oldBtn[0]
-        if (oldBtn) {
-            if (oldBtn.getAttribute("name") && oldBtn.getAttribute("name").includes("isaddBtn")) {
-                // paas
-            } else {
-                // console.log(oldBtn.getAttribute("name"))
-                oldBtn.setAttribute("name", "isaddBtn")
-                oldBtn.addEventListener('click', oldisaddBtnClick)
-            }
-        }
-
-        let oldBtn1 = $(":contains(回到旧版)")
-        oldBtn1 = oldBtn1[0]
-        if (oldBtn1) {
-            if (oldBtn1.getAttribute("name") && oldBtn1.getAttribute("name").includes("isaddBtn")) {
-                // paas
-            } else {
-                // console.log(oldBtn.getAttribute("name"))
-                oldBtn1.setAttribute("name", "isaddBtn")
-                oldBtn1.addEventListener('click', oldisaddBtnClick)
-            }
-        }
-    }
 
     function getSubmitBtn(isBeta) {
         if(!isBeta) {
@@ -1198,7 +1159,7 @@
                 translatedTitle
                 translatedContent
                 }
-            }     
+            }
             `,
         }
         ajaxReq("POST", lcgraphql, headers, body, (res)=>{
@@ -1223,7 +1184,7 @@
     function getpb() {
         if(!GM_getValue("switchpb")) return
         let switchrealoj = GM_getValue("switchrealoj")
-        
+
         // 是否在提交页面
         let isSub = location.href.match(regPbSubmission)
         if(isBeta) {
@@ -1245,8 +1206,6 @@
                 return;
             }
         }
-        // 切换onclik
-        switchUi()
 
         // 新版学习计划左侧栏分数显示
         let css_selector = "#chakra-modal--body-\\:ra\\: > div > div.flex.w-full.flex-col.gap-4"
@@ -1269,7 +1228,7 @@
                     t1 = "unknown"
                     return
                 }
-                
+
                 // let pb = location.href
                 // let titleTag = pb.substring(pb.indexOf("problems")+9, pb.indexOf("description")-1)
                 let data = t.textContent.split(".")
@@ -1298,7 +1257,7 @@
                             eventhappend()
                         }
                     }
-                } 
+                }
 
                 // 新版统计难度分数并且修改
                 let nd = colorSpan.getAttribute("class")
@@ -1506,7 +1465,7 @@
                 t1 = id
             }
         }
-        
+
     }
 
     // 查询提交更新信息并保存到内存中

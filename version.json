@@ -1,4 +1,4 @@
 {
-  "version": "1.10.9",
-  "content": "修复新旧版切换ui更新导致的问题"
+  "version": "1.10.10",
+  "content": "不再强行控制新旧ui切换,导入leetcode自身切换机制"
 }
