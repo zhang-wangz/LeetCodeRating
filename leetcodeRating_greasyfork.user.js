@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      1.10.10
+// @version      2.0.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -132,12 +132,13 @@
 // @note         2023-06-19 1.10.8 修复新旧版切换ui更新导致的问题，更新纸片人一言api
 // @note         2023-07-06 1.10.9 修复新旧版切换ui更新导致的问题
 // @note         2023-07-06 1.10.10 不再强行控制新旧ui切换,导入leetcode自身切换机制
+// @note         2023-07-11 2.0.0 题目提交页面ui修正
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "1.10.10"
+    let version = "2.0.0"
 
 
     // 页面相关url
@@ -1547,7 +1548,7 @@
             let lastIcon = lastNode.childNodes[0].childNodes[1]
             let first = childs[0].childNodes[0].childNodes[1]
             // && lastIcon.childNodes.length > 1 && first.childNodes.length > 1
-            if (!updateFlag && lastIcon.childNodes.length > 1 && first.childNodes.length > 1) {
+            if (!updateFlag && lastIcon.getAttribute("class").includes("modify") && first.getAttribute("class").includes("modify")) {
                 return
             }
             if (updateFlag) updateFlag = false
@@ -1562,25 +1563,27 @@
                 let v = childs[i]
                 let icon
                 try {
-                    icon = v.childNodes[0].childNodes[1].childNodes[0]
+                    icon = v.childNodes[0].childNodes[1]
                 } catch(err) {
                     return
                 }
                 // console.log(v)
-                let pa = icon.parentNode
-                $(pa).removeClass("w-[100px]")
-                $(pa).addClass("w-[230px]")
-                let copy1 = icon.cloneNode(true);
-                copy1.innerText = subLst[i]["runtime"]
-                let copy2 = icon.cloneNode(true);
-                copy2.innerText = subLst[i]["memory"]
-                if (pa.childNodes.length > 1) {
-                    pa.replaceChild(copy1, pa.childNodes[1])
-                    pa.replaceChild(copy2, pa.childNodes[2])
-                } else {
-                    pa.appendChild(copy1);
-                    pa.appendChild(copy2);
-                }
+                // let pa = icon.parentNode
+                let lang = subLst[i]["langName"]
+                console.log(subLst[i]["langName"])
+                if (lang !== icon.innerText) return
+                let status = v.childNodes[0].childNodes[0]
+                $(status).removeClass("w-[200px]")
+                $(status).addClass("w-[130px]")
+                $(icon).addClass("modify")
+                icon.innerText = icon.innerText + "  /  " + subLst[i]["runtime"] + "  /  " + subLst[i]["memory"]
+                $(icon).removeClass("w-[140px]")
+                $(icon).addClass("w-[220px]")
+            
+                // let copy1 = icon.cloneNode(true);
+                // copy1.innerText = subLst[i]["runtime"]
+                // let copy2 = icon.cloneNode(true);
+                // copy2.innerText = subLst[i]["memory"]
             }
         }
     }

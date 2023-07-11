@@ -1,4 +1,4 @@
 {
-  "version": "1.10.10",
-  "content": "不再强行控制新旧ui切换,导入leetcode自身切换机制"
+  "version": "2.0.0",
+  "content": "题目提交页面ui修正"
 }
