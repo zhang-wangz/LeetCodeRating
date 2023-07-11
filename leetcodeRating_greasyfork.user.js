@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.0
+// @version      2.0.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -133,12 +133,13 @@
 // @note         2023-07-06 1.10.9 修复新旧版切换ui更新导致的问题
 // @note         2023-07-06 1.10.10 不再强行控制新旧ui切换,导入leetcode自身切换机制
 // @note         2023-07-11 2.0.0 题目提交页面ui修正
+// @note         2023-07-11 2.0.1 题目页面ui修正
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.0.0"
+    let version = "2.0.1"
 
 
     // 页面相关url
@@ -1234,7 +1235,7 @@
                 // let titleTag = pb.substring(pb.indexOf("problems")+9, pb.indexOf("description")-1)
                 let data = t.textContent.split(".")
                 let id = data[0].trim()
-                let colorA = ['.bg-olive','.bg-yellow', '.bg-pink']
+                let colorA = ['.text-olive','.text-yellow', '.text-pink']
                 let colorSpan;
                 for (const color of colorA) {
                     colorSpan = document.querySelector(color)
