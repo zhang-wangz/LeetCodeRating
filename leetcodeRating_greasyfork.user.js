@@ -134,12 +134,13 @@
 // @note         2023-07-06 1.10.10 不再强行控制新旧ui切换,导入leetcode自身切换机制
 // @note         2023-07-11 2.0.0 题目提交页面ui修正
 // @note         2023-07-11 2.0.1 题目页面ui修正
+// @note         2023-07-16 2.0.2 题目页提交页面按钮独立, 修复流动布局造成的问题 
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.0.1"
+    let version = "2.0.2"
 
 
     // 页面相关url
@@ -446,7 +447,8 @@
             ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
             ['switchpbRepo', 'pbRepo function', '题库页评分(不包括灵茶)', true, false],
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
-            ['switchpb', 'pb function', '题目页评分和新版提交信息', true, true],
+            ['switchpb', 'pb function', '题目页评分', true, true],
+            ['switchpbsubmit', 'pbsubmit function', '题目新版提交页面', true, true],
             ['switchnewBeta', 'new function', '当前页使用新版ui', true, true],
             ['switchsearch', 'search function', '题目搜索页评分', true, false],
             ['switchtag', 'tag function', 'tag题单页评分(动态规划等分类题库)', true, false],
@@ -1189,7 +1191,8 @@
 
         // 是否在提交页面
         let isSub = location.href.match(regPbSubmission)
-        if(isBeta) {
+        let submit = GM_getValue("switchpbsubmit")
+        if(isBeta && submit) {
             if (!location.href.startsWith(pbUrl)) questiontag = ""
             if(isSub) {
                 let submissionUrl = location.href
@@ -1235,7 +1238,7 @@
                 // let titleTag = pb.substring(pb.indexOf("problems")+9, pb.indexOf("description")-1)
                 let data = t.textContent.split(".")
                 let id = data[0].trim()
-                let colorA = ['.text-olive','.text-yellow', '.text-pink']
+                let colorA = ['.text-pink', '.text-olive','.text-yellow']
                 let colorSpan;
                 for (const color of colorA) {
                     colorSpan = document.querySelector(color)
