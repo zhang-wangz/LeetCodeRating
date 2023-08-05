@@ -26,6 +26,7 @@
 // @note         2022-12-29 1.1.0 add english site support
 // @note         2022-12-29 1.1.1 fix when the dark mode is turned on, the prompt display is abnormal
 // @note         2023-01-05 1.1.2 modify the cdn access address
+// @note         2023-08-05 1.1.3 remaintain the project
 // ==/UserScript==
 
 (function () {
@@ -38,21 +39,21 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.1.2"
+    let version = "1.1.3"
     let preDate
     let allUrl = "https://leetcode.com/problemset"
-    let tagUrl = "https://leetcode.com/tag"
-    let pblistUrl = "https://leetcode.com/problem-list"
+    // let tagUrl = "https://leetcode.com/tag"    this url is not available
+    // let pblistUrl = "https://leetcode.com/problem-list"    this url is also not available 
     let pbUrl = "https://leetcode.com/problems"
     GM_addStyle(GM_getResourceText("css"));
 
-    // 深拷贝
+    // 深拷贝 deep copy
     function deepclone(obj) {
         let str = JSON.stringify(obj);
         return JSON.parse(str);
     }
 
-    // 获取数字
+    // 获取数字 get the contest number
     function getcontestNumber(url) {
         return parseInt(url.substr(15));
     }
@@ -60,8 +61,8 @@
     // 获取时间
     function getCurrentDate(format) {
         let now = new Date();
-        let year = now.getFullYear(); //得到年份
-        let month = now.getMonth(); //得到月份
+        let year = now.getFullYear(); //得到年份 
+        let month = now.getMonth(); //得到月份 
         let date = now.getDate(); //得到日期
         let hour = now.getHours(); //得到小时
         let minu = now.getMinutes(); //得到分钟
@@ -93,7 +94,7 @@
             let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
             // pb页面加载时直接返回
             if (arr == undefined) {
-                return 
+                return
             }
 
             // 防止过多的无效操作
@@ -124,6 +125,7 @@
         }
     }
 
+    // 上面 tagUrl 已经失效了，不清楚这个function的作用
     function getTagData() {
         if (!window.location.href.startsWith(tagUrl)) {
             clearInterval(id2)
@@ -159,6 +161,7 @@
     }
 
 
+    // pblistUrl 也已经失效，不清楚这个function的作用
     function getPblistData() {
         if (!window.location.href.startsWith(pblistUrl)) {
             clearInterval(id5)
@@ -198,10 +201,10 @@
     function getpb() {
         if (!window.location.href.startsWith(pbUrl)) {
             clearInterval(id3)
-            if (window.location.href.startsWith(allUrl)){
+            if (window.location.href.startsWith(allUrl)) {
                 id1 = setInterval(getData, 1)
                 GM_setValue("all", id1)
-            }else if (window.location.href.startsWith(tagUrl)) {
+            } else if (window.location.href.startsWith(tagUrl)) {
                 id2 = setInterval(getTagData, 1)
                 GM_setValue("tag", id2)
             } else if (window.location.href.startsWith(pblistUrl)) {
@@ -215,12 +218,12 @@
 
             // 旧版的标题位置
             let t = document.querySelector("#app > div > div.main__2_tD > div.content__3fR6 > div > div.side-tools-wrapper__1TS9 > div > div.css-1gd46d6-Container.e5i1odf0 > div.css-jtoecv > div > div.tab-pane__ncJk.css-1eusa4c-TabContent.e5i1odf5 > div > div.css-101rr4k > div.css-v3d350")
-            if (t == undefined){
+            if (t == undefined) {
                 // 新版逻辑
                 t = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div:nth-child(1) > div.flex-1 > div > div > span")
                 if (t == undefined) {
                     t1 = "unknown"
-                    return 
+                    return
                 }
                 let data = t.innerText.split(".")
                 let id = data[0].trim()
@@ -288,7 +291,7 @@
                     abody2.appendChild(span2)
                     pa.appendChild(abody)
                     pa.appendChild(abody2)
-                } else if(q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
+                } else if (q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
                     if (t2rate[id] != undefined) {
                         let contestUrl;
                         let num = getcontestNumber(t2rate[id]["ContestSlug"])
@@ -316,7 +319,7 @@
                 }
                 t1 = deepclone(id)
 
-            }else {
+            } else {
                 // 旧版逻辑，使用参数t和t1，分别代表标题的html和标题id
 
                 // 旧版题目左侧列表里面所有分数
@@ -466,7 +469,7 @@
             }
         });
     }
-    
+
     function clearAndStart(start, func, timeout) {
         let lst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
         lst.forEach(each => {
@@ -485,11 +488,11 @@
                 case 2:
                     id2 = setInterval(func, timeout)
                     GM_setValue(start, id2)
-                    break 
+                    break
                 case 3:
                     id3 = setInterval(func, timeout)
                     GM_setValue(start, id3)
-                    break   
+                    break
                 case 4:
                     id4 = setInterval(func, timeout)
                     GM_setValue(start, id4)
