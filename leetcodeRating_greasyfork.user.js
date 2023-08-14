@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.2
+// @version      2.0.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -134,13 +134,14 @@
 // @note         2023-07-06 1.10.10 不再强行控制新旧ui切换,导入leetcode自身切换机制
 // @note         2023-07-11 2.0.0 题目提交页面ui修正
 // @note         2023-07-11 2.0.1 题目页面ui修正
-// @note         2023-07-16 2.0.2 题目页提交页面按钮独立, 修复流动布局造成的问题 
+// @note         2023-07-16 2.0.2 题目页提交页面按钮独立, 修复流动布局造成的问题
+// @note         2023-08-14 2.0.3 去除版本更新后已经无用的功能
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.0.2"
+    let version = "2.0.3"
 
 
     // 页面相关url
@@ -174,14 +175,6 @@
     // level数据
     let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
 
-    // 去除复制时候的事件
-    if (GM_getValue("switchcopy")) {
-        [...document.querySelectorAll('*')].forEach(item => {
-            item.oncopy = function (e) {
-                e.stopPropagation();
-            }
-        });
-    }
     // 同步函数
     function waitForKeyElements (selectorTxt, actionFunction, bWaitOnce, iframeSelector) {
         let targetNodes, btargetsFound;
@@ -251,80 +244,17 @@
         });
     }
 
-    let newbtnSwitch = () => {
-        let headers = {
-            accept: '*/*',
-            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-            'content-type': 'application/json',
-        }
-        let body = {
-            operationName: 'setQdToBeta',
-            variables: {},
-            query: /* GraphQL */ `
-            mutation setQdToBeta {
-                authenticationSetBetaParticipation(
-                participationType: NEW_QUESTION_DETAIL_PAGE
-                optedIn: true
-                ) {
-                inBeta
-                hitBeta
-                __typename
-                }
-            }
-            `,
-        }
-        ajaxReq("POST", lcnojgo, headers, body, ()=>{})
-    }
-
-    let oldbtnSwitch = () => {
-        let headers = {
-            accept: '*/*',
-            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-            'content-type': 'application/json',
-        }
-        let body = {
-            variables: {
-                'participationType': 'NEW_QUESTION_DETAIL_PAGE'
-            },
-            query: /* GraphQL */ `
-            mutation setQdToOldVersion ($participationType: ParticipationTypeEnum!){
-                authenticationSetBetaParticipation(
-                participationType: $participationType
-                optedIn: false
-                ) {
-                inBeta
-                hitBeta
-                }
-            }
-            `,
-        }
-        ajaxReq("POST", lcnojgo, headers, body, ()=>{})
-    }
-
-    // 新版本判断
-    let isBeta
-    waitForKeyElements("body", ()=> {
-        isBeta = document.getElementById("__NEXT_DATA__") != undefined
-    })
-    GM_setValue("switchnewBeta", isBeta)
-
     // 刷新菜单
     Script_setting()
-    // urlchange事件
+    // 注册urlchange事件
     initUrlChange()
 
-    // 题目提交数据
-    let pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
-    let questiontag = ""
-    let updateFlag = true
 
     // 常量数据
     const dummySend = XMLHttpRequest.prototype.send
     const regDiss = '.*//leetcode.cn/problems/.*/discussion/.*'
     const regSovle = '.*//leetcode.cn/problems/.*/solutions/.*'
     const regPbSubmission = '.*//leetcode.cn/problems/.*/submissions/.*';
-    // const regPbDes = '.*//leetcode.cn/problems/.*/description/.*'
-    const queryPbSubmission ='\n    query submissionList($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!, $lang: String, $status: SubmissionStatusEnum) {\n  submissionList(\n    offset: $offset\n    limit: $limit\n    lastKey: $lastKey\n    questionSlug: $questionSlug\n    lang: $lang\n    status: $status\n  ) {\n    lastKey\n    hasNext\n    submissions {\n      id\n      title\n      status\n      statusDisplay\n      lang\n      langName: langVerboseName\n      runtime\n      timestamp\n      url\n      isPending\n      memory\n      submissionComment {\n        comment\n      }\n    }\n  }\n}\n    '
     const queryProblemsetQuestionList = `
     query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
         problemsetQuestionList(
@@ -364,52 +294,9 @@
             }
         }
     }`
-    const langMap = {
-        "所有语言": null,
-        "C++" : "cpp",
-        "Java" : "java",
-        "Python": "python",
-        "Python3": "python3",
-        "MySQL": "mysql",
-        "MS SQL Server": "mssql",
-        "Oracle": "oraclesql",
-        "C": "c",
-        "C#": "csharp",
-        "JavaScript": "javascript",
-        "Ruby": "ruby",
-        "Bash": "bash",
-        "Swift": "swift",
-        "Go": "golang",
-        "Scala": "scala",
-        "HTML": "html",
-        "Python ML": "pythonml",
-        "Kotlin": "kotlin",
-        "Rust": "rust",
-        "PHP": "php",
-        "TypeScript": "typescript",
-        "Racket": "racket",
-        "Erlang": "erlang",
-        "Elixir": "elixir",
-        "Dart": "dart",
-    }
-    const statusMap = {
-        "所有状态" : null,
-        "执行通过" : "AC",
-        "错误解答" : "WA",
-        "超出内存限制" : "MLE",
-        "超出输出限制" : "OLE",
-        "超出时间限制" : "TLE",
-        "执行出错" : "RE",
-        "内部出错" : "IE",
-        "编译出错" : "CE",
-        "超时" : "TO",
-    }
 
-    // 如果有数据就会直接初始化，否则初始化为空
-    pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
-    // css1
+    // css 渲染
     $(document.body).append(`<link href="https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/theme/default/layer.min.css" rel="stylesheet">`)
-
 
     // 监听urlchange事件定义
     function initUrlChange() {
@@ -445,20 +332,17 @@
         let menu_ALL = [
             ['switchvpn', 'vpn', '是否使用cdn访问数据', false, false],
             ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
-            ['switchpbRepo', 'pbRepo function', '题库页评分(不包括灵茶)', true, false],
+            ['switchpbRepo', 'pbRepo function', '题库页周赛难度评分(不包括灵茶)', true, false],
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
-            ['switchpb', 'pb function', '题目页评分', true, true],
-            ['switchpbsubmit', 'pbsubmit function', '题目新版提交页面', true, true],
-            ['switchnewBeta', 'new function', '当前页使用新版ui', true, true],
-            ['switchsearch', 'search function', '题目搜索页评分', true, false],
-            ['switchtag', 'tag function', 'tag题单页评分(动态规划等分类题库)', true, false],
-            ['switchcompany', 'company function', 'company题单页评分(字节等公司题库)', true, false],
+            ['switchpb', 'pb function', '题目页周赛难度评分', true, true],
+            ['switchcode', 'switchcode function', '题目页代码输入阻止联想', false, true],
+            ['switchsearch', 'search function', '题目搜索页周赛难度评分', true, false],
+            ['switchtag', 'tag function', 'tag题单页周赛难度评分(动态规划等分类题库)', true, false],
+            ['switchcompany', 'company function', '公司题单页周赛难度评分', true, false],
             ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
-            ['switchstudy', 'studyplan function', 'studyplan评分(仅限新版)', true, false],
-            ['switchstudylevel', 'studyplan level function', 'studyplan算术评级(仅限新版测评)', true, false],
-            ['switchcopy', 'copy function', '复制去除署名声明(只适用旧版)', true, true],
+            ['switchstudy', 'studyplan function', '学习计划周赛难度评分', true, false],
+            ['switchstudylevel', 'studyplan level function', '学习计划算术评级', true, false],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
-            ['switchcode', 'switchcode function', '新版ui阻止代码联想', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
             ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
@@ -488,17 +372,11 @@
         function menu_switch(name, ename, cname, value){
             if(value == 'false'){
                 GM_setValue(`${name}`, true);
-                if (name == "switchnewBeta") {
-                    newbtnSwitch()
-                }
                 registerMenuCommand(); // 重新注册脚本菜单
                 location.reload(); // 刷新网页
                 GM_notification({text: `「${cname}」已开启\n`, timeout: 3500}); // 提示消息
             } else {
                 GM_setValue(`${name}`, false);
-                if (name == "switchnewBeta") {
-                    oldbtnSwitch()
-                }
                 registerMenuCommand(); // 重新注册脚本菜单
                 location.reload(); // 刷新网页
                 GM_notification({text: `「${cname}」已关闭\n`, timeout: 3500}); // 提示消息
@@ -568,12 +446,6 @@
     }
 
 
-    // console.log(GM_getValue("switchnewBeta"))
-    // if (GM_getValue("switchnewBeta")) {
-    //     newbtnSwitch()
-    // } else {
-    //     oldbtnSwitch()
-    // }
 
 
     // 修改参数
@@ -1099,82 +971,6 @@
     }
 
 
-
-    function getSubmitBtn(isBeta) {
-        if(!isBeta) {
-            let subBtn = $(".submit__-6u9")
-            return subBtn
-        } else {
-            return $("button[class='px-3 py-1.5 font-medium items-center whitespace-nowrap transition-all focus:outline-none inline-flex text-label-r bg-green-s dark:bg-dark-green-s hover:bg-green-3 dark:hover:bg-dark-green-3 rounded-lg']")
-        }
-    }
-
-    let getQusId = (titleTag) => {
-        let id
-        let headers = {
-            accept: '*/*',
-            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-            'content-type': 'application/json',
-        }
-        let body = {
-            operationName: 'questionTitle',
-            variables: {
-                'titleSlug': titleTag
-            },
-            query: /* GraphQL */ `
-            query questionTitle($titleSlug: String!) {
-                question(titleSlug: $titleSlug) {
-                questionId
-                questionFrontendId
-                title
-                titleSlug
-                isPaidOnly
-                difficulty
-                likes
-                dislikes
-                }
-            }
-            `,
-        }
-        ajaxReq('POST', lcgraphql, headers, body, (res)=> {
-            id = res.data.question.questionFrontendId
-        })
-        return id
-    }
-
-    let getTitleByPbTagInSubmission = (titleTag) => {
-        if (document.title != "力扣（LeetCode）官网 - 全球极客挚爱的技术成长平台") {
-            return
-        }
-        let titlech, titleid
-        let headers = {
-            accept: '*/*',
-            'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
-            'content-type': 'application/json',
-        }
-        let body = {
-            operationName: 'questionTranslations',
-            variables: {
-                'titleSlug': titleTag
-            },
-            query: /* GraphQL */ `
-            query questionTranslations($titleSlug: String!) {
-                question(titleSlug: $titleSlug) {
-                translatedTitle
-                translatedContent
-                }
-            }
-            `,
-        }
-        ajaxReq("POST", lcgraphql, headers, body, (res)=>{
-            titlech = res.data.question.translatedTitle
-        })
-        titleid = getQusId(titleTag)
-        document.title = titleid + ". " + titlech
-    }
-
-
-
     // var lang, statusQus
     let eventhappend = function() {
         let key = document.querySelector('.inputarea')
@@ -1184,33 +980,10 @@
         key.removeAttribute('aria-activedescendant')
         // console.log(key)
     }
-    // let f = false
+
     function getpb() {
         if(!GM_getValue("switchpb")) return
         let switchrealoj = GM_getValue("switchrealoj")
-
-        // 是否在提交页面
-        let isSub = location.href.match(regPbSubmission)
-        let submit = GM_getValue("switchpbsubmit")
-        if(isBeta && submit) {
-            if (!location.href.startsWith(pbUrl)) questiontag = ""
-            if(isSub) {
-                let submissionUrl = location.href
-                let data = submissionUrl.split("/")
-                questiontag = data[data.length-3]
-                if (data[data.length-2] != "submissions") questiontag = data[data.length-4]
-                let statusOrlangPa = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div.sticky.top-0.w-full.bg-layer-1.dark\\:bg-dark-layer-1 > div")
-                if (statusOrlangPa == undefined) return;
-                let statusQu = statusOrlangPa.childNodes[0].childNodes[0].childNodes[0]
-                let lan = statusOrlangPa.childNodes[1].childNodes[0].childNodes[0]
-                if (lan == undefined || statusQu == undefined) return;
-                // 方法里面有判断如果重复则直接返回
-                updateSubmissionLst(isSub, questiontag, lan.innerText, statusQu.innerText);
-                // 在提交页面的时候顺便修改tab title
-                getTitleByPbTagInSubmission(questiontag)
-                return;
-            }
-        }
 
         // 新版学习计划左侧栏分数显示
         let css_selector = "#chakra-modal--body-\\:ra\\: > div > div.flex.w-full.flex-col.gap-4"
@@ -1221,376 +994,138 @@
         }
 
         // 题目页面
-        // 旧版的标题位置
         let curUrl = location.href
         let isDescript = !curUrl.match(regDiss) && !curUrl.match(regSovle) && !curUrl.match(regPbSubmission)
         if (isDescript) {
-            let t = document.querySelector("[data-cypress='QuestionTitle']")
-            if (t == undefined){
-                // 新版逻辑
-                t = document.querySelector(".text-lg")
-                if (t == undefined) {
-                    t1 = "unknown"
-                    return
-                }
-
-                // let pb = location.href
-                // let titleTag = pb.substring(pb.indexOf("problems")+9, pb.indexOf("description")-1)
-                let data = t.textContent.split(".")
-                let id = data[0].trim()
-                let colorA = ['.text-pink', '.text-olive','.text-yellow']
-                let colorSpan;
-                for (const color of colorA) {
-                    colorSpan = document.querySelector(color)
-                    if (colorSpan) break
-                }
-                if (!colorSpan) {
-                    console.log("color ele not found")
-                    return
-                }
-                let pa = colorSpan.parentNode
-                if (t1 != undefined && t1 == id) {
-                    return
-                }
-                if (GM_getValue("switchcode")) {
-                    waitForKeyElements(".overflowingContentWidgets", ()=>{
-                        $('.overflowingContentWidgets').remove()
-                    });
-                    let div = document.querySelector('div.h-full.w-full')
-                    div.onkeydown = function(event) {
-                        if (event.keyCode >= 65 && event.keyCode <= 90 || event.keyCode == 13) {
-                            eventhappend()
-                        }
-                    }
-                }
-
-                // 新版统计难度分数并且修改
-                let nd = colorSpan.getAttribute("class")
-                let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                if (switchrealoj || (t2rate[id] != undefined)) {
-                    if (switchrealoj) colorSpan.remove()
-                    else if(t2rate[id] != undefined) colorSpan.innerHTML = t2rate[id]["Rating"]
-                } else {
-                    for (let item in nd2ch) {
-                        if (nd.toString().includes(item)) {
-                            colorSpan.innerHTML = nd2ch[item]
-                            break
-                        }
-                    }
-                }
-                // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
-                let url = chContestUrl
-                let zhUrl = zhContestUrl
-                let q = pa.lastChild
-                let le = pa.childNodes.length
-                if (q.textContent == "") {
-                    let abody = document.createElement("a")
-                    abody.setAttribute("data-small-spacing", "true")
-                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
-
-                    let abody2 = document.createElement("a")
-                    abody2.setAttribute("data-small-spacing", "true")
-                    abody2.setAttribute("class", "css-nabodd-Button e167268t1")
-
-                    let span = document.createElement("span")
-                    let span2 = document.createElement("span")
-                    // ContestID_zh  ContestSlug
-                    if (t2rate[id] != undefined) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        span.innerText = t2rate[id]["ContestID_zh"]
-                        span2.innerText = t2rate[id]["ProblemIndex"]
-
-                        abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        abody.setAttribute("target", "_blank")
-                        abody.removeAttribute("hidden")
-
-                        abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        abody2.setAttribute("target", "_blank")
-                        if(switchrealoj) abody2.setAttribute("hidden", true)
-                        else abody2.removeAttribute("hidden")
-                    } else {
-                        span.innerText = "对应周赛未知"
-                        abody.setAttribute("href", "")
-                        abody.setAttribute("target", "_self")
-                        abody.setAttribute("hidden", "true")
-
-                        span2.innerText = "未知"
-                        abody2.setAttribute("href", "")
-                        abody2.setAttribute("target", "_self")
-                        abody2.setAttribute("hidden", "true")
-                    }
-                    abody.appendChild(span)
-                    abody2.appendChild(span2)
-                    pa.appendChild(abody)
-                    pa.appendChild(abody2)
-                } else if(q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
-                    if (t2rate[id] != undefined) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        pa.childNodes[le - 2].setAttribute("target", "_blank")
-                        pa.childNodes[le - 2].removeAttribute("hidden")
-
-                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                        pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        pa.childNodes[le - 1].setAttribute("target", "_blank")
-                        if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
-                        else pa.childNodes[le - 1].removeAttribute("hidden")
-                    } else {
-                        pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
-                        pa.childNodes[le - 2].setAttribute("href", "")
-                        pa.childNodes[le - 2].setAttribute("target", "_self")
-                        pa.childNodes[le - 2].setAttribute("hidden", "true")
-
-                        pa.childNodes[le - 1].childNodes[0].innerText = "未知"
-                        pa.childNodes[le - 1].setAttribute("href", "")
-                        pa.childNodes[le - 1].setAttribute("target", "_self")
-                        pa.childNodes[le - 1].setAttribute("hidden", "true")
-                    }
-                }
-                t1 = id
-
-            } else {
-                // 旧版逻辑，使用参数t和t1，分别代表标题的html和标题id
-                // 旧版题目左侧列表里面所有分数
-                let pbAll = document.querySelector(".question-list__1Kev")
-                if (pbAll != undefined) {
-                    let childs = pbAll.childNodes
-                    for (const element of childs) {
-                        let v = element
-                        let length = v.childNodes.length
-                        let t = v.childNodes[0].childNodes[1].innerText
-                        let data = t.split(" ")[0]
-                        let id = data.slice(1)
-                        let nd = v.childNodes[length - 1].childNodes[0].innerText
-                        if (t2rate[id] != undefined) {
-                            nd = t2rate[id]["Rating"]
-                            v.childNodes[length - 1].childNodes[0].innerText = nd
-                        }
-                    }
-                }
-                // 旧版标题修改位置
-                let data = t.textContent.split(".")
-                let id = data[0].trim()
-                let ndtext = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(1)")
-                let colorSpan = document.querySelector("#question-detail-main-tabs > div.css-1qqaagl-layer1.css-12hreja-TabContent.e16udao5 > div > div.css-xfm0cl-Container.eugt34i0 > div > span:nth-child(2)")
-                let pa = colorSpan.parentNode
-                if ((t1 != undefined && t1 == id) && (le != undefined && le <= pa.childNodes.length)) {
-                    return
-                }
-                // 统计难度分数
-                let nd = colorSpan.getAttribute("data-degree")
-                let nd2ch = { "easy": "简单", "medium": "中等", "hard": "困难" }
-                if (switchrealoj || t2rate[id] != undefined) {
-                    if(switchrealoj) { colorSpan.remove(); ndtext.remove() }
-                    else colorSpan.innerHTML = t2rate[id]["Rating"]
-                } else {
-                    colorSpan.innerHTML = nd2ch[nd]
-                }
-                // 准备做周赛链接,如果已经不存在组件就执行操作
-                let url = chContestUrl
-                let zhUrl = zhContestUrl
-                if (le == undefined || le != pa.childNodes.length) {
-                    let abody = document.createElement("a")
-                    abody.setAttribute("data-small-spacing", "true")
-                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
-
-                    let button = document.createElement("button")
-                    button.setAttribute("class", "css-nabodd-Button e167268t1")
-                    let abody2 = document.createElement("a")
-                    abody2.setAttribute("data-small-spacing", "true")
-                    abody2.setAttribute("class", "css-nabodd-Button e167268t1")
-
-                    let span = document.createElement("span")
-                    let span2 = document.createElement("span")
-                    // ContestID_zh  ContestSlug
-                    if (t2rate[id] != undefined) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        span.innerText = t2rate[id]["ContestID_zh"]
-                        span2.innerText = t2rate[id]["ProblemIndex"]
-
-                        abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        abody.setAttribute("target", "_blank")
-                        abody.removeAttribute("hidden")
-
-                        abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        abody2.setAttribute("target", "_blank")
-                        if(switchrealoj) abody2.setAttribute("hidden", "true")
-                        else abody2.removeAttribute("hidden")
-                    } else {
-                        span.innerText = "对应周赛未知"
-                        abody.setAttribute("href", "")
-                        abody.setAttribute("target", "_self")
-                        abody.setAttribute("hidden", "true")
-
-                        span2.innerText = "未知"
-                        abody2.setAttribute("href", "")
-                        abody2.setAttribute("target", "_self")
-                        abody2.setAttribute("hidden", "true")
-                    }
-                    abody.appendChild(span)
-                    abody2.appendChild(span2)
-                    button.appendChild(abody2)
-                    pa.appendChild(abody)
-                    pa.appendChild(button)
-                } else if (le == pa.childNodes.length) {  // 存在就直接替换
-                    if (t2rate[id] != undefined) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        pa.childNodes[le - 2].setAttribute("target", "_blank")
-                        pa.childNodes[le - 2].removeAttribute("hidden")
-
-                        pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_blank")
-                        if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
-                        else pa.childNodes[le - 1].childNodes[0].removeAttribute("hidden")
-                    } else {
-                        pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
-                        pa.childNodes[le - 2].setAttribute("href", "")
-                        pa.childNodes[le - 2].setAttribute("target", "_self")
-                        pa.childNodes[le - 2].setAttribute("hidden", "true")
-
-                        pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = "未知"
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("href", "")
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_self")
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("hidden", "true")
-                    }
-                }
-                le = pa.childNodes.length
-                t1 = id
-            }
-        }
-
-    }
-
-    // 查询提交更新信息并保存到内存中
-    let QuerySubmissionUpdate = (questiontag, lang, statusQus) => {
-        let key = questiontag + langMap[lang] + statusMap[statusQus]
-        pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
-        let saveData = (key, lst) => {
-            pbSubmissionInfo[key] = lst
-            GM_setValue("pbSubmissionInfo", JSON.stringify(pbSubmissionInfo))
-        }
-
-        let successFuc = (res) => {
-            let data = res.data.submissionList
-            let submissions = data.submissions
-            next = deepclone(data.hasNext)
-            // console.log("req success: ", data)
-            submissionLst = submissionLst.concat(submissions)
-            saveData(key, submissionLst)
-            console.log("update submission data: ", questiontag, langMap[lang], statusMap[statusQus])
-        }
-        var variables = {
-            "questionSlug": questiontag,
-            "offset": 0,
-            "limit": 40,
-            "lastKey": null,
-            "status": null,
-            "lang": langMap[lang],
-            "status": statusMap[statusQus],
-        };
-        next = true
-        submissionLst = []
-        // 调试使用
-        // let cnt = 0
-        while(next) {
-            postReq(lcgraphql, queryPbSubmission, variables, successFuc)
-            variables.offset += 40
-            // cnt += 1
-            // console.log("第" + cnt + "步")
-        }
-    }
-    // 监听
-    let addListener = () => {
-        // console.log("addListener....")
-        XMLHttpRequest.prototype.send = function (str) {
-            const _onreadystatechange = this.onreadystatechange;
-            this.onreadystatechange = (...args) => {
-                if (this.readyState === this.DONE && this.responseURL.startsWith(lcnojgo)) {
-                    if (this.status === 200 || this.response.type === "application/json") {
-                        if(location.href.startsWith(pbUrl)) {
-                            updateFlag = true
-                            // console.log("update list hit....")
-                        }
-                    }
-                }
-                if (_onreadystatechange) {
-                    _onreadystatechange.apply(this, args);
-                }
-            }
-            return dummySend.call(this, str);
-        }
-    }
-    addListener()
-
-    // 更新提交页数据列表
-    let updateSubmissionLst = (statusEle, questiontag, lang, statusQus) => {
-        // 数据替换操作
-        let key = questiontag + langMap[lang] + statusMap[statusQus]
-        if (questiontag != "" && statusEle) {
-            let arr = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto.rounded-b > div > div.h-full")
-            if (arr == undefined) return
-            let childs = arr.childNodes
-            if (childs.length == 1 || childs.length == 0) return;
-
-            // 已经替换过就直接返回
-            let lastNode = childs[childs.length-2]
-            if (!lastNode.hasChildNodes()) {
-                lastNode = childs[childs.length-3]
-            }
-            let lastIcon = lastNode.childNodes[0].childNodes[1]
-            let first = childs[0].childNodes[0].childNodes[1]
-            // && lastIcon.childNodes.length > 1 && first.childNodes.length > 1
-            if (!updateFlag && lastIcon.getAttribute("class").includes("modify") && first.getAttribute("class").includes("modify")) {
+            // 新版逻辑
+            let t = document.querySelector(".text-lg")
+            if (t == undefined) {
+                t1 = "unknown"
                 return
             }
-            if (updateFlag) updateFlag = false
-            console.log("has refreshed...")
-            QuerySubmissionUpdate(questiontag, lang, statusQus)
-            pbSubmissionInfo = JSON.parse(GM_getValue("pbSubmissionInfo", "{}").toString())
-            let subLst = pbSubmissionInfo[key]
-            // console.log(childs)
-            // console.log("替换数据: ", subLst)
-            if (subLst == undefined || subLst.length == 0) return
-            for (let i = 0; i < childs.length; i++) {
-                let v = childs[i]
-                let icon
-                try {
-                    icon = v.childNodes[0].childNodes[1]
-                } catch(err) {
-                    return
-                }
-                // console.log(v)
-                // let pa = icon.parentNode
-                let lang = subLst[i]["langName"]
-                console.log(subLst[i]["langName"])
-                if (lang !== icon.innerText) return
-                let status = v.childNodes[0].childNodes[0]
-                $(status).removeClass("w-[200px]")
-                $(status).addClass("w-[130px]")
-                $(icon).addClass("modify")
-                icon.innerText = icon.innerText + "  /  " + subLst[i]["runtime"] + "  /  " + subLst[i]["memory"]
-                $(icon).removeClass("w-[140px]")
-                $(icon).addClass("w-[220px]")
-            
-                // let copy1 = icon.cloneNode(true);
-                // copy1.innerText = subLst[i]["runtime"]
-                // let copy2 = icon.cloneNode(true);
-                // copy2.innerText = subLst[i]["memory"]
+
+            // let pb = location.href
+            // let titleTag = pb.substring(pb.indexOf("problems")+9, pb.indexOf("description")-1)
+            let data = t.textContent.split(".")
+            let id = data[0].trim()
+            let colorA = ['.text-pink', '.text-olive','.text-yellow']
+            let colorSpan;
+            for (const color of colorA) {
+                colorSpan = document.querySelector(color)
+                if (colorSpan) break
             }
+            if (!colorSpan) {
+                console.log("color ele not found")
+                return
+            }
+            let pa = colorSpan.parentNode
+            if (t1 != undefined && t1 == id) {
+                return
+            }
+            if (GM_getValue("switchcode")) {
+                waitForKeyElements(".overflowingContentWidgets", ()=>{
+                    $('.overflowingContentWidgets').remove()
+                });
+                let div = document.querySelector('div.h-full.w-full')
+                div.onkeydown = function(event) {
+                    if (event.keyCode >= 65 && event.keyCode <= 90 || event.keyCode == 13) {
+                        eventhappend()
+                    }
+                }
+            }
+
+            // 新版统计难度分数并且修改
+            let nd = colorSpan.getAttribute("class")
+            let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
+            if (switchrealoj || (t2rate[id] != undefined)) {
+                if (switchrealoj) colorSpan.remove()
+                else if(t2rate[id] != undefined) colorSpan.innerHTML = t2rate[id]["Rating"]
+            } else {
+                for (let item in nd2ch) {
+                    if (nd.toString().includes(item)) {
+                        colorSpan.innerHTML = nd2ch[item]
+                        break
+                    }
+                }
+            }
+            // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
+            let url = chContestUrl
+            let zhUrl = zhContestUrl
+            let q = pa.lastChild
+            let le = pa.childNodes.length
+            if (q.textContent == "") {
+                let abody = document.createElement("a")
+                abody.setAttribute("data-small-spacing", "true")
+                abody.setAttribute("class", "css-nabodd-Button e167268t1")
+
+                let abody2 = document.createElement("a")
+                abody2.setAttribute("data-small-spacing", "true")
+                abody2.setAttribute("class", "css-nabodd-Button e167268t1")
+
+                let span = document.createElement("span")
+                let span2 = document.createElement("span")
+                // ContestID_zh  ContestSlug
+                if (t2rate[id] != undefined) {
+                    let contestUrl;
+                    let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                    if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
+                    span.innerText = t2rate[id]["ContestID_zh"]
+                    span2.innerText = t2rate[id]["ProblemIndex"]
+
+                    abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
+                    abody.setAttribute("target", "_blank")
+                    abody.removeAttribute("hidden")
+
+                    abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                    abody2.setAttribute("target", "_blank")
+                    if(switchrealoj) abody2.setAttribute("hidden", true)
+                    else abody2.removeAttribute("hidden")
+                } else {
+                    span.innerText = "对应周赛未知"
+                    abody.setAttribute("href", "")
+                    abody.setAttribute("target", "_self")
+                    abody.setAttribute("hidden", "true")
+
+                    span2.innerText = "未知"
+                    abody2.setAttribute("href", "")
+                    abody2.setAttribute("target", "_self")
+                    abody2.setAttribute("hidden", "true")
+                }
+                abody.appendChild(span)
+                abody2.appendChild(span2)
+                pa.appendChild(abody)
+                pa.appendChild(abody2)
+            } else if(q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
+                if (t2rate[id] != undefined) {
+                    let contestUrl;
+                    let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                    if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
+                    pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
+                    pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
+                    pa.childNodes[le - 2].setAttribute("target", "_blank")
+                    pa.childNodes[le - 2].removeAttribute("hidden")
+
+                    pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
+                    pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                    pa.childNodes[le - 1].setAttribute("target", "_blank")
+                    if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
+                    else pa.childNodes[le - 1].removeAttribute("hidden")
+                } else {
+                    pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
+                    pa.childNodes[le - 2].setAttribute("href", "")
+                    pa.childNodes[le - 2].setAttribute("target", "_self")
+                    pa.childNodes[le - 2].setAttribute("hidden", "true")
+
+                    pa.childNodes[le - 1].childNodes[0].innerText = "未知"
+                    pa.childNodes[le - 1].setAttribute("href", "")
+                    pa.childNodes[le - 1].setAttribute("target", "_self")
+                    pa.childNodes[le - 1].setAttribute("hidden", "true")
+                }
+            }
+            t1 = id
         }
     }
+
 
 
     let now = getCurrentDate(1)
@@ -1758,9 +1293,6 @@
                 console.log(err)
             }
         });
-    } else if (location.href.startsWith(pbUrl)) {
-        // do nothing
-        addListener()
     }
 
     // 定时启动
