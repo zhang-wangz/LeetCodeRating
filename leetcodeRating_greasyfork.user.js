@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.4
+// @version      2.0.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -137,12 +137,13 @@
 // @note         2023-07-16 2.0.2 题目页提交页面按钮独立, 修复流动布局造成的问题
 // @note         2023-08-14 2.0.3 去除版本更新后已经无用的功能
 // @note         2023-08-22 2.0.4 题目页面流动布局难度分修正
+// @note         2023-08-23 2.0.5 题目页面流动布局存在不会自动排版的问题,导致点开相关流动布局之后元素位置紊乱,防止相应问题产生,挪移最后插入的周赛链接位置
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.0.4"
+    let version = "2.0.5"
 
 
     // 页面相关url
@@ -1028,9 +1029,8 @@
                     console.log("color ele not found")
                     return
                 }
-                let pa = colorSpan.parentNode
-                // 新版统计难度分数并且修改
-                // console.log(t2rate[id]["Rating"])
+
+                // 统计难度分数并且修改
                 let nd = colorSpan.getAttribute("class")
                 let nd2ch = { "text-difficulty-easy": "简单", "text-difficulty-medium": "中等", "text-difficulty-hard": "困难" }
                 if (switchrealoj || (t2rate[id] != undefined)) {
@@ -1044,14 +1044,20 @@
                         }
                     }
                 }
-                // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
+                // 逻辑，准备做周赛链接,如果已经不存在组件就执行操作
                 let url = chContestUrl
                 let zhUrl = zhContestUrl
-                let q = pa.lastChild
-                let le = pa.childNodes.length
+                let tips = colorSpan.parentNode
+                let tipsPa = tips.parentNode
+                // tips 一栏的父亲节点第一子元素的位置, 插入后变成难度分位置
+                let tipsChildone = tipsPa.childNodes[1]
+                // 题目内容, 插入后变成原tips栏目
+                let pbDescription = tipsPa.childNodes[2]
                 waitForKeyElements("#qd-content > div > div:nth-child(4) > div > div.flex.w-full.flex-1.flex-col.gap-4.overflow-y-auto.px-4.py-5 > div.flex.gap-1 > div:nth-child(3)", ()=>{
                     console.log("相关企业标签已刷新..")
-                    if (q.textContent.includes("相关企业")) {
+                    if (pbDescription.getAttribute("data-track-load") != undefined) {
+                        let divTips = document.createElement("div")
+                        divTips.setAttribute("class", "flex gap-1")
                         let abody = document.createElement("a")
                         abody.setAttribute("data-small-spacing", "true")
                         abody.setAttribute("class", "css-nabodd-Button e167268t1")
@@ -1091,9 +1097,12 @@
                         }
                         abody.appendChild(span)
                         abody2.appendChild(span2)
-                        pa.appendChild(abody)
-                        pa.appendChild(abody2)
-                    } else if(q.textContent.includes("Q") || q.textContent == "未知") {  // 存在就直接替换
+                        divTips.appendChild(abody)
+                        divTips.appendChild(abody2)
+                        tipsPa.insertBefore(divTips, tips)
+                    } else if(tipsChildone.childNodes != undefined  && (tipsChildone.childNodes[0].textContent.includes("Q") || tipsChildone.childNodes[0].textContent.includes("未知"))) { 
+                        let le = tipsChildone.childNodes.length
+                        // 存在就直接替换
                         if (t2rate[id] != undefined) {
                             let contestUrl;
                             let num = getcontestNumber(t2rate[id]["ContestSlug"])
