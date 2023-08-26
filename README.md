@@ -22,7 +22,10 @@
 ### :iphone: 兼容性&安装
 
 请注意： 英文版只有题库页面，tag页面和题目页面展示周赛分，并且不支持其余中文站功能
-安装英文版本请切换github tag为english [点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
+安装英文版本请切换github tag为english 
+
+Note: The English version only shows the difficulty rating of the question on the gallary page (problemset), the tag page and the question page, and does not support other functions in CN site.
+[Click here to switch|点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
 
 LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。 
 
