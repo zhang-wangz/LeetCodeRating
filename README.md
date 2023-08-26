@@ -77,9 +77,9 @@ After testing, we have determined that the following browsers and plugins are co
 
 #### 💡 script effect (ask star ヾ(≧▽≦*)o)
 
-![problemSetPage](https://cdn.jsdelivr.net/gh/wwwld1/LeetCodeRating/images/problemSetPage.png)
+![problemSetPage](./images/problemSetPage.png)
 
-![tagPage1](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/tagPage1.png)
+![tagPage1](./images/tagPage1.png)
 
 ![tagPage2](./images/tagPage2.png)
 
