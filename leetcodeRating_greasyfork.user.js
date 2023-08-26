@@ -160,13 +160,13 @@
         }
         try {
             const problemList = document.querySelector("#__next > div > div.mx-auto.mt-\\[50px\\].w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl.bg-overlay-1.dark\\:bg-dark-overlay-1.md\\:bg-paper.md\\:dark\\:bg-dark-paper > div > div.col-span-4.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(2) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
-            if (t != undefined && t == arr.lastChild.innerHTML) {
+            if (t != undefined && t == problemList.lastChild.innerHTML) {
                 return
             }
             let problems = problemList.childNodes
             for (let problem of problems) {
                 let length = problem.childNodes.length
-                let problemTitle = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                let problemTitle = problem.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
                 let problemIndex = problemTitle.split(".")[0].trim()
                 let problemDifficulty = problem.childNodes[4].childNodes[0].innerHTML
 
@@ -212,26 +212,18 @@
                     t1 = "unknown"
                     return
                 }
-                let problemIndex = problemTitle.innerText.split(".")[0].trim()
-                let colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-5 > div > div.mt-3.flex.space-x-4 > div:nth-child(1)") // 不确定要不要删除最后一个 "div"
-                let pa = colorSpan.parentNode.parentNode
+                const problemIndex = problemTitle.innerText.split(".")[0].trim()
+                const colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-5 > div > div.mt-3.flex.space-x-4 > div:nth-child(1)") // 不确定要不要删除最后一个 "div"
+                // const pa = colorSpan.parentNode.parentNode
                 if (t1 != undefined && t1 == problemIndex) {
                     return
                 }
                 // 新版统计难度分数并且修改
-                let nd = colorSpan.getAttribute("class")
-                let nd2ch = { "dark:text-dark-olive text-olive": "Easy", "dark:bg-dark-yellow text-yellow": "Medium", "dark:text-dark-pink text-pink": "Hard" }
+                let problemDifficulty = colorSpan.getAttribute("class")
                 if (t2rate[problemIndex] != undefined) {
                     colorSpan.innerHTML = t2rate[problemIndex]["Rating"]
-                } else {
-                    for (let item in nd2ch) {
-                        if (nd.toString().includes(item)) {
-                            colorSpan.innerHTML = nd2ch[item]
-                            break
-                        }
-                    }
-                    // 依旧不知道这个else作用是什么
                 }
+                /*
                 // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
                 let url = "https://leetcode.com/contest/"
                 let zhUrl = "https://leetcode.com/contest/"
@@ -414,7 +406,8 @@
                         pa.childNodes[le - 1].childNodes[0].setAttribute("hidden", "true")
                     }
                 }
-                le = pa.childNodes.length
+                */
+                // le = pa.childNodes.length
                 t1 = deepclone(id)
             }
         } catch (e) {
@@ -504,6 +497,7 @@
 
     if (window.location.href.startsWith(allUrl)) {
         // 版本更新机制
+        /*
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/version.json' + "?timeStamp=" + new Date().getTime(),
@@ -536,7 +530,7 @@
                 console.log(err)
             }
         });
-
+        */
         clearAndStart('all', getData, 1)
     } else if (window.location.href.startsWith(tagUrl)) {
         clearAndStart('tag', getTagData, 1)
