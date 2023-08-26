@@ -104,20 +104,14 @@
             }
 
             const problems = problemList.childNodes
-            for (let i = 0; i < problems.length; i++) {
-                let problem = problems[i]
-                let length = problem.childNodes.length
-                let problemTitle = problem.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                let problemIndex = parseInt(problemTitle.split(".")[0], 10)
+            for (const problem of problems) {
+                const length = problem.childNodes.length
+                const problemTitle = problem.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                const problemIndex = parseInt(problemTitle.split(".")[0], 10)
                 let problemDifficulty = problem.childNodes[4].childNodes[0].innerHTML
                 if (t2rate[problemIndex] != undefined) {
                     problemDifficulty = t2rate[problemIndex]["Rating"]
                     problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
-                } else {
-                    let nd2ch = { "text-olive dark:text-dark-olive": "Easy", "text-yellow dark:text-dark-yellow": "Medium", "text-pink dark:text-dark-pink": "Hard" }
-                    let cls = problem.childNodes[length - 2].childNodes[0].getAttribute("class")
-                    problem.childNodes[4].childNodes[0].innerHTML = nd2ch[cls]
-                    // 没明白这个else是做什么的，感觉是重新又给复制了一遍
                 }
             }
             t = deepclone(problemList.lastChild.innerHTML)
@@ -147,14 +141,9 @@
                 if (t2rate[problemIndex] != undefined) {
                     problemDifficulty = t2rate[problemIndex]["Rating"]
                     problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
-                } else {
-                    let nd2ch = { "label label-success round": "Easy", "label label-warning round": "Medium", "label label-danger round": "Hard" }
-                    let clr = problem.childNodes[4].childNodes[0].getAttribute("class")
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[clr]
-                    // 不知道else这段在做什么
                 }
             }
-            t = deepclone(arr.lastChild.innerHTML)
+            t = deepclone(problemList.lastChild.innerHTML)
         } catch (e) {
             return
         }
