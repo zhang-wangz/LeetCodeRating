@@ -16,6 +16,7 @@
 // @grant        GM_getResourceText
 // @connect      zerotrac.github.io
 // @connect      raw.staticdn.net
+// @connect      raw.gitmirror.com
 // @connect      raw.githubusercontents.com
 // @connect      raw.githubusercontent.com
 // @require      https://gcore.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js
@@ -39,15 +40,15 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.1.3"
+    let version = "1.1.2"
     let preDate
     let allUrl = "https://leetcode.com/problemset"
-    // let tagUrl = "https://leetcode.com/tag"    this url is not available
-    // let pblistUrl = "https://leetcode.com/problem-list"    this url is also not available 
+    let tagUrl = "https://leetcode.com/tag"
+    let pblistUrl = "https://leetcode.com/problem-list"
     let pbUrl = "https://leetcode.com/problems"
     GM_addStyle(GM_getResourceText("css"));
 
-    // 深拷贝 deep copy
+    // 深拷贝 deep clone
     function deepclone(obj) {
         let str = JSON.stringify(obj);
         return JSON.parse(str);
@@ -91,41 +92,41 @@
     let t1, le // pb
     function getData() {
         try {
-            let arr = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(7) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
+            const problemList = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(6) > div:nth-child(2) > div > div > div:nth-child(2)")
             // pb页面加载时直接返回
-            if (arr == undefined) {
+            if (problemList == undefined) {
                 return
             }
 
             // 防止过多的无效操作
-            if (t != undefined && t == arr.lastChild.innerHTML) {
+            if (t != undefined && t == problemList.lastChild.innerHTML) {
                 return
             }
 
-            let childs = arr.childNodes
-            for (let idx = 0; idx < childs.length; idx++) {
-                let v = childs[idx]
-                let length = v.childNodes.length
-                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                let data = t.split(".")
-                let id = data[0].trim()
-                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
-                if (t2rate[id] != undefined) {
-                    nd = t2rate[id]["Rating"]
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+            const problems = problemList.childNodes
+            for (let i = 0; i < problems.length; i++) {
+                let problem = problems[i]
+                let length = problem.childNodes.length
+                let problemTitle = problem.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                let problemIndex = parseInt(problemTitle.split(".")[0], 10)
+                let problemDifficulty = problem.childNodes[4].childNodes[0].innerHTML
+                if (t2rate[problemIndex] != undefined) {
+                    problemDifficulty = t2rate[problemIndex]["Rating"]
+                    problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
                 } else {
                     let nd2ch = { "text-olive dark:text-dark-olive": "Easy", "text-yellow dark:text-dark-yellow": "Medium", "text-pink dark:text-dark-pink": "Hard" }
-                    let cls = v.childNodes[length - 2].childNodes[0].getAttribute("class")
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[cls]
+                    let cls = problem.childNodes[length - 2].childNodes[0].getAttribute("class")
+                    problem.childNodes[4].childNodes[0].innerHTML = nd2ch[cls]
+                    // 没明白这个else是做什么的，感觉是重新又给复制了一遍
                 }
             }
-            t = deepclone(arr.lastChild.innerHTML)
+            t = deepclone(problemList.lastChild.innerHTML)
         } catch (e) {
             return
         }
     }
 
-    // 上面 tagUrl 已经失效了，不清楚这个function的作用
+
     function getTagData() {
         if (!window.location.href.startsWith(tagUrl)) {
             clearInterval(id2)
@@ -134,24 +135,23 @@
             return
         }
         try {
-            let arr = document.querySelector("#app > div > div.ant-row.content__xk8m > div > div > div > table > tbody")
-            if (t != undefined && t == arr.lastChild.innerHTML) {
+            const problemList = document.querySelector("#app > div > div.ant-row.content__xk8m > div > div > div > table > tbody")
+            if (t != undefined && t == problemList.lastChild.innerHTML) {
                 return
             }
-            let childs = arr.childNodes
-            for (const element of childs) {
-                let v = element
-                let length = v.childNodes.length
-                let idText = v.childNodes[1].innerText
-                let id = idText.trim()
-                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
-                if (t2rate[id] != undefined) {
-                    nd = t2rate[id]["Rating"]
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+            let problems = problemList.childNodes
+            for (let problem of problems) {
+                let length = problem.childNodes.length
+                let problemIndex = problem.childNodes[1].innerText.trim()
+                let problemDifficulty = problem.childNodes[4].childNodes[0].innerHTML
+                if (t2rate[problemIndex] != undefined) {
+                    problemDifficulty = t2rate[problemIndex]["Rating"]
+                    problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
                 } else {
                     let nd2ch = { "label label-success round": "Easy", "label label-warning round": "Medium", "label label-danger round": "Hard" }
-                    let clr = v.childNodes[length - 2].childNodes[0].getAttribute("class")
+                    let clr = problem.childNodes[4].childNodes[0].getAttribute("class")
                     v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[clr]
+                    // 不知道else这段在做什么
                 }
             }
             t = deepclone(arr.lastChild.innerHTML)
@@ -161,7 +161,7 @@
     }
 
 
-    // pblistUrl 也已经失效，不清楚这个function的作用
+
     function getPblistData() {
         if (!window.location.href.startsWith(pblistUrl)) {
             clearInterval(id5)
@@ -170,29 +170,27 @@
             return
         }
         try {
-            let arr = document.querySelector("#__next > div > div.mx-auto.mt-\\[50px\\].w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl.bg-overlay-1.dark\\:bg-dark-overlay-1.md\\:bg-paper.md\\:dark\\:bg-dark-paper > div > div.col-span-4.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(2) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
+            const problemList = document.querySelector("#__next > div > div.mx-auto.mt-\\[50px\\].w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl.bg-overlay-1.dark\\:bg-dark-overlay-1.md\\:bg-paper.md\\:dark\\:bg-dark-paper > div > div.col-span-4.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(2) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
             if (t != undefined && t == arr.lastChild.innerHTML) {
                 return
             }
-            let childs = arr.childNodes
-            for (const element of childs) {
-                let v = element
-                let length = v.childNodes.length
-                let t = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                let data = t.split(".")
-                let id = data[0].trim()
-                let nd = v.childNodes[length - 2].childNodes[0].innerHTML
+            let problems = problemList.childNodes
+            for (let problem of problems) {
+                let length = problem.childNodes.length
+                let problemTitle = v.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
+                let problemIndex = problemTitle.split(".")[0].trim()
+                let problemDifficulty = problem.childNodes[4].childNodes[0].innerHTML
 
-                if (t2rate[id] != undefined) {
-                    nd = t2rate[id]["Rating"]
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd
+                if (t2rate[problemIndex] != undefined) {
+                    problemDifficulty = t2rate[problemIndex]["Rating"]
+                    problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
                 } else {
                     let nd2ch = { "text-olive dark:text-dark-olive": "Easy", "text-yellow dark:text-dark-yellow": "Medium", "text-pink dark:text-dark-pink": "Hard" }
-                    let cls = v.childNodes[length - 2].childNodes[0].getAttribute("class")
-                    v.childNodes[length - 2].childNodes[0].innerHTML = nd2ch[cls]
+                    let cls = problem.childNodes[4].childNodes[0].getAttribute("class")
+                    problem.childNodes[4].childNodes[0].innerHTML = nd2ch[cls]
                 }
             }
-            t = deepclone(arr.lastChild.innerHTML)
+            t = deepclone(problemList.lastChild.innerHTML)
         } catch (e) {
             return
         }
@@ -217,26 +215,25 @@
         try {
 
             // 旧版的标题位置
-            let t = document.querySelector("#app > div > div.main__2_tD > div.content__3fR6 > div > div.side-tools-wrapper__1TS9 > div > div.css-1gd46d6-Container.e5i1odf0 > div.css-jtoecv > div > div.tab-pane__ncJk.css-1eusa4c-TabContent.e5i1odf5 > div > div.css-101rr4k > div.css-v3d350")
-            if (t == undefined) {
+            let problemTitle = document.querySelector("#app > div > div.main__2_tD > div.content__3fR6 > div > div.side-tools-wrapper__1TS9 > div > div.css-1gd46d6-Container.e5i1odf0 > div.css-jtoecv > div > div.tab-pane__ncJk.css-1eusa4c-TabContent.e5i1odf5 > div > div.css-101rr4k > div.css-v3d350")
+            if (problemTitle == undefined) {
                 // 新版逻辑
-                t = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div:nth-child(1) > div.flex-1 > div > div > span")
-                if (t == undefined) {
+                problemTitle = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-5 > div > div:nth-child(1) > div.flex-1 > div > a")
+                if (problemTitle == undefined) {
                     t1 = "unknown"
                     return
                 }
-                let data = t.innerText.split(".")
-                let id = data[0].trim()
-                let colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-4 > div > div.mt-3.flex.space-x-4 > div:nth-child(1) > div")
+                let problemIndex = problemTitle.innerText.split(".")[0].trim()
+                let colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-5 > div > div.mt-3.flex.space-x-4 > div:nth-child(1)") // 不确定要不要删除最后一个 "div"
                 let pa = colorSpan.parentNode.parentNode
-                if (t1 != undefined && t1 == id) {
+                if (t1 != undefined && t1 == problemIndex) {
                     return
                 }
                 // 新版统计难度分数并且修改
                 let nd = colorSpan.getAttribute("class")
                 let nd2ch = { "dark:text-dark-olive text-olive": "Easy", "dark:bg-dark-yellow text-yellow": "Medium", "dark:text-dark-pink text-pink": "Hard" }
-                if (t2rate[id] != undefined) {
-                    colorSpan.innerHTML = t2rate[id]["Rating"]
+                if (t2rate[problemIndex] != undefined) {
+                    colorSpan.innerHTML = t2rate[problemIndex]["Rating"]
                 } else {
                     for (let item in nd2ch) {
                         if (nd.toString().includes(item)) {
@@ -244,6 +241,7 @@
                             break
                         }
                     }
+                    // 依旧不知道这个else作用是什么
                 }
                 // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
                 let url = "https://leetcode.com/contest/"
@@ -262,27 +260,27 @@
                     let span = document.createElement("span")
                     let span2 = document.createElement("span")
                     // ContestID_en  ContestSlug
-                    if (t2rate[id] != undefined) {
+                    if (t2rate[problemIndex] != undefined) {
                         let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        span.innerText = t2rate[id]["ContestID_en"]
-                        span2.innerText = t2rate[id]["ProblemIndex"]
+                        let num = getcontestNumber(t2rate[problemIndex]["ContestSlug"])
+                        contestUrl = url
+                        span.innerText = t2rate[problemIndex]["ContestID_en"]
+                        span2.innerText = t2rate[problemIndex]["ProblemIndex"]
 
-                        abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
+                        abody.setAttribute("href", contestUrl + t2rate[problemIndex]["ContestSlug"])
                         abody.setAttribute("target", "_blank")
                         abody.removeAttribute("hidden")
 
-                        abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        abody2.setAttribute("href", contestUrl + t2rate[problemIndex]["ContestSlug"] + "/problems/" + t2rate[problemIndex]["TitleSlug"])
                         abody2.setAttribute("target", "_blank")
                         abody2.removeAttribute("hidden")
                     } else {
-                        span.innerText = "对应周赛未知"
+                        span.innerText = "Unknown"
                         abody.setAttribute("href", "")
                         abody.setAttribute("target", "_self")
                         abody.setAttribute("hidden", "true")
 
-                        span2.innerText = "未知"
+                        span2.innerText = "Unknown"
                         abody2.setAttribute("href", "")
                         abody2.setAttribute("target", "_self")
                         abody2.setAttribute("hidden", "true")
@@ -292,26 +290,26 @@
                     pa.appendChild(abody)
                     pa.appendChild(abody2)
                 } else if (q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
-                    if (t2rate[id] != undefined) {
+                    if (t2rate[problemIndex] != undefined) {
                         let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_en"]
-                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
+                        let num = getcontestNumber(t2rate[problemIndex]["ContestSlug"])
+                        contestUrl = url
+                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[problemIndex]["ContestID_en"]
+                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[problemIndex]["ContestSlug"])
                         pa.childNodes[le - 2].setAttribute("target", "_blank")
                         pa.childNodes[le - 2].removeAttribute("hidden")
 
-                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                        pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[problemIndex]["ProblemIndex"]
+                        pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[problemIndex]["ContestSlug"] + "/problems/" + t2rate[problemIndex]["TitleSlug"])
                         pa.childNodes[le - 1].setAttribute("target", "_blank")
                         pa.childNodes[le - 1].removeAttribute("hidden")
                     } else {
-                        pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
+                        pa.childNodes[le - 2].childNodes[0].innerText = "unknown"
                         pa.childNodes[le - 2].setAttribute("href", "")
                         pa.childNodes[le - 2].setAttribute("target", "_self")
                         pa.childNodes[le - 2].setAttribute("hidden", "true")
 
-                        pa.childNodes[le - 1].childNodes[0].innerText = "未知"
+                        pa.childNodes[le - 1].childNodes[0].innerText = "unknown"
                         pa.childNodes[le - 1].setAttribute("href", "")
                         pa.childNodes[le - 1].setAttribute("target", "_self")
                         pa.childNodes[le - 1].setAttribute("hidden", "true")
@@ -540,7 +538,7 @@
                             }
                         });
                     } else {
-                        console.log("leetcodeRating难度分插件当前已经是最新版本~")
+                        console.log("leetcodeRating difficulty plugin is currently the latest version~")
                     }
                 }
             },
