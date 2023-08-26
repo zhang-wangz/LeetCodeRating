@@ -77,15 +77,13 @@ After testing, we have determined that the following browsers and plugins are co
 
 #### 💡 script effect (ask star ヾ(≧▽≦*)o)
 
-![image-20220907114848833](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/1.png)
+![problemSetPage](./images/problemSetPage.png)
 
-![image-20220907114911865](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/2.png)
+![tagPage1](./images/tagPage1.png)
 
-![image-20220911231824291](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220911231824291.png)
+![tagPage2](./images/tagPage2.png)
 
-![image-20220912001243159](https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/image-20220912001243159.png)
-
-![image-20221008121311231](https://raw.staticdn.net/zhang-wangz/LeetCodeRating/main/images/4.png)
+![problemPage](./images/problemPage.png)
 
 <br/>
 
