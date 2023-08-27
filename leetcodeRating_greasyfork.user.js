@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜English
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.2
+// @version      1.1.3
 // @license      MIT
 // @description  LeetCodeRating The score of the weekly competition is displayed, and currently supports the tag page, question bank page, problem_list page and question page
 // @author       小东是个阳光蛋(Leetcode Nickname of chinese site
@@ -40,7 +40,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.1.2"
+    let version = "1.1.3"
     let preDate
     let allUrl = "https://leetcode.com/problemset"
     let tagUrl = "https://leetcode.com/tag"
@@ -497,7 +497,6 @@
 
     if (window.location.href.startsWith(allUrl)) {
         // 版本更新机制
-        /*
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/version.json' + "?timeStamp=" + new Date().getTime(),
@@ -530,7 +529,6 @@
                 console.log(err)
             }
         });
-        */
         clearAndStart('all', getData, 1)
     } else if (window.location.href.startsWith(tagUrl)) {
         clearAndStart('tag', getTagData, 1)
