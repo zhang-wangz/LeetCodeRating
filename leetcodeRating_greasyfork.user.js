@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.6
+// @version      2.0.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -139,12 +139,13 @@
 // @note         2023-08-22 2.0.4 题目页面流动布局难度分修正
 // @note         2023-08-23 2.0.5 题目页面流动布局存在不会自动排版的问题,导致点开相关流动布局之后元素位置紊乱,防止相应问题产生,挪移最后插入的周赛链接位置
 // @note         2023-08-31 2.0.6 修复流动ui导致的一些问题, 增加流动ui下,题目页侧边栏分数显示
+// @note         2023-08-31 2.0.7 修复流动ui导致的一些问题, 增加流动ui下,题目页侧边栏分数显示,更新机制问题修复
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.0.6"
+    let version = "2.0.7"
 
 
     // 页面相关url
@@ -1481,7 +1482,7 @@
         });
     }
 
-    if (location.href.startsWith(allUrl)) {
+    if (location.href.match(allUrl)) {
         // 版本更新机制
         GM_xmlhttpRequest({
             method: "get",
