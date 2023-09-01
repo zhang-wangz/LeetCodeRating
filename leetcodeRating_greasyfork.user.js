@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.7
+// @version      2.0.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -140,12 +140,13 @@
 // @note         2023-08-23 2.0.5 题目页面流动布局存在不会自动排版的问题,导致点开相关流动布局之后元素位置紊乱,防止相应问题产生,挪移最后插入的周赛链接位置
 // @note         2023-08-31 2.0.6 修复流动ui导致的一些问题, 增加流动ui下,题目页侧边栏分数显示
 // @note         2023-08-31 2.0.7 修复流动ui导致的一些问题, 增加流动ui下,题目页侧边栏分数显示,更新机制问题修复
+// @note         2023-09-01 2.0.8 修复ui变化导致的侧边栏相关问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.0.7"
+    let version = "2.0.8"
 
 
     // 页面相关url
@@ -923,10 +924,16 @@
     }
     // 只确认一次
     let studyf;
-    function getStudyData(cs_selector) {
+    function getStudyData(css_selector) {
         if (!GM_getValue("switchstudy")) return;
         levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
-        let totArr = document.querySelector(cs_selector)
+        let totArr = null
+        // 如果传入的是已经找到的node元素, 就不再搜索
+        if (css_selector instanceof Element) {
+            totArr = css_selector
+        }  else {
+            totArr = document.querySelector(css_selector)
+        }
         if (totArr == undefined) return;
         let first = totArr.firstChild.childNodes[0].textContent
         if (studyf && studyf == first) {
@@ -989,37 +996,52 @@
         let switchrealoj = GM_getValue("switchrealoj")
 
         // 新版学习计划左侧栏分数显示
-        let css_selector = "body > div:nth-child(12) > div.z-modal-2.fixed.left-0.top-0.flex.h-full.w-\\[600px\\].-translate-x-full.flex-col.transition-all.duration-500.transform-none.bg-lc-layer-01.dark\\:bg-dark-lc-layer-01 > div.overflow-auto.p-5 > div > div.flex.w-full.flex-col.gap-4"
-        let studyplan = document.querySelector(css_selector);
-        if(!studyplan) studyf = undefined
-        if(GM_getValue("switchstudy") && studyplan) {
-            getStudyData(css_selector)
-        }
-
-        // 题目页面题库展开栏
-        let pbarr = document.querySelector("body > div:nth-child(13) > div.z-modal-2.fixed.left-0.top-0.flex.h-full.w-\\[600px\\].-translate-x-full.flex-col.transition-all.duration-500.transform-none.bg-lc-layer-01.dark\\:bg-dark-lc-layer-01 > div.overflow-auto.p-5 > div > div.flex.w-full.flex-col.gap-4 > div")
-        if (pbarr != undefined && pbsidefresh) {
-            for (const onepb of pbarr.childNodes) {
-                let pbName = onepb.innerText
-                pbName = pbName.split("\n")[0]
-                let nd = onepb.childNodes[0].childNodes[1].childNodes[1]
-                pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
-                let id = pbName2Id[pbName]
-                pbName = pbName.split(" ").join("") //去除中间的空格
-                let darkn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
-                let lightn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
-                // rating
-                if (id && t2rate[id]) {
-                    let ndRate = t2rate[id]["Rating"]
-                    nd.textContent = ndRate
-                } else {
-                    if (!nd) break
-                    let clr = nd.getAttribute("class")
-                    nd.innerHTML = lightn2c[clr] == undefined ? darkn2c[clr]:lightn2c[clr]
-                }
+        let searchParams = location.search
+        // ?envType=study-plan-v2&envId=leetcode-75
+        if (searchParams.indexOf("?") != -1 && pbsidefresh) { 
+            let str = searchParams.substring(1); 
+            let strs = str.split("="); 
+            let code = strs[0];
+            // 参数含有envType就是学习计划
+            if (code.includes("envType")) {
+                waitForKeyElements(".css-yw0m6t", ()=>{
+                    let cssChild = document.querySelector(".css-yw0m6t")
+                    let studyplan = cssChild.parentNode;
+                    if(!studyplan) studyf = undefined
+                    if(GM_getValue("switchstudy") && studyplan && pbsidefresh) {
+                        getStudyData(studyplan)
+                        console.log("已经刷新侧边栏envType分数...")
+                        pbsidefresh = false
+                    }
+                });
+            
             }
-            console.log("已经刷新侧边栏题库分数...")
-            pbsidefresh = false
+        } else {
+            // 题目页面题库展开栏
+            let pbarr = document.querySelector(".css-yw0m6t")
+            if (pbarr != undefined && pbsidefresh) {
+                for (const onepb of pbarr.childNodes) {
+                    let pbName = onepb.innerText
+                    pbName = pbName.split("\n")[0]
+                    let nd = onepb.childNodes[0].childNodes[1].childNodes[1]
+                    pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
+                    let id = pbName2Id[pbName]
+                    pbName = pbName.split(" ").join("") //去除中间的空格
+                    let darkn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
+                    let lightn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
+                    // rating
+                    if (id && t2rate[id]) {
+                        let ndRate = t2rate[id]["Rating"]
+                        nd.textContent = ndRate
+                    } else {
+                        if (!nd) break
+                        let clr = nd.getAttribute("class")
+                        nd.innerHTML = lightn2c[clr] == undefined ? darkn2c[clr]:lightn2c[clr]
+                    }
+                }
+                console.log("已经刷新侧边栏题库分数...")
+                pbsidefresh = false
+            }
         }
 
         // 题目页面
