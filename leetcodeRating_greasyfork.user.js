@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.8
+// @version      2.0.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -141,12 +141,13 @@
 // @note         2023-08-31 2.0.6 修复流动ui导致的一些问题, 增加流动ui下,题目页侧边栏分数显示
 // @note         2023-08-31 2.0.7 修复流动ui导致的一些问题, 增加流动ui下,题目页侧边栏分数显示,更新机制问题修复
 // @note         2023-09-01 2.0.8 修复ui变化导致的侧边栏相关问题
+// @note         2023-09-01 2.0.9 修复ui变化导致的首页界面变化问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.0.8"
+    let version = "2.0.9"
 
 
     // 页面相关url
@@ -616,7 +617,14 @@
         let switchpbRepo = GM_getValue("switchpbRepo")
         let switchTea = GM_getValue("switchTea")
         let switchrealoj = GM_getValue("switchrealoj")
-        let arr = document.querySelector("div[role='rowgroup']")
+        let arrList = document.querySelectorAll("div[role='rowgroup']")
+        let arr = arrList[0]
+        for (let ele of arrList) {
+            if (ele.childNodes.length != 0) {
+                arr = ele 
+                break
+            }
+        }
         // pb页面加载时直接返回
         if (arr == undefined) {
             return
@@ -631,7 +639,7 @@
         let first = switchTea ? 1 : 0
         if ((!switchpbRepo || (tFirst && tFirst == arr.childNodes[first].textContent && tLast && tLast == lastchild.textContent))
             && (!switchTea || arr.childNodes[0].childNodes[2].textContent == "题解")
-            && (!switchrealoj) || lastchild.childNodes[4].textContent == "隐藏") {
+            && (!switchrealoj) || lastchild.textContent.includes("隐藏")) {
             return
         }
 
