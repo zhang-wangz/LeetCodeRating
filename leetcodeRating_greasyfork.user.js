@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜English
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.3
+// @version      1.1.4
 // @license      MIT
 // @description  LeetCodeRating The score of the weekly competition is displayed, and currently supports the tag page, question bank page, problem_list page and question page
 // @author       小东是个阳光蛋(Leetcode Nickname of chinese site
@@ -28,6 +28,7 @@
 // @note         2022-12-29 1.1.1 fix when the dark mode is turned on, the prompt display is abnormal
 // @note         2023-01-05 1.1.2 modify the cdn access address
 // @note         2023-08-05 1.1.3 remaintain the project
+// @note         2023-09-20 1.1.4 fix the error that scores are not displayed properly due to ui changes in problem page
 // ==/UserScript==
 
 (function () {
@@ -40,7 +41,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.1.3"
+    let version = "1.1.4"
     let preDate
     let allUrl = "https://leetcode.com/problemset"
     let tagUrl = "https://leetcode.com/tag"
@@ -207,13 +208,13 @@
             let problemTitle = document.querySelector("#app > div > div.main__2_tD > div.content__3fR6 > div > div.side-tools-wrapper__1TS9 > div > div.css-1gd46d6-Container.e5i1odf0 > div.css-jtoecv > div > div.tab-pane__ncJk.css-1eusa4c-TabContent.e5i1odf5 > div > div.css-101rr4k > div.css-v3d350")
             if (problemTitle == undefined) {
                 // 新版逻辑
-                problemTitle = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-5 > div > div:nth-child(1) > div.flex-1 > div > a")
+                problemTitle = document.querySelector("#qd-content > div > div.flexlayout__tab > div > div > div > div > div > a")
                 if (problemTitle == undefined) {
                     t1 = "unknown"
                     return
                 }
                 const problemIndex = problemTitle.innerText.split(".")[0].trim()
-                const colorSpan = document.querySelector("#qd-content > div.h-full.flex-col.ssg__qd-splitter-primary-w > div > div > div > div.flex.h-full.w-full.overflow-y-auto > div > div > div.w-full.px-5.pt-5 > div > div.mt-3.flex.space-x-4 > div:nth-child(1)") // 不确定要不要删除最后一个 "div"
+                const colorSpan = document.querySelector("#qd-content > div > div.flexlayout__tab > div > div > div.flex.gap-1 > div") // 不确定要不要删除最后一个 "div"
                 // const pa = colorSpan.parentNode.parentNode
                 if (t1 != undefined && t1 == problemIndex) {
                     return
