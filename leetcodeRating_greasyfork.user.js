@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.9
+// @version      2.0.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -142,12 +142,13 @@
 // @note         2023-08-31 2.0.7 修复流动ui导致的一些问题, 增加流动ui下,题目页侧边栏分数显示,更新机制问题修复
 // @note         2023-09-01 2.0.8 修复ui变化导致的侧边栏相关问题
 // @note         2023-09-01 2.0.9 修复ui变化导致的首页界面变化问题
+// @note         2023-09-27 2.0.10 增加插件群聊信息, 有问题的可以加群询问问题, 企鹅群号, 654726006
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.0.9"
+    let version = "2.0.10"
 
 
     // 页面相关url
@@ -181,7 +182,8 @@
     // level数据
     let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
     // 是否使用动态布局
-    let isDynamic = localStorage.getItem("used-dynamic-layout").includes("true")
+    let localVal = localStorage.getItem("used-dynamic-layout")
+    let isDynamic = localVal != undefined ? localVal.includes("true") : false
 
     // 同步函数
     function waitForKeyElements (selectorTxt, actionFunction, bWaitOnce, iframeSelector) {
