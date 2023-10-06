@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.10
+// @version      2.1.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -143,12 +143,13 @@
 // @note         2023-09-01 2.0.8 修复ui变化导致的侧边栏相关问题
 // @note         2023-09-01 2.0.9 修复ui变化导致的首页界面变化问题
 // @note         2023-09-27 2.0.10 增加插件群聊信息, 有问题的可以加群询问问题, 企鹅群号, 654726006
+// @note         2023-10-06 2.1.0 win平台题目页面部分信息显示不全的bug修复
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.0.10"
+    let version = "2.1.0"
 
 
     // 页面相关url
@@ -376,6 +377,8 @@
             }
             menu_ID[menu_ID.length] = GM_registerMenuCommand(`🏁 当前版本 ${version}`, function () {window.GM_openInTab('https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86', {active: true,insert: true,setParent: true});});
             menu_ID_Content[menu_ID_Content.length] = `🏁 当前版本 ${version}`
+            menu_ID[menu_ID.length+1] = GM_registerMenuCommand(`🏁 企业群号 654726006`, function () {});
+            menu_ID_Content[menu_ID_Content.length+1] = `🏁 654726006`
         }
 
         //切换选项
@@ -1113,172 +1116,90 @@
                 let zhUrl = zhContestUrl
                 let tips = colorSpan.parentNode
                 let tipsPa = tips.parentNode
-                // tips 一栏的父亲节点第一子元素的位置, 插入后变成难度分位置
+                // tips 一栏的父亲节点第一子元素的位置, 插入后变成竞赛信息位置
                 let tipsChildone = tipsPa.childNodes[1]
                 // 题目内容, 插入后变成原tips栏目
                 let pbDescription = tipsPa.childNodes[2]
-                let compantTip = "#qd-content > div > div:nth-child(4) > div > div.flex.w-full.flex-1.flex-col.gap-4.overflow-y-auto.px-4.py-5 > div.flex.gap-1 > div:nth-child(3)"
-                if (document.querySelector(compantTip) == undefined) {
-                waitForKeyElements("compantTip", () => {
-                    console.log("相关企业标签已刷新..")
-                    if (pbDescription.getAttribute("data-track-load") != undefined) {
-                        let divTips = document.createElement("div")
-                        divTips.setAttribute("class", "flex gap-1")
-                        let abody = document.createElement("a")
-                        abody.setAttribute("data-small-spacing", "true")
-                        abody.setAttribute("class", "css-nabodd-Button e167268t1")
 
-                        let abody2 = document.createElement("a")
-                        abody2.setAttribute("data-small-spacing", "true")
-                        abody2.setAttribute("class", "css-nabodd-Button e167268t1")
+                if (pbDescription.getAttribute("data-track-load") != undefined) {
+                    let divTips = document.createElement("div")
+                    divTips.setAttribute("class", "flex gap-1")
+                    let abody = document.createElement("a")
+                    abody.setAttribute("data-small-spacing", "true")
+                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
 
-                        let span = document.createElement("span")
-                        let span2 = document.createElement("span")
-                        // ContestID_zh  ContestSlug
-                        if (t2rate[id] != undefined) {
-                            let contestUrl;
-                            let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                            if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                            span.innerText = t2rate[id]["ContestID_zh"]
-                            span2.innerText = t2rate[id]["ProblemIndex"]
+                    let abody2 = document.createElement("a")
+                    abody2.setAttribute("data-small-spacing", "true")
+                    abody2.setAttribute("class", "css-nabodd-Button e167268t1")
 
-                            abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                            abody.setAttribute("target", "_blank")
-                            abody.removeAttribute("hidden")
+                    let span = document.createElement("span")
+                    let span2 = document.createElement("span")
+                    // ContestID_zh  ContestSlug
+                    if (t2rate[id] != undefined) {
+                        let contestUrl;
+                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
+                        span.innerText = t2rate[id]["ContestID_zh"]
+                        span2.innerText = t2rate[id]["ProblemIndex"]
 
-                            abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                            abody2.setAttribute("target", "_blank")
-                            if(switchrealoj) abody2.setAttribute("hidden", true)
-                            else abody2.removeAttribute("hidden")
-                        } else {
-                            span.innerText = "对应周赛未知"
-                            abody.setAttribute("href", "")
-                            abody.setAttribute("target", "_self")
-                            abody.setAttribute("hidden", "true")
+                        abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
+                        abody.setAttribute("target", "_blank")
+                        abody.removeAttribute("hidden")
 
-                            span2.innerText = "未知"
-                            abody2.setAttribute("href", "")
-                            abody2.setAttribute("target", "_self")
-                            abody2.setAttribute("hidden", "true")
-                        }
-                        abody.appendChild(span)
-                        abody2.appendChild(span2)
-                        divTips.appendChild(abody)
-                        divTips.appendChild(abody2)
-                        tipsPa.insertBefore(divTips, tips)
-                    } else if(tipsChildone.childNodes != undefined  && (tipsChildone.childNodes[1].textContent.includes("Q") || tipsChildone.childNodes[1].textContent.includes("未知"))) { 
-                        let pa = tipsChildone
-                        let le = pa.childNodes.length
-                        console.log(le)
-                        // 存在就直接替换
-                        if (t2rate[id] != undefined) {
-                            let contestUrl;
-                            let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                            if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                            pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                            pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                            pa.childNodes[le - 2].setAttribute("target", "_blank")
-                            pa.childNodes[le - 2].removeAttribute("hidden")
+                        abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        abody2.setAttribute("target", "_blank")
+                        if(switchrealoj) abody2.setAttribute("hidden", true)
+                        else abody2.removeAttribute("hidden")
+                    } else {
+                        span.innerText = "对应周赛未知"
+                        abody.setAttribute("href", "")
+                        abody.setAttribute("target", "_self")
+                        abody.setAttribute("hidden", "true")
 
-                            pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                            pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                            pa.childNodes[le - 1].setAttribute("target", "_blank")
-                            if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
-                            else pa.childNodes[le - 1].removeAttribute("hidden")
-                        } else {
-                            pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
-                            pa.childNodes[le - 2].setAttribute("href", "")
-                            pa.childNodes[le - 2].setAttribute("target", "_self")
-                            pa.childNodes[le - 2].setAttribute("hidden", "true")
-
-                            pa.childNodes[le - 1].childNodes[0].innerText = "未知"
-                            pa.childNodes[le - 1].setAttribute("href", "")
-                            pa.childNodes[le - 1].setAttribute("target", "_self")
-                            pa.childNodes[le - 1].setAttribute("hidden", "true")
-                        }
+                        span2.innerText = "未知"
+                        abody2.setAttribute("href", "")
+                        abody2.setAttribute("target", "_self")
+                        abody2.setAttribute("hidden", "true")
                     }
-                    t1 = id
-                });
-                } else {
-                    console.log("相关企业标签已刷新..")
-                    if (pbDescription.getAttribute("data-track-load") != undefined) {
-                        let divTips = document.createElement("div")
-                        divTips.setAttribute("class", "flex gap-1")
-                        let abody = document.createElement("a")
-                        abody.setAttribute("data-small-spacing", "true")
-                        abody.setAttribute("class", "css-nabodd-Button e167268t1")
+                    abody.appendChild(span)
+                    abody2.appendChild(span2)
+                    divTips.appendChild(abody)
+                    divTips.appendChild(abody2)
+                    tipsPa.insertBefore(divTips, tips)
+                } else if ( tipsChildone.childNodes != undefined
+                            && tipsChildone.childNodes.length >= 2 
+                            && (tipsChildone.childNodes[1].textContent.includes("Q") 
+                            || tipsChildone.childNodes[1].textContent.includes("未知"))) { 
+                    let pa = tipsChildone
+                    let le = pa.childNodes.length
+                    // 存在就直接替换
+                    if (t2rate[id] != undefined) {
+                        let contestUrl;
+                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
+                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
+                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
+                        pa.childNodes[le - 2].setAttribute("target", "_blank")
+                        pa.childNodes[le - 2].removeAttribute("hidden")
 
-                        let abody2 = document.createElement("a")
-                        abody2.setAttribute("data-small-spacing", "true")
-                        abody2.setAttribute("class", "css-nabodd-Button e167268t1")
+                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
+                        pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                        pa.childNodes[le - 1].setAttribute("target", "_blank")
+                        if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
+                        else pa.childNodes[le - 1].removeAttribute("hidden")
+                    } else {
+                        pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
+                        pa.childNodes[le - 2].setAttribute("href", "")
+                        pa.childNodes[le - 2].setAttribute("target", "_self")
+                        pa.childNodes[le - 2].setAttribute("hidden", "true")
 
-                        let span = document.createElement("span")
-                        let span2 = document.createElement("span")
-                        // ContestID_zh  ContestSlug
-                        if (t2rate[id] != undefined) {
-                            let contestUrl;
-                            let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                            if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                            span.innerText = t2rate[id]["ContestID_zh"]
-                            span2.innerText = t2rate[id]["ProblemIndex"]
-
-                            abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                            abody.setAttribute("target", "_blank")
-                            abody.removeAttribute("hidden")
-
-                            abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                            abody2.setAttribute("target", "_blank")
-                            if(switchrealoj) abody2.setAttribute("hidden", true)
-                            else abody2.removeAttribute("hidden")
-                        } else {
-                            span.innerText = "对应周赛未知"
-                            abody.setAttribute("href", "")
-                            abody.setAttribute("target", "_self")
-                            abody.setAttribute("hidden", "true")
-
-                            span2.innerText = "未知"
-                            abody2.setAttribute("href", "")
-                            abody2.setAttribute("target", "_self")
-                            abody2.setAttribute("hidden", "true")
-                        }
-                        abody.appendChild(span)
-                        abody2.appendChild(span2)
-                        divTips.appendChild(abody)
-                        divTips.appendChild(abody2)
-                        tipsPa.insertBefore(divTips, tips)
-                    } else if(tipsChildone.childNodes != undefined  && (tipsChildone.childNodes[1].textContent.includes("Q") || tipsChildone.childNodes[1].textContent.includes("未知"))) { 
-                        let pa = tipsChildone
-                        let le = pa.childNodes.length
-                        // 存在就直接替换
-                        if (t2rate[id] != undefined) {
-                            let contestUrl;
-                            let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                            if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                            pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                            pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                            pa.childNodes[le - 2].setAttribute("target", "_blank")
-                            pa.childNodes[le - 2].removeAttribute("hidden")
-
-                            pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                            pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                            pa.childNodes[le - 1].setAttribute("target", "_blank")
-                            if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
-                            else pa.childNodes[le - 1].removeAttribute("hidden")
-                        } else {
-                            pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
-                            pa.childNodes[le - 2].setAttribute("href", "")
-                            pa.childNodes[le - 2].setAttribute("target", "_self")
-                            pa.childNodes[le - 2].setAttribute("hidden", "true")
-
-                            pa.childNodes[le - 1].childNodes[0].innerText = "未知"
-                            pa.childNodes[le - 1].setAttribute("href", "")
-                            pa.childNodes[le - 1].setAttribute("target", "_self")
-                            pa.childNodes[le - 1].setAttribute("hidden", "true")
-                        }
+                        pa.childNodes[le - 1].childNodes[0].innerText = "未知"
+                        pa.childNodes[le - 1].setAttribute("href", "")
+                        pa.childNodes[le - 1].setAttribute("target", "_self")
+                        pa.childNodes[le - 1].setAttribute("hidden", "true")
                     }
-                    t1 = id
                 }
-                
+                t1 = id
             } else {
                 // 新版逻辑
                 let t = document.querySelector(".text-lg")
