@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.0
+// @version      2.1.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -144,12 +144,13 @@
 // @note         2023-09-01 2.0.9 修复ui变化导致的首页界面变化问题
 // @note         2023-09-27 2.0.10 增加插件群聊信息, 有问题的可以加群询问问题, 企鹅群号, 654726006
 // @note         2023-10-06 2.1.0 win平台题目页面部分信息显示不全的bug修复
+// @note         2023-11-06 2.1.1 根据力扣ui变化, 修改部分功能的实现, 主要影响学习计划页面,pblist页面,题目边栏页面
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.0"
+    let version = "2.1.1"
 
 
     // 页面相关url
@@ -349,7 +350,7 @@
             ['switchcode', 'switchcode function', '题目页代码输入阻止联想', false, true],
             ['switchsearch', 'search function', '题目搜索页周赛难度评分', true, false],
             ['switchtag', 'tag function', 'tag题单页周赛难度评分(动态规划等分类题库)', true, false],
-            ['switchcompany', 'company function', '公司题单页周赛难度评分', true, false],
+            // ['switchcompany', 'company function', '公司题单页周赛难度评分', true, false],
             ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
             ['switchstudy', 'studyplan function', '学习计划周赛难度评分', true, false],
             ['switchstudylevel', 'studyplan level function', '学习计划算术评级', true, false],
@@ -854,7 +855,14 @@
     let pblistt, pblistf;
     function getPblistData() {
         if (!GM_getValue("switchpblist")) return;
-        let arr = document.querySelector("div[role='rowgroup']")
+        let arrList = document.querySelectorAll("div[role='rowgroup']")
+        let arr = arrList[0]
+        for (let ele of arrList) {
+            if (ele.childNodes.length != 0) {
+                arr = ele 
+                break
+            }
+        }
         if (arr == undefined) return
         if (pblistt != undefined && arr.lastChild && pblistt == arr.lastChild.textContent
             && arr.firstChild && pblistf == arr.firstChild.textContent) {
@@ -961,18 +969,34 @@
                 let id = pbName2Id[pbName]
                 pbName = pbName.split(" ").join("") //去除中间的空格
                 let level = levelData[pbName]
+                // console.log(pbName)
                 let hit = false
-                let darkn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
-                let lightn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
+                let darkn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
+                let lightn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
                 // rating
                 if (id && t2rate[id]) {
+                    console.log(id)
                     let ndRate = t2rate[id]["Rating"]
                     nd.textContent = ndRate
                     hit = true
                 } else {
                     if (!nd) break
                     let clr = nd.getAttribute("class")
-                    nd.innerHTML = lightn2c[clr] == undefined ? darkn2c[clr]:lightn2c[clr]
+                    let flag = true
+                    for (let c in lightn2c) {
+                        if (!flag) break
+                        if (clr.includes(c)) {
+                            nd.innerHTML = lightn2c[c] 
+                            flag= false
+                        }
+                    }
+                    for (let c in darkn2c) {
+                        if (!flag) break
+                        if (clr.includes(c)) {
+                            nd.innerHTML = darkn2c[c] 
+                            flag= false
+                        }
+                    }
                 }
 
                 // level渲染
@@ -988,6 +1012,82 @@
         }
         if(totArr.firstChild.childNodes[0]) studyf = totArr.firstChild.childNodes[0].textContent
         console.log("has refreshed...")
+    }
+
+    let pbsidef;
+    function getpbside(css_selector) {
+        levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
+        let totArr = null
+        // 如果传入的是已经找到的node元素, 就不再搜索
+        if (css_selector instanceof Element) {
+            totArr = css_selector
+        }  else {
+            totArr = document.querySelector(css_selector)
+        }
+        if (totArr == undefined) return;
+        let first = totArr.firstChild.childNodes[0].textContent
+        if (pbsidef && pbsidef == first) {
+            return
+        }
+        let childs = totArr.childNodes
+        for (const arr of childs) {
+            for (let pbidx = 1; pbidx < arr.childNodes.length; pbidx++) {
+                let pb = arr.childNodes[pbidx]
+                let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
+                let nd = pb.childNodes[0].childNodes[1].childNodes[1]
+                let data = pbName.split(".")
+                pbName = data[1]
+                let id = data[0]
+                if (pbName == null) {
+                    pbName = ""
+                } else {
+                    pbName = pbName.split(" ").join("")
+                }
+                let level = levelData[pbName]
+                // console.log(pbName)
+                // console.log(level)
+                let hit = false
+                let darkn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
+                let lightn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
+                // rating
+                if (id && t2rate[id]) {
+                    let ndRate = t2rate[id]["Rating"]
+                    nd.textContent = ndRate
+                    hit = true
+                } else {
+                    if (!nd) break
+                    let clr = nd.getAttribute("class")
+                    if (clr == null) console.log(nd);
+                    let flag = true
+                    for (let c in lightn2c) {
+                        if (!flag) break
+                        if (clr.includes(c)) {
+                            nd.innerHTML = lightn2c[c] 
+                            flag= false
+                        }
+                    }
+                    for (let c in darkn2c) {
+                        if (!flag) break
+                        if (clr.includes(c)) {
+                            nd.innerHTML = darkn2c[c] 
+                            flag= false
+                        }
+                    }
+                }
+
+                // level渲染
+                if (level && GM_getValue("switchstudylevel")) {
+                    let text = document.createElement('span')
+                    text.style = nd.getAttribute("style")
+                    text.innerHTML = "算术评级: " + level["Level"].toString()
+                    if (hit) text.style.paddingRight = "75px" // 命中之后宽度不一样
+                    else text.style.paddingRight = "80px" 
+                    nd.parentNode.insertBefore(text, nd)
+                }
+            }
+        }
+        if(totArr.firstChild.childNodes[0]) pbsidef = totArr.firstChild.childNodes[0].textContent
+        console.log("has refreshed side...")
     }
 
 
@@ -1017,12 +1117,12 @@
             let code = strs[0];
             // 参数含有envType就是学习计划
             if (code.includes("envType")) {
-                waitForKeyElements(".css-yw0m6t", ()=>{
-                    let cssChild = document.querySelector(".css-yw0m6t")
-                    let studyplan = cssChild.parentNode;
+                waitForKeyElements(".overflow-auto", ()=>{
+                    let overflow = document.querySelector(".overflow-auto")
+                    let studyplan = overflow.childNodes[0].childNodes[1];
                     if(!studyplan) studyf = undefined
                     if(GM_getValue("switchstudy") && studyplan && pbsidefresh) {
-                        getStudyData(studyplan)
+                        getpbside(studyplan)
                         console.log("已经刷新侧边栏envType分数...")
                         pbsidefresh = false
                     }
@@ -1031,30 +1131,47 @@
             }
         } else {
             // 题目页面题库展开栏
-            let pbarr = document.querySelector(".css-yw0m6t")
-            if (pbarr != undefined && pbsidefresh) {
-                for (const onepb of pbarr.childNodes) {
-                    let pbName = onepb.innerText
-                    pbName = pbName.split("\n")[0]
-                    let nd = onepb.childNodes[0].childNodes[1].childNodes[1]
-                    pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
-                    let id = pbName2Id[pbName]
-                    pbName = pbName.split(" ").join("") //去除中间的空格
-                    let darkn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
-                    let lightn2c = {"chakra-text css-1tad05g": "简单", "chakra-text css-1l21w2d": "中等", "chakra-text css-cza8jh": "困难" }
-                    // rating
-                    if (id && t2rate[id]) {
-                        let ndRate = t2rate[id]["Rating"]
-                        nd.textContent = ndRate
-                    } else {
-                        if (!nd) break
-                        let clr = nd.getAttribute("class")
-                        nd.innerHTML = lightn2c[clr] == undefined ? darkn2c[clr]:lightn2c[clr]
+            waitForKeyElements(".overflow-auto", () => {
+                let overflow = document.querySelector(".overflow-auto")
+                let pbarr = overflow.childNodes[0].childNodes[1].childNodes[0];
+                if (pbarr != undefined && pbsidefresh) {
+                    for (const onepb of pbarr.childNodes) {
+                        let pbName = onepb.childNodes[0].childNodes[1].childNodes[0].textContent
+                        let nd = onepb.childNodes[0].childNodes[1].childNodes[1]
+                        pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
+                        let data = pbName.split(".")
+                        pbName = data[1]
+                        let id = data[0]
+                        let darkn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
+                        let lightn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
+                        // rating
+                        if (id && t2rate[id]) {
+                            let ndRate = t2rate[id]["Rating"]
+                            nd.textContent = ndRate
+                        } else {
+                            if (!nd) break
+                            let clr = nd.getAttribute("class")
+                            let flag = true
+                            for (let c in lightn2c) {
+                                if (!flag) break
+                                if (clr.includes(c)) {
+                                    nd.innerHTML = lightn2c[c] 
+                                    flag = false
+                                }
+                            }
+                            for (let c in darkn2c) {
+                                if (!flag) break
+                                if (clr.includes(c)) {
+                                    nd.innerHTML = darkn2c[c] 
+                                    flag = false
+                                }
+                            }
+                        }
                     }
+                    console.log("已经刷新侧边栏题库分数...")
+                    pbsidefresh = false
                 }
-                console.log("已经刷新侧边栏题库分数...")
-                pbsidefresh = false
-            }
+            });
         }
 
         // 题目页面
