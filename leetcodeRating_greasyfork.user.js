@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.1
+// @version      2.1.2
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -145,12 +145,13 @@
 // @note         2023-09-27 2.0.10 增加插件群聊信息, 有问题的可以加群询问问题, 企鹅群号, 654726006
 // @note         2023-10-06 2.1.0 win平台题目页面部分信息显示不全的bug修复
 // @note         2023-11-06 2.1.1 根据力扣ui变化, 修改部分功能的实现, 主要影响学习计划页面,pblist页面,题目边栏页面
+// @note         2023-12-11 2.1.2 根据力扣ui变化, 修改部分功能的实现, 并优化题库页灵茶数据每日不统一的问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.1"
+    let version = "2.1.2"
 
 
     // 页面相关url
@@ -228,7 +229,7 @@
     }
 
 
-    let ajaxReq = (type, reqUrl, headers, data, successFuc) => {
+    let ajaxReq = (type, reqUrl, headers, data, successFuc, withCredentials=true) => {
         $.ajax({
             // 请求方式
             type : type,
@@ -237,7 +238,7 @@
             // 请求地址
             url: reqUrl,
             // 数据，json字符串
-            data : JSON.stringify(data),
+            data : data != null? JSON.stringify(data): null,
             // 同步方式
             async: false,
             xhrFields: {
@@ -339,6 +340,27 @@
         return load
     }
 
+
+    let isVpn = !GM_getValue("switchvpn")
+    // 访问相关url
+    let teaUrl, versionUrl, sciptUrl, rakingUrl, levelUrl
+    if (isVpn) {
+        teaUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
+        versionUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/version.json"
+        sciptUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
+        rakingUrl = "https://zerotrac.github.io/leetcode_problem_rating/data.json"
+        levelUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
+    } else {
+        teaUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
+        versionUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/version.json"
+        sciptUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
+        rakingUrl = "https://raw.gitmirror.com/zerotrac/leetcode_problem_rating/main/data.json"
+        levelUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
+    }
+
+    // 获取必须获取的数据
+    getNeedData()
+
     // 菜单方法定义
     function Script_setting(){
         let menu_ALL = [
@@ -399,22 +421,7 @@
         }
     }
 
-    let isVpn = !GM_getValue("switchvpn")
-    // 访问相关url
-    let teaUrl, versionUrl, sciptUrl, rakingUrl, levelUrl
-    if (isVpn) {
-        teaUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
-        versionUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/version.json"
-        sciptUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
-        rakingUrl = "https://zerotrac.github.io/leetcode_problem_rating/data.json"
-        levelUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
-    } else {
-        teaUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
-        versionUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/version.json"
-        sciptUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
-        rakingUrl = "https://raw.gitmirror.com/zerotrac/leetcode_problem_rating/main/data.json"
-        levelUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
-    }
+
 
     // lc 基础req
     let baseReq = (type, reqUrl, query, variables, successFuc) => {
@@ -635,9 +642,9 @@
         if (arr == undefined) {
             return
         }
-
-        let head = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div.relative.flex.items-center.space-x-4.py-3.my-4.-ml-4.overflow-hidden.pl-4")
-        if (head == undefined) return
+        // 判断已失效，暂时注释，等待后续调整
+        // let head = document.querySelector("#__next > div.flex.min-h-screen.min-w-\\[360px\\].flex-col.text-label-1.dark\\:text-dark-label-1 > div.mx-auto.w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl.mt-\\[50px\\].dark\\:bg-dark-layer-bg.bg-white > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.z-base.col-span-4.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(4) > div.-mx-4.transition-opacity.md\\:mx-0 > div > div > div.border-divider-border-2.dark\\:border-dark-divider-border-2.border-b")
+        // if (head == undefined) return
         // let lasthead = head.lastChild
         let lastchild = arr.lastChild
         // 防止过多的无效操作
@@ -1044,7 +1051,7 @@
                     pbName = pbName.split(" ").join("")
                 }
                 let level = levelData[pbName]
-                // console.log(pbName)
+                console.log(pbName)
                 // console.log(level)
                 let hit = false
                 let darkn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
@@ -1448,47 +1455,6 @@
     }
 
 
-
-    let now = getCurrentDate(1)
-    preDate = GM_getValue("preDate", "")
-    if (t2rate["tagVersion6"] == undefined || (preDate == "" || preDate != now)) {
-        // 每天重置为空
-        GM_setValue("pbSubmissionInfo", "{}")
-        GM_xmlhttpRequest({
-            method: "get",
-            url: rakingUrl + "?timeStamp=" + new Date().getTime(),
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            onload: function (res) {
-                if (res.status === 200) {
-                    // 保留唯一标识
-                    t2rate = {}
-                    pbName2Id = {}
-                    let dataStr = res.response
-                    let json = eval(dataStr)
-                    for (const element of json) {
-                        t2rate[element.ID] = element
-                        t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
-                        pbName2Id[element.TitleZH] = element.ID
-                    }
-                    t2rate["tagVersion6"] = {}
-                    console.log("everyday getdate once...")
-                    preDate = now
-                    GM_setValue("preDate", preDate)
-                    GM_setValue("t2ratedb", JSON.stringify(t2rate))
-                    GM_setValue("pbName2Id", JSON.stringify(pbName2Id))
-                    // t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
-                    // preDate = GM_getValue("preDate", "")
-                }
-            },
-            onerror: function (err) {
-                console.log('error')
-                console.log(err)
-            }
-        });
-    }
-
     function clearAndStart(url, timeout, isAddEvent) {
             let start = ""
             let targetIdx = -1
@@ -1518,18 +1484,75 @@
                     clearAndStart(newUrl, 1, false)
                 })
             }
-        }
+    }
 
-    // 更新level数据
-    let week = new Date().getDay()
-    if (levelData["tagVersion20"] == undefined || week == 1) {
-        GM_xmlhttpRequest({
-            method: "get",
-            url: levelUrl + "?timeStamp=" + new Date().getTime(),
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            onload: function (res) {
+    // 获取界面所需数据, 需要在菜单页面刷新前进行更新
+    function getNeedData() {
+        // 更新分数数据
+        async function getScore() {
+            let now = getCurrentDate(1)
+            preDate = GM_getValue("preDate", "")
+            if (t2rate["tagVersion6"] == undefined || (preDate == "" || preDate != now)) {
+                // 每天重置为空
+                GM_setValue("pbSubmissionInfo", "{}")
+                let res = await new Promise((resolve, reject) => {
+                    GM_xmlhttpRequest({
+                        method: "get",
+                        url: rakingUrl + "?timeStamp=" + new Date().getTime(),
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        onload: function (res) {
+                            resolve(res)
+                        },
+                        onerror: function (err) {
+                            console.log('error')
+                            console.log(err)
+                        }
+                    });
+                });
+                if (res.status === 200) {
+                    // 保留唯一标识
+                    t2rate = {}
+                    pbName2Id = {}
+                    let dataStr = res.response
+                    let json = eval(dataStr)
+                    for (const element of json) {
+                        t2rate[element.ID] = element
+                        t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
+                        pbName2Id[element.TitleZH] = element.ID
+                    }
+                    t2rate["tagVersion6"] = {}
+                    console.log("everyday getdate once...")
+                    preDate = now
+                    GM_setValue("preDate", preDate)
+                    GM_setValue("t2ratedb", JSON.stringify(t2rate))
+                    GM_setValue("pbName2Id", JSON.stringify(pbName2Id))
+                }
+            }
+        }
+        getScore()
+
+        // 更新level数据
+        async function getPromiseLevel() {
+            let week = new Date().getDay()
+            if (levelData["tagVersion20"] == undefined || week == 1) {
+                let res = await new Promise((resolve, reject) => {
+                    GM_xmlhttpRequest({
+                        method: "get",
+                        url: levelUrl + "?timeStamp=" + new Date().getTime(),
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        onload: function (res) {
+                            resolve(res)
+                        },
+                        onerror: function (err) {
+                            console.log('error')
+                            console.log(err)
+                        }
+                    });
+                });
                 if (res.status === 200) {
                     levelData = {}
                     let dataStr = res.response
@@ -1544,58 +1567,65 @@
                     console.log("every Monday get level once...")
                     GM_setValue("levelData", JSON.stringify(levelData))
                 }
-            },
-            onerror: function (err) {
-                console.log('error')
-                console.log(err)
             }
-        });
-    }
-
-    if (location.href.match(allUrl)) {
-        // 版本更新机制
-        GM_xmlhttpRequest({
-            method: "get",
-            url: versionUrl + "?timeStamp=" + new Date().getTime(),
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            onload: function (res) {
-                if (res.status === 200) {
-                    console.log("enter home page check version once...")
-                    let dataStr = res.response
-                    let json = JSON.parse(dataStr)
-                    let v = json["version"]
-                    let upcontent = json["content"]
-                    if (v != version) {
-                        layer.open({
-                            area: ['400px', '260px'],
-                            content: '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' + v +'啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
-                            yes: function (index, layer0) {
-                                let c = window.open(sciptUrl + "?timeStamp=" + new Date().getTime())
-                                c.close()
-                                layer.close(index)
-                            }
-                        });
-                    } else {
-                        console.log("leetcodeRating难度分插件当前已经是最新版本~")
+        }
+        getPromiseLevel()
+        
+    
+        if (location.href.match(allUrl)) {
+            // 版本更新机制
+            GM_xmlhttpRequest({
+                method: "get",
+                url: versionUrl + "?timeStamp=" + new Date().getTime(),
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                onload: function (res) {
+                    if (res.status === 200) {
+                        console.log("enter home page check version once...")
+                        let dataStr = res.response
+                        let json = JSON.parse(dataStr)
+                        let v = json["version"]
+                        let upcontent = json["content"]
+                        if (v != version) {
+                            layer.open({
+                                area: ['400px', '260px'],
+                                content: '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' + v +'啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
+                                yes: function (index, layer0) {
+                                    let c = window.open(sciptUrl + "?timeStamp=" + new Date().getTime())
+                                    c.close()
+                                    layer.close(index)
+                                }
+                            });
+                        } else {
+                            console.log("leetcodeRating难度分插件当前已经是最新版本~")
+                        }
                     }
+                },
+                onerror: function (err) {
+                    console.log('error')
+                    console.log(err)
                 }
-            },
-            onerror: function (err) {
-                console.log('error')
-                console.log(err)
-            }
-        });
+            });
 
-        // 获取茶数据
-        GM_xmlhttpRequest({
-            method: "get",
-            url: teaUrl + "?timeStamp=" + new Date().getTime(),
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            onload: function (res) {
+            // 获取茶数据
+            async function getTea() {
+                let res = await new Promise((resole, reject) => {
+                    GM_xmlhttpRequest({
+                        method: "get",
+                        url: teaUrl + "?timeStamp=" + new Date().getTime(),
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        onload: function (res) {
+                            resole(res)
+                        },
+                        onerror: function (err) {
+                            console.log('error')
+                            console.log(err)
+                        }
+                    });
+                });
                 if (res.status === 200) {
                     console.log("enter home page gettea once...")
                     latestpb = {}
@@ -1608,15 +1638,12 @@
                     GM_setValue("latestpb", JSON.stringify(latestpb))
                     latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
                 }
-            },
-            onerror: function (err) {
-                console.log('error')
-                console.log(err)
             }
-        });
+            getTea()
+        }
     }
 
-    // 定时启动
+    // 定时启动函数程序
     clearAndStart(location.href, 1, true)
     GM_addStyle(`
         .versioncontent {
