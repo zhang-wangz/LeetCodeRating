@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.2
+// @version      2.1.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -146,12 +146,13 @@
 // @note         2023-10-06 2.1.0 win平台题目页面部分信息显示不全的bug修复
 // @note         2023-11-06 2.1.1 根据力扣ui变化, 修改部分功能的实现, 主要影响学习计划页面,pblist页面,题目边栏页面
 // @note         2023-12-11 2.1.2 根据力扣ui变化, 修改部分功能的实现, 并优化题库页灵茶数据每日不统一的问题
+// @note         2023-12-11 2.1.3 修复题目页左侧栏目刷新的bug问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.2"
+    let version = "2.1.3"
 
 
     // 页面相关url
@@ -317,7 +318,6 @@
         const load = () => {
             if (isLoad) return
             isLoad = true
-
             const oldPushState = history.pushState
             const oldReplaceState = history.replaceState
 
@@ -370,11 +370,13 @@
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
             ['switchpb', 'pb function', '题目页周赛难度评分', true, true],
             ['switchcode', 'switchcode function', '题目页代码输入阻止联想', false, true],
+            ['switchpbside', 'switchpbside function', '题目页侧边栏分数显示', true, true],
             ['switchsearch', 'search function', '题目搜索页周赛难度评分', true, false],
             ['switchtag', 'tag function', 'tag题单页周赛难度评分(动态规划等分类题库)', true, false],
             // ['switchcompany', 'company function', '公司题单页周赛难度评分', true, false],
             ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
             ['switchstudy', 'studyplan function', '学习计划周赛难度评分', true, false],
+            ['switchcontestpage', 'contestpage function', '竞赛页面双栏布局', true, false],
             ['switchstudylevel', 'studyplan level function', '学习计划算术评级', true, false],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
@@ -562,6 +564,101 @@
             if(!error.toString().includes("NotFoundError")) console.log("力扣api发生错误: ", error.toString().substr(0, 150))
         }
         return err
+    }
+
+    // 竞赛页面双栏布局
+    // 来源 better contest page / author ExplodingKonjac
+    let switchcontestpage = GM_getValue("switchcontestpage")
+    if(location.href.match("https://leetcode.cn/contest/.*/problems/.*") && switchcontestpage) {
+        const CSS = `
+            body {
+                display: flex;
+                flex-direction: column;
+            }
+
+            body .content-wrapper {
+                height: 0;
+                min-height: 0 !important;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                padding-bottom: 0 !important;
+            }
+
+            .content-wrapper #base_content {
+                display: flex;
+                overflow: hidden;
+                height: 0;
+                flex: 1;
+            }
+
+            .content-wrapper #base_content > .container {
+                width: 40%;
+                overflow: scroll;
+            }
+
+            .content-wrapper #base_content > .container .question-content {
+                overflow: unset !important;
+                white-space: break-spaces !important;
+            }
+
+            .content-wrapper #base_content > .editor-container {
+                flex: 1;
+                overflow: scroll;
+            }
+
+            .content-wrapper #base_content > .editor-container .container {
+                width: 100% !important;
+            }
+
+            .content-wrapper #base_content > .custom-resize {
+                width: 4px;
+                height: 100%;
+                background: #eee;
+                cursor: ew-resize;
+                margin: 0 2px;
+            }
+
+            .content-wrapper #base_content > .custom-resize:hover {
+                background: #1a90ff;
+            }
+        `
+
+        const storageKey = '--previous-editor-size';
+        (function () {
+        const $css = document.createElement('style')
+        $css.innerHTML = CSS
+        document.head.append($css)
+        const $problem = document.querySelector('.content-wrapper #base_content > .container')
+        const $editor = document.querySelector('.content-wrapper #base_content > .editor-container')
+        const $resize = document.createElement('div')
+        if (localStorage.getItem(storageKey)) {
+            $problem.style.width = localStorage.getItem(storageKey)
+        }
+        $editor.parentElement.insertBefore($resize, $editor)
+        $resize.classList.add('custom-resize')
+        let currentSize, startX, resizing = false
+        $resize.addEventListener('mousedown', (e) => {
+            currentSize = $problem.getBoundingClientRect().width
+            startX = e.clientX
+            resizing = true
+            $resize.style.background = '#1a90ff'
+        })
+        window.addEventListener('mousemove', (e) => {
+            if (!resizing) return
+            const deltaX = e.clientX - startX
+            const newSize = Math.max(450, Math.min(1200, currentSize + deltaX))
+            $problem.style.width = `${newSize}px`
+            e.preventDefault()
+        })
+        window.addEventListener('mouseup', (e) => {
+            if (!resizing) return
+            e.preventDefault()
+            resizing = false
+            $resize.style.background = ''
+            localStorage.setItem(storageKey, $problem.style.width)
+        })
+        })()
     }
 
 
@@ -1038,7 +1135,7 @@
         }
         let childs = totArr.childNodes
         for (const arr of childs) {
-            for (let pbidx = 1; pbidx < arr.childNodes.length; pbidx++) {
+            for (let pbidx = 0; pbidx < arr.childNodes.length; pbidx++) {
                 let pb = arr.childNodes[pbidx]
                 let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
@@ -1051,7 +1148,7 @@
                     pbName = pbName.split(" ").join("")
                 }
                 let level = levelData[pbName]
-                console.log(pbName)
+                // console.log(pbName)
                 // console.log(level)
                 let hit = false
                 let darkn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
@@ -1111,10 +1208,7 @@
     
     // 只刷新一次
     let pbsidefresh = true 
-    function getpb() {
-        if(!GM_getValue("switchpb")) return
-        let switchrealoj = GM_getValue("switchrealoj")
-
+    function getPbSideData() {
         // 新版学习计划左侧栏分数显示
         let searchParams = location.search
         // ?envType=study-plan-v2&envId=leetcode-75
@@ -1126,22 +1220,72 @@
             if (code.includes("envType")) {
                 waitForKeyElements(".overflow-auto", ()=>{
                     let overflow = document.querySelector(".overflow-auto")
-                    let studyplan = overflow.childNodes[0].childNodes[1];
-                    if(!studyplan) studyf = undefined
-                    if(GM_getValue("switchstudy") && studyplan && pbsidefresh) {
-                        getpbside(studyplan)
+                    if (!(overflow != null && overflow.childNodes != null 
+                        && overflow.childNodes[0].children != null 
+                        && overflow.childNodes[0].children[1].childNodes != null))
+                        return
+                    let pbarr = overflow.childNodes[0].childNodes[1].childNodes[0];
+                    if (pbarr == null) return
+                    // console.log(pbarr)
+                    // 如果第一个搜索的元素不满足条件的话， 就在所有符合条件的元素中找第一个符合条件的元素
+                    if (!(pbarr.childNodes != null && pbarr.childNodes.length > 30)) {
+                        pbarr = null
+                        let all = document.querySelectorAll(".overflow-auto")
+                        for (let index = 0; index < all.length; index++) {
+                            const over = all[index];
+                            if (!(over != null && over.childNodes != null 
+                                && over.childNodes[0].children != null 
+                                && over.childNodes[0].children.length > 1
+                                && over.childNodes[0].children[1].childNodes != null))
+                                continue
+                            let arr = over.childNodes[0].childNodes[1].childNodes[0];
+                            if (arr.childNodes != null && arr.childNodes.length > 30) {
+                                pbarr = arr
+                                break
+                            }
+                        }
+                    }
+                    // console.log(pbarr)
+                    if (pbarr == null) return
+                    if(pbarr && pbsidefresh) {
+                        getpbside(pbarr.parentNode)
                         console.log("已经刷新侧边栏envType分数...")
                         pbsidefresh = false
                     }
                 });
             
             }
-        } else {
+        } else if (searchParams.indexOf("?") == -1 && pbsidefresh) {
             // 题目页面题库展开栏
             waitForKeyElements(".overflow-auto", () => {
                 let overflow = document.querySelector(".overflow-auto")
+                if (!(overflow != null && overflow.childNodes != null 
+                    && overflow.childNodes[0].children != null && overflow.childNodes[0].children[1].childNodes != null))
+                    return
                 let pbarr = overflow.childNodes[0].childNodes[1].childNodes[0];
-                if (pbarr != undefined && pbsidefresh) {
+                if (pbarr == null) return
+                // console.log(pbarr)
+                // 如果第一个搜索的元素不满足条件的话， 就在所有符合条件的元素中找第一个符合条件的元素
+                if (!(pbarr.childNodes != null && pbarr.childNodes.length > 30)) {
+                    pbarr = null
+                    let all = document.querySelectorAll(".overflow-auto")
+                    for (let index = 0; index < all.length; index++) {
+                        const over = all[index];
+                        if (!(over != null && over.childNodes != null 
+                            && over.childNodes[0].children != null 
+                            && over.childNodes[0].children.length > 1
+                            && over.childNodes[0].children[1].childNodes != null))
+                            continue
+                        let arr = over.childNodes[0].childNodes[1].childNodes[0];
+                        if (arr.childNodes != null && arr.childNodes.length > 30) {
+                            pbarr = arr
+                            break
+                        }
+                    }
+                }
+                // console.log(pbarr)
+                if (pbarr == null) return
+                if (pbsidefresh) {
                     for (const onepb of pbarr.childNodes) {
                         let pbName = onepb.childNodes[0].childNodes[1].childNodes[0].textContent
                         let nd = onepb.childNodes[0].childNodes[1].childNodes[1]
@@ -1180,6 +1324,13 @@
                 }
             });
         }
+    }
+
+    function getpb() {
+        if(!GM_getValue("switchpb")) return
+        let switchrealoj = GM_getValue("switchrealoj")
+        
+        if(GM_getValue("switchpbside")) getPbSideData()
 
         // 题目页面
         let curUrl = location.href
