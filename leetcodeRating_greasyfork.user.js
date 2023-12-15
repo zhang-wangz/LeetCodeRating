@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜English
 // @namespace    https://github.com/zhang-wangz
-// @version      1.1.4
+// @version      1.1.5
 // @license      MIT
 // @description  LeetCodeRating The score of the weekly competition is displayed, and currently supports the tag page, question bank page, problem_list page and question page
 // @author       小东是个阳光蛋(Leetcode Nickname of chinese site
@@ -29,6 +29,7 @@
 // @note         2023-01-05 1.1.2 modify the cdn access address
 // @note         2023-08-05 1.1.3 remaintain the project
 // @note         2023-09-20 1.1.4 fix the error that scores are not displayed properly due to ui changes in problem page
+// @note         2023-12-14 1.1.5 fix the error that scores are not displayed properly due to ui changes in problem set page
 // ==/UserScript==
 
 (function () {
@@ -41,7 +42,7 @@
     let id4 = ""
     let id5 = ""
     let id6 = ""
-    let version = "1.1.4"
+    let version = "1.1.5"
     let preDate
     let allUrl = "https://leetcode.com/problemset"
     let tagUrl = "https://leetcode.com/tag"
@@ -93,7 +94,7 @@
     let t1, le // pb
     function getData() {
         try {
-            const problemList = document.querySelector("#__next > div > div > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.col-span-4.z-base.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(6) > div:nth-child(2) > div > div > div:nth-child(2)")
+            const problemList = document.querySelector("#__next > div > div > div:nth-child(2) > div > div:nth-child(4) > div:nth-child(2) > div > div > div:nth-child(2)")
             // pb页面加载时直接返回
             if (problemList == undefined) {
                 return
