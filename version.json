@@ -1,4 +1,4 @@
 {
-  "version": "1.1.4",
-  "content": "fix the error that scores are not displayed properly due to ui changes in problem page"
+  "version": "1.1.5",
+  "content": "fix the error that scores are not displayed properly due to ui changes in problem set page"
 }
