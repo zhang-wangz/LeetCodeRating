@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.3
+// @version      2.1.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -147,12 +147,13 @@
 // @note         2023-11-06 2.1.1 根据力扣ui变化, 修改部分功能的实现, 主要影响学习计划页面,pblist页面,题目边栏页面
 // @note         2023-12-11 2.1.2 根据力扣ui变化, 修改部分功能的实现, 并优化题库页灵茶数据每日不统一的问题
 // @note         2023-12-11 2.1.3 修复题目页左侧栏目刷新的bug问题
+// @note         2023-12-11 2.1.4 恢复题目页左侧栏目的部分功能，并在之前的基础上修复功能缺陷
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.3"
+    let version = "2.1.4"
 
 
     // 页面相关url
@@ -1076,13 +1077,13 @@
                 let id = pbName2Id[pbName]
                 pbName = pbName.split(" ").join("") //去除中间的空格
                 let level = levelData[pbName]
-                // console.log(pbName)
+                // console.log(pbName, level)
                 let hit = false
                 let darkn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
                 let lightn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
                 // rating
                 if (id && t2rate[id]) {
-                    console.log(id)
+                    // console.log(id)
                     let ndRate = t2rate[id]["Rating"]
                     nd.textContent = ndRate
                     hit = true
@@ -1108,6 +1109,7 @@
 
                 // level渲染
                 if (level && GM_getValue("switchstudylevel")) {
+                    // console.log(pbName, level)
                     let text = document.createElement('span')
                     text.style = nd.getAttribute("style")
                     text.innerHTML = "算术评级: " + level["Level"].toString()
@@ -1138,7 +1140,10 @@
         }
         let childs = totArr.childNodes
         for (const arr of childs) {
-            for (let pbidx = 0; pbidx < arr.childNodes.length; pbidx++) {
+            // 特殊判定， 如果大于30就肯定是每日一日列表
+            let pbidx = 1;
+            if (arr.childNodes.length >= 30) pbidx = 0;
+            for (; pbidx < arr.childNodes.length; pbidx++) {
                 let pb = arr.childNodes[pbidx]
                 let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
@@ -1181,7 +1186,7 @@
                         }
                     }
                 }
-
+ 
                 // level渲染
                 if (level && GM_getValue("switchstudylevel")) {
                     let text = document.createElement('span')
@@ -1223,72 +1228,22 @@
             if (code.includes("envType")) {
                 waitForKeyElements(".overflow-auto", ()=>{
                     let overflow = document.querySelector(".overflow-auto")
-                    if (!(overflow != null && overflow.childNodes != null 
-                        && overflow.childNodes[0].children != null 
-                        && overflow.childNodes[0].children[1].childNodes != null))
-                        return
-                    let pbarr = overflow.childNodes[0].childNodes[1].childNodes[0];
-                    if (pbarr == null) return
-                    // console.log(pbarr)
-                    // 如果第一个搜索的元素不满足条件的话， 就在所有符合条件的元素中找第一个符合条件的元素
-                    if (!(pbarr.childNodes != null && pbarr.childNodes.length > 30)) {
-                        pbarr = null
-                        let all = document.querySelectorAll(".overflow-auto")
-                        for (let index = 0; index < all.length; index++) {
-                            const over = all[index];
-                            if (!(over != null && over.childNodes != null 
-                                && over.childNodes[0].children != null 
-                                && over.childNodes[0].children.length > 1
-                                && over.childNodes[0].children[1].childNodes != null))
-                                continue
-                            let arr = over.childNodes[0].childNodes[1].childNodes[0];
-                            if (arr.childNodes != null && arr.childNodes.length > 30) {
-                                pbarr = arr
-                                break
-                            }
-                        }
-                    }
-                    // console.log(pbarr)
-                    if (pbarr == null) return
-                    if(pbarr && pbsidefresh) {
-                        getpbside(pbarr.parentNode)
+                    let studyplan = overflow.childNodes[0].childNodes[1];
+                    if(!studyplan) studyf = undefined
+                    if(GM_getValue("switchstudy") && studyplan && pbsidefresh) {
+                        getpbside(studyplan)
                         console.log("已经刷新侧边栏envType分数...")
                         pbsidefresh = false
                     }
                 });
             
             }
-        } else if (searchParams.indexOf("?") == -1 && pbsidefresh) {
+        } else {
             // 题目页面题库展开栏
             waitForKeyElements(".overflow-auto", () => {
                 let overflow = document.querySelector(".overflow-auto")
-                if (!(overflow != null && overflow.childNodes != null 
-                    && overflow.childNodes[0].children != null && overflow.childNodes[0].children[1].childNodes != null))
-                    return
                 let pbarr = overflow.childNodes[0].childNodes[1].childNodes[0];
-                if (pbarr == null) return
-                // console.log(pbarr)
-                // 如果第一个搜索的元素不满足条件的话， 就在所有符合条件的元素中找第一个符合条件的元素
-                if (!(pbarr.childNodes != null && pbarr.childNodes.length > 30)) {
-                    pbarr = null
-                    let all = document.querySelectorAll(".overflow-auto")
-                    for (let index = 0; index < all.length; index++) {
-                        const over = all[index];
-                        if (!(over != null && over.childNodes != null 
-                            && over.childNodes[0].children != null 
-                            && over.childNodes[0].children.length > 1
-                            && over.childNodes[0].children[1].childNodes != null))
-                            continue
-                        let arr = over.childNodes[0].childNodes[1].childNodes[0];
-                        if (arr.childNodes != null && arr.childNodes.length > 30) {
-                            pbarr = arr
-                            break
-                        }
-                    }
-                }
-                // console.log(pbarr)
-                if (pbarr == null) return
-                if (pbsidefresh) {
+                if (pbarr != undefined && pbsidefresh) {
                     for (const onepb of pbarr.childNodes) {
                         let pbName = onepb.childNodes[0].childNodes[1].childNodes[0].textContent
                         let nd = onepb.childNodes[0].childNodes[1].childNodes[1]
