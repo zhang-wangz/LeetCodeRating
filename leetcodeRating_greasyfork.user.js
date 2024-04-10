@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.5
+// @version      2.1.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -24,7 +24,7 @@
 // @connect      raw.githubusercontents.com
 // @connect      raw.githubusercontent.com
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js
-// @require      https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/layer.min.js
+// @require      https://unpkg.com/layui@2.9.6/dist/layui.js
 // @grant        unsafeWindow
 // @note         2022-09-07 1.1.0 支持tag页面和题库页面显示匹配的周赛分难度
 // @note         2022-09-07 1.1.0 分数数据出自零神项目
@@ -149,12 +149,13 @@
 // @note         2023-12-11 2.1.3 修复题目页左侧栏目刷新的bug问题
 // @note         2023-12-11 2.1.4 恢复题目页左侧栏目的部分功能，并在之前的基础上修复功能缺陷
 // @note         2024-04-10 2.1.5 因4月1号腾讯共享文档api调整,不能通过接口api去获取灵茶题集,所以修改了题库界面该功能展示
+// @note         2024-04-10 2.1.6 4/10二次更新，题目页新增题目搜索功能，位于题目页左上方
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.5"
+    let version = "2.1.6"
 
 
     // 页面相关url
@@ -310,7 +311,7 @@
     }`
 
     // css 渲染
-    $(document.body).append(`<link href="https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/theme/default/layer.min.css" rel="stylesheet">`)
+    $(document.body).append(`<link href="https://unpkg.com/layui@2.9.6/dist/css/layui.css" rel="stylesheet">`)
 
     // 监听urlchange事件定义
     function initUrlChange() {
@@ -369,6 +370,7 @@
             ['switchpb', 'pb function', '题目页周赛难度评分', true, true],
             ['switchcode', 'switchcode function', '题目页代码输入阻止联想', false, true],
             ['switchpbside', 'switchpbside function', '题目页侧边栏分数显示', true, true],
+            ['switchpbsearch', 'switchpbsearch function', '题目页题目搜索框', true, true],
             ['switchsearch', 'search function', '题目搜索页周赛难度评分', true, false],
             ['switchtag', 'tag function', 'tag题单页周赛难度评分(动态规划等分类题库)', true, false],
             // ['switchcompany', 'company function', '公司题单页周赛难度评分', true, false],
@@ -464,13 +466,6 @@
             localStorage.setItem("lc-dark-side", "dark")
             console.log("修改至dark mode...")
         }
-    }
-
-
-    // 深拷贝
-    function deepclone(obj) {
-        let str = JSON.stringify(obj);
-        return JSON.parse(str);
     }
 
     // 获取数字
@@ -1224,6 +1219,86 @@
                 if (t1 != undefined && t1 == id) {
                     return
                 }
+                if(GM_getValue("switchpbsearch")) {
+                    // 做个搜索框
+                    if (document.querySelector("#id-dropdown") == undefined) {
+                        let div = document.createElement("div")
+                        div.setAttribute("class", "layui-inline")
+                        div.innerHTML += `<input name="" placeholder="请搜索或选择" class="layui-input" id="id-dropdown">`
+                        let center = document.querySelector('.flex .items-center')
+                        center = center.childNodes[0].childNodes[0].childNodes[0]
+                        center.appendChild(div)
+                        
+                        layui.use(function(){
+                            var dropdown = layui.dropdown;
+                            var $ = layui.$;
+                            var inst = dropdown.render({
+                                elem: '#id-dropdown',
+                                data: [],
+                                click: function(obj){
+                                    this.elem.val(obj.title);
+                                    this.elem.attr('data-id', obj.id)
+                                }
+                            });
+    
+                            $(inst.config.elem).on('input propertychange', function() {
+                                var elem = $(this);
+                                var value = elem.val().trim();
+                                elem.removeAttr('data-id');
+                                var dataNew = findData(value);
+                                dropdown.reloadData(inst.config.id, {
+                                    data: dataNew
+                                })
+                            });
+
+                            $(inst.config.elem).on('blur', function() {
+                                var elem = $(this);
+                                var dataId = elem.attr('data-id');
+                                if (!dataId) {
+                                    elem.val('');
+                                }
+                            });
+                            function findData(value) {
+                                return getsearch(value);
+                            }
+                            function getsearch(search) {
+                                let queryT = `
+                                    query problemsetQuestions($in: ProblemsetQuestionsInput!) {
+                                        problemsetQuestions(in: $in) {
+                                        hasMore
+                                        questions {
+                                            titleCn
+                                            titleSlug
+                                            title
+                                            frontendId
+                                            acRate
+                                            solutionNum
+                                            difficulty
+                                            userQuestionStatus
+                                        }
+                                        }
+                                    }
+                                `
+                                let list = { "query": queryT, operationName: "problemsetQuestions", "variables": {"in" : {"query": search, "limit": 10, "offset":0}} };
+                                let resLst = []
+                                $.ajax({ type :"POST", url : lcnojgo, data: JSON.stringify(list), success: function(res) {
+                                    let data = res.data.problemsetQuestions.questions
+                                    for (let idx = 0; idx < data.length; idx++){
+                                        let resp = data[idx]
+                                        let item = {}
+                                        item.id = idx
+                                        item.title = resp.titleCn
+                                        item.href = "https://leetcode.cn/problems/" + resp.titleSlug
+                                        item.target = "_self"
+                                        resLst.push(item)
+                                    }
+                                }, async: false, xhrFields : { withCredentials: true }, contentType: "application/json;charset=UTF-8"})
+                                return resLst
+                            }
+                            
+                        });
+                    }
+                }
                 if (GM_getValue("switchcode")) {
                     waitForKeyElements(".overflowingContentWidgets", ()=>{
                         $('.overflowingContentWidgets').remove()
@@ -1859,36 +1934,7 @@ if (GM_getValue("switchperson")) {
         $("#spig").attr("hidden", false)
         $("#spig").css({top : top, left : left})
 
-        // $("#spig").animate({
-        //     opacity: 1
-        // },
-        // {
-        //     queue: false,
-        //     duration: 1000
-        // });
     });
-
-    // 随时间自动漂浮，暂时不开启
-    // jQuery(document).ready(function($) {
-    //     window.setInterval(function() {
-    //         msgs = [$("#hitokoto").text()];
-    //         //if(weather.state) msgs.concat(weather.c);
-    //         var i = Math.floor(Math.random() * msgs.length);
-    //         var s = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, -0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7, -0.75];
-    //         var i1 = Math.floor(Math.random() * s.length);
-    //         var i2 = Math.floor(Math.random() * s.length);
-    //         $(".spig").animate({
-    //             left: document.body.offsetWidth / 2 * (1 + s[i1]),
-    //             top: document.body.offsetheight / 2 * (1 + s[i2])
-    //         },
-    //         {
-    //             duration: 2000,
-    //             complete: showMessage(msgs[i])
-    //         });
-    //     },
-    //     45000);
-    // });
-
 
     // 随滚动条移动
     jQuery(document).ready(function ($) {
@@ -1986,65 +2032,6 @@ if (GM_getValue("switchperson")) {
         // console.log(hc.content)
     }
     setTimeout(getkoto, 5000);
-
-    // 求天气相关, 暂时关闭，没有适合的api
-    // function getCookie(name) {
-    //     let nameEQ = name + "=";
-    //     let ca = document.cookie.split(';');
-    //     for (const element of ca) {
-    //         let c = element;
-    //         while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-    //         if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length)
-    //     }
-    //     return null;
-    // }
-
-    // function setCookie(name, value, days) {
-    //     let expires
-    //     if (days) {
-    //         let date = new Date();
-    //         date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-    //         expires = "; expires=" + date.toGMTString()
-    //     } else {
-    //         expires = "";
-    //     }
-    //     document.cookie = name + "=" + value + expires + "; path=/"
-    // }
-
-    // let weather = Array();
-    // weather.s = false;
-    // jQuery(document).ready(function($) {
-    //     let date = new Date();
-    //     weather.d = "" + date.getFullYear() + date.getMonth() + date.getDay();
-    //     weather.ck = getCookie("weather");
-    //     if (weather.ck == null || weather.d != getCookie("wea_tstamp")) {
-    //         $.ajax({
-    //             dataType: "jsonp",
-    //             success: function(data) {
-    //                 if (data.success != 1) {
-    //                     return;
-    //                 }
-    //                 weather.s = true;
-    //                 weather.c = Array();
-    //                 weather.c[0] = "今天是" + data.result[0].days + "，" + data.result[0].week;
-    //                 weather.c[1] = data.result[0].citynm + "今天" + data.result[0].temp_high + "°C到" + data.result[0].temp_low + "°C";
-    //                 weather.c[2] = data.result[0].citynm + "今天" + data.result[0].weather;
-    //                 weather.c[3] = data.result[0].citynm + "今天" + data.result[0].winp + "，" + data.result[0].wind;
-    //                 weather.c[4] = data.result[0].citynm + "明天" + data.result[1].temp_high + "°C到" + data.result[1].temp_low + "°C";
-    //                 weather.c[5] = data.result[0].citynm + "明天" + data.result[1].weather;
-    //                 weather.c[6] = data.result[0].citynm + "后天" + data.result[2].temp_high + "°C到" + data.result[2].temp_low + "°C";
-    //                 weather.c[7] = data.result[0].citynm + "后天" + data.result[2].weather;
-    //                 setCookie("wea_tstamp", weather.d, 1);
-    //                 setCookie("weather", encodeURI(weather.c.join(",")), 1);
-    //             },
-    //             type: "GET",
-    //             url: "https://myhloliapi.sinaapp.com/weather/?callback=?"
-    //         });
-    //     } else {
-    //         weather.s = true;
-    //         weather.c = decodeURI(weather.ck).split(",");
-    //     }
-    // });
 }
 
 })();
