@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.4
+// @version      2.1.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -148,12 +148,13 @@
 // @note         2023-12-11 2.1.2 根据力扣ui变化, 修改部分功能的实现, 并优化题库页灵茶数据每日不统一的问题
 // @note         2023-12-11 2.1.3 修复题目页左侧栏目刷新的bug问题
 // @note         2023-12-11 2.1.4 恢复题目页左侧栏目的部分功能，并在之前的基础上修复功能缺陷
+// @note         2024-04-10 2.1.5 因4月1号腾讯共享文档api调整,不能通过接口api去获取灵茶题集,所以修改了题库界面该功能展示
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.4"
+    let version = "2.1.5"
 
 
     // 页面相关url
@@ -181,8 +182,6 @@
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     // 题目名称-id ContestID_zh-ID
     let pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
-    // 茶数据
-    let latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     let preDate = GM_getValue("preDate", "")
     // level数据
     let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
@@ -344,15 +343,13 @@
 
     let isVpn = !GM_getValue("switchvpn")
     // 访问相关url
-    let teaUrl, versionUrl, sciptUrl, rakingUrl, levelUrl
+    let versionUrl, sciptUrl, rakingUrl, levelUrl
     if (isVpn) {
-        teaUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
         versionUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/version.json"
         sciptUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
         rakingUrl = "https://zerotrac.github.io/leetcode_problem_rating/data.json"
         levelUrl = "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
     } else {
-        teaUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/tencentdoc/tea.json"
         versionUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/version.json"
         sciptUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/leetcodeRating_greasyfork.user.js"
         rakingUrl = "https://raw.gitmirror.com/zerotrac/leetcode_problem_rating/main/data.json"
@@ -504,6 +501,9 @@
         // 精确到分
         else if (format == 2) {
             time = year + "-" + month + "-" + date + " " + hour + ":" + minu + ":" + sec;
+        } 
+        else if (format == 3) {
+            time = year + "/" + month + "/" + date;
         }
         return time;
     }
@@ -516,44 +516,6 @@
             display: block;
         }
     `)
-
-    function checksolve(){
-        layer.open({
-            type: 1 // Page 层类型
-            ,area: ['650px', '450px']
-            ,title: '题解说明'
-            ,shade: 0.6 // 遮罩透明度
-            ,maxmin: true // 允许全屏最小化
-            ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre class="containerlingtea" style="padding:20px;color:#000;">${latestpb["solve"]['str']}</pre>`
-        });
-    }
-
-    function checkout(){
-        layer.open({
-            type: 1 // Page 层类型
-            ,area: ['650px', '450px']
-            ,title: '输入/输出'
-            ,shade: 0.6 // 遮罩透明度
-            ,maxmin: true // 允许全屏最小化
-            ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre class="containerlingtea" style="padding:20px;color:#000;">${latestpb["out"]["str"]}</pre>`
-        });
-    }
-
-    function checktrans(){
-        latestpb["pb"]["str"] = latestpb["pb"]["str"].replaceAll('<', "&lt;").replaceAll('>', "&gt;")
-        layer.open({
-            type: 0
-            ,area: ['650px', '450px']
-            ,title: '中文翻译'
-            ,shade: 0.6 // 遮罩透明度
-            ,maxmin: true // 允许全屏最小化
-            ,anim: 5 // 0-6的动画形式，-1不开启
-            ,content: `<pre class="containerlingtea" style="padding:20px;color:#000;">${latestpb["pb"]["str"]}</pre>`
-        });
-    }
-
 
     // 因为力扣未捕获错误信息，所以重写一下removechild方法
     const removeChildFn = Node.prototype.removeChild;
@@ -743,79 +705,35 @@
         if (arr == undefined) {
             return
         }
-        // 判断已失效，暂时注释，等待后续调整
-        // let head = document.querySelector("#__next > div.flex.min-h-screen.min-w-\\[360px\\].flex-col.text-label-1.dark\\:text-dark-label-1 > div.mx-auto.w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl.mt-\\[50px\\].dark\\:bg-dark-layer-bg.bg-white > div.grid.grid-cols-4.gap-4.md\\:grid-cols-3.lg\\:grid-cols-4.lg\\:gap-6 > div.z-base.col-span-4.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(4) > div.-mx-4.transition-opacity.md\\:mx-0 > div > div > div.border-divider-border-2.dark\\:border-dark-divider-border-2.border-b")
-        // if (head == undefined) return
-        // let lasthead = head.lastChild
         let lastchild = arr.lastChild
-        // 防止过多的无效操作
-        // (lasthead && lasthead.textContent.includes("灵茶の试炼")) || head.childNodes.length > 6
         let first = switchTea ? 1 : 0
         if ((!switchpbRepo || (tFirst && tFirst == arr.childNodes[first].textContent && tLast && tLast == lastchild.textContent))
-            && (!switchTea || arr.childNodes[0].childNodes[2].textContent == "题解")
+            && (!switchTea || arr.childNodes[0].childNodes[2].textContent == "——")
             && (!switchrealoj) || lastchild.textContent.includes("隐藏")) {
             return
         }
-
+        
         t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
-        latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
 
         // 灵茶题目渲染
         if (switchTea) {
-            if (arr.childNodes[0].childNodes[2].textContent != "题解") {
-                latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
-                if (Object.keys(latestpb).length == 0) {
-                    return
-                }
+            console.log(arr.childNodes[0].childNodes[2].textContent)
+            if (arr.childNodes[0].childNodes[2].textContent != "——") {
                 let div = document.createElement('div')
                 div.setAttribute("role", "row")
                 div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
                 div.setAttribute("class", "odd:bg-layer-1 even:bg-overlay-1 dark:odd:bg-dark-layer-bg dark:even:bg-dark-fill-4")
-                let teaUrl = latestpb["url"]["url"]
-                let vo = ['cf题目', 'atcoder']
-                let lst = ['codeforces', 'atcoder']
-                let src = "未知来源";
-                for (let index = 0; index < lst.length; index++) {
-                    const element = lst[index];
-                    if (teaUrl.includes(element)) {
-                        src = vo[index]
-                        break
-                    }
-                }
-                latestpb['nd']['str'] = latestpb['nd']['str'] != '' || latestpb['nd']['str'] != undefined ? latestpb['nd']['str'].substr(0,4) : "未知"
-                if (latestpb['nd']['str'] == undefined) {
-                    console.log("难度分错误...")
-                    return
-                }
-                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><a href=${teaSheetUrl} target='_blank'>${src}</a</div>`
-                if (teaUrl != "") {
-                    div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href="${latestpb["url"]["url"]}"  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">${latestpb["date"]["str"]}&nbsp灵茶</a></div></div></div></div></div>`
-                }else {
-                    div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><p class="h-5">${latestpb["date"]["str"]}&nbsp灵茶</p></div></div></div></div></div>`
-                }
-                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">题解</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">输入/输出</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">${latestpb['nd']['str']}</span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >中文翻译</a></span></div>`
-
-                div.childNodes[2].addEventListener("click", (e)=>{
-                    e.preventDefault();
-                    checksolve();
-                });
-                div.childNodes[3].addEventListener("click", (e)=> {
-                    e.preventDefault();
-                    checkout();
-                })
-                div.childNodes[5].addEventListener("click", (e)=> {
-                    e.preventDefault();
-                    checktrans();
-                })
+                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><a href="" target='_blank'>${getCurrentDate(3)}</a</div>`
+                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href=${teaSheetUrl}  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">灵茶题集</a></div></div></div></div></div>`
+                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">——</a></span></div><div \
+                    role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">——</a></span></div><div \
+                    role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">——</span></div><div \
+                    role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >——</a></span></div>`
                 arr.insertBefore(div, arr.childNodes[0])
-                console.log("has refreshed tea pb...")
+                console.log("has refreshed ling pb...")
             }
 
         }
-
         // console.log(tFirst)
         // console.log(tLast)
         if (switchpbRepo) {
@@ -1186,7 +1104,6 @@
                         }
                     }
                 }
- 
                 // level渲染
                 if (level && GM_getValue("switchstudylevel")) {
                     let text = document.createElement('span')
@@ -1590,7 +1507,7 @@
             if (isAddEvent) {
                 window.addEventListener("urlchange", () => {
                     let newUrl = location.href
-                    clearAndStart(newUrl, 1, false)
+                    clearAndStart(newUrl, 1000, false)
                 })
             }
     }
@@ -1716,39 +1633,6 @@
                     console.log(err)
                 }
             });
-
-            // 获取茶数据
-            async function getTea() {
-                let res = await new Promise((resole, reject) => {
-                    GM_xmlhttpRequest({
-                        method: "get",
-                        url: teaUrl + "?timeStamp=" + new Date().getTime(),
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
-                        },
-                        onload: function (res) {
-                            resole(res)
-                        },
-                        onerror: function (err) {
-                            console.log('error')
-                            console.log(err)
-                        }
-                    });
-                });
-                if (res.status === 200) {
-                    console.log("enter home page gettea once...")
-                    latestpb = {}
-                    let dataStr = res.response
-                    let json = JSON.parse(dataStr)
-                    let al = json["🎈算法趣题"][1]
-                    latestpb["date"] = al[0] || {'str':''};latestpb["pb"] = al[1] || {'str':''};latestpb["url"] = al[1] || {'url':''};
-                    latestpb["out"] = al[2] || {'str':''};latestpb["nd"] = al[3] || {'str':''};latestpb["solve"] = al[4] || {'str':''};
-                    latestpb["blank"] = al[5] || {'str':''};
-                    GM_setValue("latestpb", JSON.stringify(latestpb))
-                    latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
-                }
-            }
-            getTea()
         }
     }
 
