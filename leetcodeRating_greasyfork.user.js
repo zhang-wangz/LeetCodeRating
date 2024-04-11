@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.6
+// @version      2.1.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -149,13 +149,14 @@
 // @note         2023-12-11 2.1.3 修复题目页左侧栏目刷新的bug问题
 // @note         2023-12-11 2.1.4 恢复题目页左侧栏目的部分功能，并在之前的基础上修复功能缺陷
 // @note         2024-04-10 2.1.5 因4月1号腾讯共享文档api调整,不能通过接口api去获取灵茶题集,所以修改了题库界面该功能展示
-// @note         2024-04-10 2.1.6 4/10二次更新，题目页新增题目搜索功能，位于题目页左上方
+// @note         2024-04-10 2.1.6 4.10二次更新，题目页新增题目搜索功能，位于题目页左上方
+// @note         2024-04-11 2.1.7 4.11 更新，修复layui css导入导致深色模式下a标签style固定为灰色的问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.6"
+    let version = "2.1.7"
 
 
     // 页面相关url
@@ -175,6 +176,7 @@
 
     // 灵茶相关url
     const teaSheetUrl = "https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz"
+    const lc0x3fsolveUrl = "https://huxulm.github.io/lc-rating/#/search"
 
     // 用于延时函数的通用id
     let id = ""
@@ -312,7 +314,6 @@
 
     // css 渲染
     $(document.body).append(`<link href="https://unpkg.com/layui@2.9.6/dist/css/layui.css" rel="stylesheet">`)
-
     // 监听urlchange事件定义
     function initUrlChange() {
         let isLoad = false
@@ -423,6 +424,44 @@
         }
     }
 
+    // 首次加载重置
+    localStorage.removeItem("urlchange")
+    localStorage.removeItem("themechange")
+    let observer = new MutationObserver(function(mutationsList, observer) {
+        // 检查每个变化
+        mutationsList.forEach(function(mutation) {
+            themechange();
+        });
+    });
+    // 配置 MutationObserver 监听的内容和选项
+    let config = { attributes: true, childList: false, subtree: true };
+    observer.observe(document, config);
+    function themechange() {
+        let url = window.location.href
+        let urlchange = localStorage.getItem("urlchange")
+        let theme = localStorage.getItem("lc-dark-side")
+        let themecg = localStorage.getItem("themechange")
+        if ((urlchange == undefined || url != urlchange) || (themecg == undefined || theme != themecg)) {
+            let style = document.createElement("style");
+            style.type = "text/css";
+            style.innerHTML = `
+                a {
+                    color: inherit !important;
+                    text-decoration: inherit !important;
+                }
+            `;
+            console.log("修改layui a属性style")
+            if (theme == "dark") {
+                style.innerHTML += `
+                .layui-menu-body-title {
+                    color : #333 !important;
+                }
+                `
+            }
+            document.head.appendChild(style);
+            localStorage.setItem("urlchange", url)
+        }
+    }
 
 
     // lc 基础req
@@ -703,7 +742,7 @@
         let lastchild = arr.lastChild
         let first = switchTea ? 1 : 0
         if ((!switchpbRepo || (tFirst && tFirst == arr.childNodes[first].textContent && tLast && tLast == lastchild.textContent))
-            && (!switchTea || arr.childNodes[0].childNodes[2].textContent == "——")
+            && (!switchTea || arr.childNodes[0].childNodes[2].textContent == "灵神题解集")
             && (!switchrealoj) || lastchild.textContent.includes("隐藏")) {
             return
         }
@@ -713,14 +752,14 @@
         // 灵茶题目渲染
         if (switchTea) {
             console.log(arr.childNodes[0].childNodes[2].textContent)
-            if (arr.childNodes[0].childNodes[2].textContent != "——") {
+            if (arr.childNodes[0].childNodes[2].textContent != "灵神题解集") {
                 let div = document.createElement('div')
                 div.setAttribute("role", "row")
                 div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
                 div.setAttribute("class", "odd:bg-layer-1 even:bg-overlay-1 dark:odd:bg-dark-layer-bg dark:even:bg-dark-fill-4")
                 div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><a href="" target='_blank'>${getCurrentDate(3)}</a</div>`
                 div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href=${teaSheetUrl}  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">灵茶题集</a></div></div></div></div></div>`
-                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="javascript:;" class="truncate" aria-label="solution">——</a></span></div><div \
+                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="${lc0x3fsolveUrl}" class="truncate" target="_blank" hover:text-blue-s aria-label="solution">灵神题解集</a></span></div><div \
                     role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">——</a></span></div><div \
                     role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">——</span></div><div \
                     role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >——</a></span></div>`
@@ -1228,11 +1267,10 @@
                         let center = document.querySelector('.flex .items-center')
                         center = center.childNodes[0].childNodes[0].childNodes[0]
                         center.appendChild(div)
-                        
                         layui.use(function(){
-                            var dropdown = layui.dropdown;
-                            var $ = layui.$;
-                            var inst = dropdown.render({
+                            let dropdown = layui.dropdown;
+                            let $ = layui.$;
+                            let inst = dropdown.render({
                                 elem: '#id-dropdown',
                                 data: [],
                                 click: function(obj){
@@ -1240,20 +1278,22 @@
                                     this.elem.attr('data-id', obj.id)
                                 }
                             });
-    
-                            $(inst.config.elem).on('input propertychange', function() {
-                                var elem = $(this);
-                                var value = elem.val().trim();
-                                elem.removeAttr('data-id');
-                                var dataNew = findData(value);
-                                dropdown.reloadData(inst.config.id, {
-                                    data: dataNew
-                                })
+
+                            $(inst.config.elem).on('keydown', function(event) {
+                                if (event.key === 'Enter') {
+                                    let elem = $(this);
+                                    let value = elem.val().trim();
+                                    elem.removeAttr('data-id');
+                                    let dataNew = findData(value);
+                                    dropdown.reloadData(inst.config.id, {
+                                        data: dataNew
+                                    })
+                                }
                             });
 
                             $(inst.config.elem).on('blur', function() {
-                                var elem = $(this);
-                                var dataId = elem.attr('data-id');
+                                let elem = $(this);
+                                let dataId = elem.attr('data-id');
                                 if (!dataId) {
                                     elem.val('');
                                 }
@@ -1287,7 +1327,7 @@
                                         let resp = data[idx]
                                         let item = {}
                                         item.id = idx
-                                        item.title = resp.titleCn
+                                        item.title = resp.frontendId + "." +resp.titleCn
                                         item.href = "https://leetcode.cn/problems/" + resp.titleSlug
                                         item.target = "_self"
                                         resLst.push(item)
