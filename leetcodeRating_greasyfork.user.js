@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.8
+// @version      2.1.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -153,12 +153,13 @@
 // @note         2024-04-10 2.1.6 4.10二次更新，题目页新增题目搜索功能，位于题目页左上方
 // @note         2024-04-11 2.1.7 4.11 更新，修复layui css导入导致深色模式下a标签style固定为灰色的问题
 // @note         2024-04-11 2.1.8 修复学习计划页面的缺失问题，修复题目页面左侧栏重复bug问题，回退搜索框为即搜即查模式
+// @note         2024-04-11 2.1.8 题目页显示算术评级功能，点击显示功能评级详情
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.8"
+    let version = "2.1.9"
 
 
     // 页面相关url
@@ -192,12 +193,12 @@
     let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
     // 是否使用动态布局
     let localVal = localStorage.getItem("used-dynamic-layout")
-    let isDynamic = localVal != undefined ? localVal.includes("true") : false
+    let isDynamic = localVal != null ? localVal.includes("true") : false
 
     // 同步函数
     function waitForKeyElements (selectorTxt, actionFunction, bWaitOnce, iframeSelector) {
         let targetNodes, btargetsFound;
-        if (typeof iframeSelector == "undefined")
+        if (typeof iframeSelector == "null")
             targetNodes = $(selectorTxt);
         else
             targetNodes = $(iframeSelector).contents().find (selectorTxt);
@@ -264,9 +265,9 @@
     }
 
     // 刷新菜单
-    Script_setting()
+    script_setting()
     // 注册urlchange事件
-    initUrlChange()
+    initUrlChange()()
 
 
     // 常量数据
@@ -324,19 +325,16 @@
             isLoad = true
             const oldPushState = history.pushState
             const oldReplaceState = history.replaceState
-
             history.pushState = function pushState(...args) {
                 const res = oldPushState.apply(this, args)
                 window.dispatchEvent(new Event('urlchange'))
                 return res
             }
-
             history.replaceState = function replaceState(...args) {
                 const res = oldReplaceState.apply(this, args)
                 window.dispatchEvent(new Event('urlchange'))
                 return res
             }
-
             window.addEventListener('popstate', () => {
                 window.dispatchEvent(new Event('urlchange'))
             })
@@ -364,13 +362,13 @@
     getNeedData()
 
     // 菜单方法定义
-    function Script_setting(){
+    function script_setting(){
         let menu_ALL = [
             ['switchvpn', 'vpn', '是否使用cdn访问数据', false, false],
             ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
             ['switchpbRepo', 'pbRepo function', '题库页周赛难度评分(不包括灵茶)', true, false],
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
-            ['switchpb', 'pb function', '题目页周赛难度评分', true, true],
+            ['switchpbscore', 'pb function', '题目页周赛难度评分', true, true],
             ['switchcode', 'switchcode function', '题目页代码输入阻止联想', false, true],
             ['switchpbside', 'switchpbside function', '题目页侧边栏分数显示', true, true],
             ['switchpbsearch', 'switchpbsearch function', '题目页题目搜索框', true, true],
@@ -445,7 +443,7 @@
             let urlchange = localStorage.getItem("urlchange")
             let theme = localStorage.getItem("lc-dark-side")
             let themecg = localStorage.getItem("themechange")
-            if ((urlchange == undefined || url != urlchange) || (themecg == undefined || theme != themecg)) {
+            if ((urlchange == null || url != urlchange) || (themecg == null || theme != themecg)) {
                 let style = document.createElement("style");
                 style.type = "text/css";
                 style.innerHTML = `
@@ -742,7 +740,7 @@
             }
         }
         // pb页面加载时直接返回
-        if (arr == undefined) {
+        if (arr == null) {
             return
         }
         let lastchild = arr.lastChild
@@ -757,7 +755,7 @@
 
         // 灵茶题目渲染
         if (switchTea) {
-            console.log(arr.childNodes[0].childNodes[2].textContent)
+            // console.log(arr.childNodes[0].childNodes[2].textContent)
             if (arr.childNodes[0].childNodes[2].textContent != "灵神题解集") {
                 let div = document.createElement('div')
                 div.setAttribute("role", "row")
@@ -810,9 +808,8 @@
                     v.childNodes[headndidx].textContent = "隐藏"
                     continue
                 }
-                if (t2rate[id] != undefined && !rateRefresh){
+                if (t2rate[id] != null && !rateRefresh){
                     nd = t2rate[id]["Rating"]
-                    // console.log(nd)
                     v.childNodes[headndidx].childNodes[0].innerHTML = nd
                 } else {
                     let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
@@ -832,7 +829,7 @@
         // 筛选更新
         let arr = document.querySelector(".ant-table-tbody")
         let head = document.querySelector(".ant-table-cell")
-        if(head == undefined) return
+        if(head == null) return
         head = head.parentNode
         if (tagt && arr.lastChild && tagt == arr.lastChild.textContent
             && tagf && arr.firstChild && tagf == arr.firstChild.textContent) {
@@ -859,7 +856,7 @@
             let data = t.split(".")
             let id = data[0].trim()
             let nd = v.childNodes[headndidx].childNodes[0].innerHTML
-            if (t2rate[id] != undefined && !rateRefresh) {
+            if (t2rate[id] != null && !rateRefresh) {
                 nd = t2rate[id]["Rating"]
                 v.childNodes[headndidx].childNodes[0].innerHTML = nd
             } else {
@@ -878,7 +875,7 @@
         if (!GM_getValue("switchcompany")) return;
         let arr = document.querySelector(".ant-table-tbody")
         let head = document.querySelector(".ant-table-cell")
-        if(head == undefined) return
+        if(head == null) return
         head = head.parentNode
         if (companyt && arr.lastChild && companyt == arr.lastChild.textContent
             && companyf && arr.firstChild && companyf == arr.firstChild.textContent) {
@@ -904,7 +901,7 @@
             let data = t.split(".")
             let id = data[0].trim()
             let nd = v.childNodes[headndidx].childNodes[0].innerHTML
-            if (t2rate[id] != undefined && !rateRefresh) {
+            if (t2rate[id] != null && !rateRefresh) {
                 nd = t2rate[id]["Rating"]
                 v.childNodes[headndidx].childNodes[0].innerHTML = nd
             } else {
@@ -929,8 +926,8 @@
                 break
             }
         }
-        if (arr == undefined) return
-        if (pblistt != undefined && arr.lastChild && pblistt == arr.lastChild.textContent
+        if (arr == null) return
+        if (pblistt != null && arr.lastChild && pblistt == arr.lastChild.textContent
             && arr.firstChild && pblistf == arr.firstChild.textContent) {
             return
         }
@@ -956,7 +953,7 @@
             let data = t.split(".")
             let id = data[0].trim()
             let nd = v.childNodes[headndidx].textContent
-            if (t2rate[id] != undefined && !rateRefresh) {
+            if (t2rate[id] != null && !rateRefresh) {
                 nd = t2rate[id]["Rating"]
                 v.childNodes[headndidx].childNodes[0].innerHTML = nd
             } else {
@@ -999,7 +996,7 @@
             let data = t.split(".")
             let id = data[0].trim()
             let nd = v.childNodes[headndidx].childNodes[0].innerHTML
-            if (t2rate[id] != undefined && !rateRefresh) {
+            if (t2rate[id] != null && !rateRefresh) {
                 nd = t2rate[id]["Rating"]
                 v.childNodes[headndidx].childNodes[0].innerHTML = nd
             } else {
@@ -1021,7 +1018,7 @@
         }  else {
             totArr = document.querySelector(css_selector)
         }
-        if (totArr == undefined) return;
+        if (totArr == null) return;
         let first = totArr.firstChild.childNodes[0].textContent
         if (studyf && studyf == first) {
             return
@@ -1090,7 +1087,7 @@
         }  else {
             totArr = document.querySelector(css_selector)
         }
-        if (totArr == undefined) return;
+        if (totArr == null) return;
         let first = totArr.firstChild.childNodes[0].textContent
         if (pbsidef && pbsidef == first) {
             return
@@ -1155,7 +1152,7 @@
             }
         }
         if(totArr.firstChild.childNodes[0]) pbsidef = totArr.firstChild.childNodes[0].textContent
-        console.log("has refreshed side...")
+        console.log("已经刷新侧边栏envType分数...")
     }
 
 
@@ -1168,39 +1165,40 @@
         key.removeAttribute('aria-activedescendant')
     }
     
-    // 只刷新一次
-    let pbsidefresh = true 
     function getpbsideData() {
         // 左侧栏分数显示
         let searchParams = location.search
         levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
         // ?envType=study-plan-v2&envId=leetcode-75
-        if (searchParams.indexOf("?") != -1 && pbsidefresh) { 
+        if (searchParams.indexOf("?") != -1) { 
             let str = searchParams.substring(1); 
             let strs = str.split("="); 
             let code = strs[0];
-            let url = window.location.href
             // 参数含有envType就是使用标签进行渲染
             if (code.includes("envType")) {
                 let overflow = document.querySelector(".overflow-auto.p-5")
                 if (overflow == null) return
                 let studyplan = overflow.childNodes[0].childNodes[1];
-                if(!studyplan) studyf = undefined
-                if(GM_getValue("switchstudy") && studyplan && pbsidefresh) {
+                if(!studyplan) studyf = null
+                if(GM_getValue("switchstudy") && studyplan) {
                     getpbside(studyplan)
-                    console.log("已经刷新侧边栏envType分数...")
-                    pbsidefresh = false
                 }
             }
         } else {
             // 题目页面题库展开栏
             let overflow = document.querySelector(".overflow-auto.p-5")
             if (overflow == null) return
-            let pbarr = overflow.childNodes[0].childNodes[1].childNodes[0];
-            if (pbarr != undefined && pbsidefresh) {
+            let pbarr = overflow?.childNodes[0]?.childNodes[1]?.childNodes[0];
+            if (pbarr == null) return
+            if (pbsidef == pbarr.firstChild.textContent) return
+            if (pbarr != null) {
                 for (const onepb of pbarr.childNodes) {
-                    let pbName = onepb.childNodes[0].childNodes[1].childNodes[0].textContent
-                    let nd = onepb.childNodes[0].childNodes[1].childNodes[1]
+                    let pbName = onepb.childNodes[0]?.childNodes[1]?.childNodes[0]?.textContent
+                    if (pbName == null) return
+                    let nd = onepb.childNodes[0]?.childNodes[1]?.childNodes[1]
+                    if (nd == null) return 
+                    // 如果为算术，说明当前已被替换过
+                    if (nd.textContent.includes("算术")) continue
                     pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
                     let data = pbName.split(".")
                     pbName = data[1]
@@ -1224,18 +1222,20 @@
                     } else {
                         if (!nd) break
                         let clr = nd.getAttribute("class")
+                        // console.log(nd)
+                        // console.log(clr)
                         let flag = true
                         for (let c in lightn2c) {
                             if (!flag) break
                             if (clr.includes(c)) {
-                                nd.innerHTML = lightn2c[c] 
+                                nd.innerText = lightn2c[c] 
                                 flag = false
                             }
                         }
                         for (let c in darkn2c) {
                             if (!flag) break
                             if (clr.includes(c)) {
-                                nd.innerHTML = darkn2c[c] 
+                                nd.innerText = darkn2c[c] 
                                 flag = false
                             }
                         }
@@ -1250,117 +1250,137 @@
                         nd.parentNode.insertBefore(text, nd)
                     }
                 }
+                pbsidef = pbarr.firstChild.textContent
                 console.log("已经刷新侧边栏题库分数...")
-                pbsidefresh = false
             }
         }
     }
 
-    function getpb() {
-        if(!GM_getValue("switchpb")) return
-        let switchrealoj = GM_getValue("switchrealoj")
-        
-        if(GM_getValue("switchpbside")) getpbsideData()
+    function createSearchBtn() {
+        if(!GM_getValue("switchpbsearch")) return
+        if (document.querySelector("#id-dropdown") == null) {
+            // 题目页面才渲染并且监听标签变化
+            observerpb()
+            $(document.body).append(`<link href="https://unpkg.com/layui@2.9.6/dist/css/layui.css" rel="stylesheet">`)
+            // 做个搜索框
+            let div = document.createElement("div")
+            div.setAttribute("class", "layui-inline")
+            div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="layui-input" id="id-dropdown">`
+            let center = document.querySelector('.flex.items-center')
+            center = center?.childNodes[0]?.childNodes[0]?.childNodes[0]
+            if (center == null) return
+            if (center.childNodes.length > 0) center.insertBefore(div, center.childNodes[1])
+            else center.appendChild(div)
+            layui.use(function(){
+                let dropdown = layui.dropdown;
+                let $ = layui.$;
+                let inst = dropdown.render({
+                    elem: '#id-dropdown',
+                    data: [],
+                    click: function(obj){
+                        this.elem.val(obj.title);
+                        this.elem.attr('data-id', obj.id)
+                    }
+                });
+                
+                $(inst.config.elem).on('input propertychange', function(event) {
+                    let elem = $(this);
+                    let value = elem.val().trim();
+                    elem.removeAttr('data-id');
+                    let dataNew = findData(value);
+                    dropdown.reloadData(inst.config.id, {
+                        data: dataNew
+                    })
+                });
 
+                $(inst.config.elem).on('blur', function() {
+                    let elem = $(this);
+                    let dataId = elem.attr('data-id');
+                    if (!dataId) {
+                        elem.val('');
+                    }
+                });
+                function findData(value) {
+                    return getsearch(value);
+                }
+                function getsearch(search) {
+                    let queryT = `
+                        query problemsetQuestions($in: ProblemsetQuestionsInput!) {
+                            problemsetQuestions(in: $in) {
+                            hasMore
+                            questions {
+                                titleCn
+                                titleSlug
+                                title
+                                frontendId
+                                acRate
+                                solutionNum
+                                difficulty
+                                userQuestionStatus
+                            }
+                            }
+                        }
+                    `
+                    let list = { "query": queryT, operationName: "problemsetQuestions", "variables": {"in" : {"query": search, "limit": 10, "offset":0}} };
+                    let resLst = []
+                    $.ajax({ type :"POST", url : lcnojgo, data: JSON.stringify(list), success: function(res) {
+                        let data = res.data.problemsetQuestions.questions
+                        for (let idx = 0; idx < data.length; idx++){
+                            let resp = data[idx]
+                            let item = {}
+                            item.id = idx
+                            item.title = resp.frontendId + "." +resp.titleCn
+                            item.href = "https://leetcode.cn/problems/" + resp.titleSlug
+                            item.target = "_self"
+                            resLst.push(item)
+                        }
+                    }, async: false, xhrFields : { withCredentials: true }, contentType: "application/json;charset=UTF-8"})
+                    return resLst
+                }
+            });
+        }
+    }
+    function getpb() {
+        let switchrealoj = GM_getValue("switchrealoj")
+        // 左边栏
+        if(GM_getValue("switchpbside")) getpbsideData()
+        // 搜索功能
+        createSearchBtn()
         // 题目页面
         let curUrl = location.href
+        // 只有描述页才进行加载
         let isDescript = !curUrl.match(regDiss) && !curUrl.match(regSovle) && !curUrl.match(regPbSubmission)
         if (isDescript) {
             if (isDynamic) {
                 // 流动布局逻辑
                 let t = document.querySelector(".text-title-large")
-                if (t == undefined) {
+                if (t == null) {
                     t1 = "unknown"
                     return
                 }
-
                 let data = t.textContent.split(".")
                 let id = data[0].trim()
-                if (t1 != undefined && t1 == id) {
+                if (t1 != null && t1 == id) {
                     return
                 }
-                if(GM_getValue("switchpbsearch")) {
-                    // 题目页面才渲染并且监听标签变化
-                    observerpb()
-                    $(document.body).append(`<link href="https://unpkg.com/layui@2.9.6/dist/css/layui.css" rel="stylesheet">`)
-                    // 做个搜索框
-                    if (document.querySelector("#id-dropdown") == undefined) {
-                        let div = document.createElement("div")
-                        div.setAttribute("class", "layui-inline")
-                        div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="layui-input" id="id-dropdown">`
-                        let center = document.querySelector('.flex .items-center')
-                        center = center.childNodes[0].childNodes[0].childNodes[0]
-                        center.appendChild(div)
-                        layui.use(function(){
-                            let dropdown = layui.dropdown;
-                            let $ = layui.$;
-                            let inst = dropdown.render({
-                                elem: '#id-dropdown',
-                                data: [],
-                                click: function(obj){
-                                    this.elem.val(obj.title);
-                                    this.elem.attr('data-id', obj.id)
-                                }
-                            });
-                            
-                            $(inst.config.elem).on('input propertychange', function(event) {
-                                let elem = $(this);
-                                let value = elem.val().trim();
-                                elem.removeAttr('data-id');
-                                let dataNew = findData(value);
-                                dropdown.reloadData(inst.config.id, {
-                                    data: dataNew
-                                })
-                            });
-
-                            $(inst.config.elem).on('blur', function() {
-                                let elem = $(this);
-                                let dataId = elem.attr('data-id');
-                                if (!dataId) {
-                                    elem.val('');
-                                }
-                            });
-                            function findData(value) {
-                                return getsearch(value);
-                            }
-                            function getsearch(search) {
-                                let queryT = `
-                                    query problemsetQuestions($in: ProblemsetQuestionsInput!) {
-                                        problemsetQuestions(in: $in) {
-                                        hasMore
-                                        questions {
-                                            titleCn
-                                            titleSlug
-                                            title
-                                            frontendId
-                                            acRate
-                                            solutionNum
-                                            difficulty
-                                            userQuestionStatus
-                                        }
-                                        }
-                                    }
-                                `
-                                let list = { "query": queryT, operationName: "problemsetQuestions", "variables": {"in" : {"query": search, "limit": 10, "offset":0}} };
-                                let resLst = []
-                                $.ajax({ type :"POST", url : lcnojgo, data: JSON.stringify(list), success: function(res) {
-                                    let data = res.data.problemsetQuestions.questions
-                                    for (let idx = 0; idx < data.length; idx++){
-                                        let resp = data[idx]
-                                        let item = {}
-                                        item.id = idx
-                                        item.title = resp.frontendId + "." +resp.titleCn
-                                        item.href = "https://leetcode.cn/problems/" + resp.titleSlug
-                                        item.target = "_self"
-                                        resLst.push(item)
-                                    }
-                                }, async: false, xhrFields : { withCredentials: true }, contentType: "application/json;charset=UTF-8"})
-                                return resLst
-                            }
-                            
-                        });
-                    }
+                let title = data[1]
+                if (title == null ) {
+                    title = ""
+                } else {
+                    title = title.split(" ").join("").trim()
                 }
+                // console.log(title)
+                let colorA = ['.text-difficulty-hard', '.text-difficulty-easy','.text-difficulty-medium']
+                let colorSpan;
+                for (const color of colorA) {
+                    colorSpan = document.querySelector(color)
+                    if (colorSpan) break
+                }
+                if (!colorSpan) {
+                    console.log("color ele not found")
+                    return
+                }
+                // code提示功能
                 if (GM_getValue("switchcode")) {
                     waitForKeyElements(".overflowingContentWidgets", ()=>{
                         $('.overflowingContentWidgets').remove()
@@ -1372,23 +1392,12 @@
                         }
                     }
                 }
-                let colorA = ['.text-difficulty-hard', '.text-difficulty-easy','.text-difficulty-medium']
-                let colorSpan;
-                for (const color of colorA) {
-                    colorSpan = document.querySelector(color)
-                    if (colorSpan) break
-                }
-                if (!colorSpan) {
-                    console.log("color ele not found")
-                    return
-                }
-
                 // 统计难度分数并且修改
                 let nd = colorSpan.getAttribute("class")
                 let nd2ch = { "text-difficulty-easy": "简单", "text-difficulty-medium": "中等", "text-difficulty-hard": "困难" }
-                if (switchrealoj || (t2rate[id] != undefined)) {
+                if (switchrealoj || (t2rate[id] != null && GM_getValue("switchpbscore"))) {
                     if (switchrealoj) colorSpan.remove()
-                    else if(t2rate[id] != undefined) colorSpan.innerHTML = t2rate[id]["Rating"]
+                    else if(t2rate[id] != null) colorSpan.innerHTML = t2rate[id]["Rating"]
                 } else {
                     for (let item in nd2ch) {
                         if (nd.toString().includes(item)) {
@@ -1407,32 +1416,69 @@
                 let tipsChildone = tipsPa.childNodes[1]
                 // 题目内容, 插入后变成原tips栏目
                 let pbDescription = tipsPa.childNodes[2]
-
-                if (pbDescription.getAttribute("data-track-load") != undefined) {
+                if (pbDescription.getAttribute("data-track-load") != null) {
                     let divTips = document.createElement("div")
                     divTips.setAttribute("class", "flex gap-1")
                     let abody = document.createElement("a")
                     abody.setAttribute("data-small-spacing", "true")
-                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
-
+                    abody.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
                     let abody2 = document.createElement("a")
                     abody2.setAttribute("data-small-spacing", "true")
-                    abody2.setAttribute("class", "css-nabodd-Button e167268t1")
-
+                    abody2.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
+                    
+                    let abody3 = document.createElement("a")
+                    abody2.setAttribute("data-small-spacing", "true")
+                    abody2.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
                     let span = document.createElement("span")
                     let span2 = document.createElement("span")
+                    let span3 = document.createElement("span")
+                    let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
+                    if (levelData[title] != null) {
+                        let des = "算术评级: " + levelData[title]["Level"].toString()
+                        span3.innerText = des
+                        span3.onclick = function(e) {
+                            e.preventDefault();
+                            let des = `
+                                1      无算法要求
+                                2      知道常用数据结构和算法并简单使用
+                                3      理解常用数据结构和算法
+                                4      掌握常用数据结构和算法
+                                5      熟练掌握常用数据结构和算法，初步了解高级数据结构
+                                6      深入理解并灵活应用数据结构和算法，理解高级数据结构
+                                7      结合多方面的数据结构和算法，处理较复杂问题
+                                8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
+                                9      处理复杂问题，对时间复杂度的要求更严格
+                                10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
+                                11     竞赛内容，知识点超出面试范围
+                            `
+                            layer.open({
+                                type: 1 // Page 层类型
+                                ,area: ['700px', '320px']
+                                ,title: '算术评级说明'
+                                ,shade: 0.6 // 遮罩透明度
+                                ,maxmin: true // 允许全屏最小化
+                                ,anim: 5 // 0-6的动画形式，-1不开启
+                                ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${des}</p>`
+                            });
+                        }
+                        abody3.removeAttribute("hidden")
+                    } else {
+                        span3.innerText = "未知评级"
+                        abody3.setAttribute("hidden", "true")
+                    }
                     // ContestID_zh  ContestSlug
-                    if (t2rate[id] != undefined) {
+                    abody3.setAttribute("href", "")
+                    abody3.setAttribute("style", "padding-right: 10px;")
+                    abody3.setAttribute("target", "_blank")
+                    if (t2rate[id] != null) {
                         let contestUrl;
                         let num = getcontestNumber(t2rate[id]["ContestSlug"])
                         if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
                         span.innerText = t2rate[id]["ContestID_zh"]
                         span2.innerText = t2rate[id]["ProblemIndex"]
-
                         abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
                         abody.setAttribute("target", "_blank")
                         abody.removeAttribute("hidden")
-
                         abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
                         abody2.setAttribute("target", "_blank")
                         if(switchrealoj) abody2.setAttribute("hidden", true)
@@ -1442,25 +1488,63 @@
                         abody.setAttribute("href", "")
                         abody.setAttribute("target", "_self")
                         abody.setAttribute("hidden", "true")
-
                         span2.innerText = "未知"
                         abody2.setAttribute("href", "")
                         abody2.setAttribute("target", "_self")
                         abody2.setAttribute("hidden", "true")
                     }
+                    abody.setAttribute("style", "padding-right: 10px;")
+                    abody2.setAttribute("style", "padding-top: 1.5px;")
                     abody.appendChild(span)
                     abody2.appendChild(span2)
+                    abody3.appendChild(span3)
+                    divTips.appendChild(abody3)
                     divTips.appendChild(abody)
                     divTips.appendChild(abody2)
                     tipsPa.insertBefore(divTips, tips)
-                } else if ( tipsChildone.childNodes != undefined
+                } else if ( tipsChildone.childNodes != null
                             && tipsChildone.childNodes.length >= 2 
-                            && (tipsChildone.childNodes[1].textContent.includes("Q") 
-                            || tipsChildone.childNodes[1].textContent.includes("未知"))) { 
+                            && (tipsChildone.childNodes[2].textContent.includes("Q") 
+                            || tipsChildone.childNodes[2].textContent.includes("未知"))) { 
                     let pa = tipsChildone
                     let le = pa.childNodes.length
                     // 存在就直接替换
-                    if (t2rate[id] != undefined) {
+                    let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
+                    if (levelData[title] != null) {
+                        let des = "算术评级: " + levelData[title]["Level"].toString()
+                        pa.childNodes[le - 3].childNodes[0].innerText = des
+                        pa.childNodes[le - 3].childNodes[0].onclick = function(e) {
+                            e.preventDefault();
+                            let des = `
+                                1      无算法要求
+                                2      知道常用数据结构和算法并简单使用
+                                3      理解常用数据结构和算法
+                                4      掌握常用数据结构和算法
+                                5      熟练掌握常用数据结构和算法，初步了解高级数据结构
+                                6      深入理解并灵活应用数据结构和算法，理解高级数据结构
+                                7      结合多方面的数据结构和算法，处理较复杂问题
+                                8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
+                                9      处理复杂问题，对时间复杂度的要求更严格
+                                10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
+                                11     竞赛内容，知识点超出面试范围
+                            `
+                            layer.open({
+                                type: 1 // Page 层类型
+                                ,area: ['700px', '320px']
+                                ,title: '算术评级说明'
+                                ,shade: 0.6 // 遮罩透明度
+                                ,maxmin: true // 允许全屏最小化
+                                ,anim: 5 // 0-6的动画形式，-1不开启
+                                ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${des}</p>`
+                            });
+                        }
+                        pa.childNodes[le - 3].removeAttribute("hidden")
+                    } else {
+                        pa.childNodes[le - 3].childNodes[0].innerText = "未知评级"
+                        pa.childNodes[le - 3].childNodes[0].setAttribute("hidden", "true")
+                    }
+                    // ContestID_zh  ContestSlug
+                    if (t2rate[id] != null) {
                         let contestUrl;
                         let num = getcontestNumber(t2rate[id]["ContestSlug"])
                         if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
@@ -1490,7 +1574,7 @@
             } else {
                 // 新版逻辑
                 let t = document.querySelector(".text-lg")
-                if (t == undefined) {
+                if (t == null) {
                     t1 = "unknown"
                     return
                 }
@@ -1509,7 +1593,7 @@
                     return
                 }
                 let pa = colorSpan.parentNode
-                if (t1 != undefined && t1 == id) {
+                if (t1 != null && t1 == id) {
                     return
                 }
                 if (GM_getValue("switchcode")) {
@@ -1527,9 +1611,9 @@
                 // 新版统计难度分数并且修改
                 let nd = colorSpan.getAttribute("class")
                 let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                if (switchrealoj || (t2rate[id] != undefined)) {
+                if (switchrealoj || (t2rate[id] != null)) {
                     if (switchrealoj) colorSpan.remove()
-                    else if(t2rate[id] != undefined) colorSpan.innerHTML = t2rate[id]["Rating"]
+                    else if(t2rate[id] != null) colorSpan.innerHTML = t2rate[id]["Rating"]
                 } else {
                     for (let item in nd2ch) {
                         if (nd.toString().includes(item)) {
@@ -1555,7 +1639,7 @@
                     let span = document.createElement("span")
                     let span2 = document.createElement("span")
                     // ContestID_zh  ContestSlug
-                    if (t2rate[id] != undefined) {
+                    if (t2rate[id] != null) {
                         let contestUrl;
                         let num = getcontestNumber(t2rate[id]["ContestSlug"])
                         if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
@@ -1586,7 +1670,7 @@
                     pa.appendChild(abody)
                     pa.appendChild(abody2)
                 } else if(q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
-                    if (t2rate[id] != undefined) {
+                    if (t2rate[id] != null) {
                         let contestUrl;
                         let num = getcontestNumber(t2rate[id]["ContestSlug"])
                         if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
@@ -1642,7 +1726,9 @@
                 GM_setValue(start, id)
             }
             if (isAddEvent) {
+                // 只需要定位urlchange变更
                 window.addEventListener("urlchange", () => {
+                    console.log("urlchange/event/happened")
                     let newUrl = location.href
                     clearAndStart(newUrl, 1000, false)
                 })
@@ -1655,7 +1741,7 @@
         async function getScore() {
             let now = getCurrentDate(1)
             preDate = GM_getValue("preDate", "")
-            if (t2rate["tagVersion6"] == undefined || (preDate == "" || preDate != now)) {
+            if (t2rate["tagVersion6"] == null || (preDate == "" || preDate != now)) {
                 // 每天重置为空
                 GM_setValue("pbSubmissionInfo", "{}")
                 let res = await new Promise((resolve, reject) => {
@@ -1699,7 +1785,7 @@
         // 更新level数据
         async function getPromiseLevel() {
             let week = new Date().getDay()
-            if (levelData["tagVersion20"] == undefined || week == 1) {
+            if (levelData["tagVersion20"] == null || week == 1) {
                 let res = await new Promise((resolve, reject) => {
                     GM_xmlhttpRequest({
                         method: "get",
