@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.7
+// @version      2.1.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -24,6 +24,7 @@
 // @connect      raw.githubusercontents.com
 // @connect      raw.githubusercontent.com
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js
+// @require      https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/layer.min.js
 // @require      https://unpkg.com/layui@2.9.6/dist/layui.js
 // @grant        unsafeWindow
 // @note         2022-09-07 1.1.0 支持tag页面和题库页面显示匹配的周赛分难度
@@ -151,12 +152,13 @@
 // @note         2024-04-10 2.1.5 因4月1号腾讯共享文档api调整,不能通过接口api去获取灵茶题集,所以修改了题库界面该功能展示
 // @note         2024-04-10 2.1.6 4.10二次更新，题目页新增题目搜索功能，位于题目页左上方
 // @note         2024-04-11 2.1.7 4.11 更新，修复layui css导入导致深色模式下a标签style固定为灰色的问题
+// @note         2024-04-11 2.1.8 修复学习计划页面的缺失问题，修复题目页面左侧栏重复bug问题，回退搜索框为即搜即查模式
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.7"
+    let version = "2.1.8"
 
 
     // 页面相关url
@@ -313,7 +315,7 @@
     }`
 
     // css 渲染
-    $(document.body).append(`<link href="https://unpkg.com/layui@2.9.6/dist/css/layui.css" rel="stylesheet">`)
+    $(document.body).append(`<link href="https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/theme/default/layer.min.css" rel="stylesheet">`)
     // 监听urlchange事件定义
     function initUrlChange() {
         let isLoad = false
@@ -378,7 +380,7 @@
             ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
             ['switchstudy', 'studyplan function', '学习计划周赛难度评分', true, false],
             ['switchcontestpage', 'contestpage function', '竞赛页面双栏布局', true, false],
-            ['switchstudylevel', 'studyplan level function', '学习计划算术评级', true, false],
+            ['switchlevel', 'studyplan level function', '算术评级(显示左侧栏和学习计划中)', true, false],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
             ['switchperson', 'person function', '纸片人', false, true],
@@ -425,41 +427,45 @@
     }
 
     // 首次加载重置
+    // 题目页面监听变化
     localStorage.removeItem("urlchange")
     localStorage.removeItem("themechange")
-    let observer = new MutationObserver(function(mutationsList, observer) {
-        // 检查每个变化
-        mutationsList.forEach(function(mutation) {
-            themechange();
+    function observerpb() {
+        let observer = new MutationObserver(function(mutationsList, observer) {
+            // 检查每个变化
+            mutationsList.forEach(function(mutation) {
+                themechange();
+            });
         });
-    });
-    // 配置 MutationObserver 监听的内容和选项
-    let config = { attributes: true, childList: false, subtree: true };
-    observer.observe(document, config);
-    function themechange() {
-        let url = window.location.href
-        let urlchange = localStorage.getItem("urlchange")
-        let theme = localStorage.getItem("lc-dark-side")
-        let themecg = localStorage.getItem("themechange")
-        if ((urlchange == undefined || url != urlchange) || (themecg == undefined || theme != themecg)) {
-            let style = document.createElement("style");
-            style.type = "text/css";
-            style.innerHTML = `
-                a {
-                    color: inherit !important;
-                    text-decoration: inherit !important;
+        // 配置 MutationObserver 监听的内容和选项
+        let config = { attributes: true, childList: false, subtree: true };
+        observer.observe(document, config);
+        function themechange() {
+            let url = window.location.href
+            let urlchange = localStorage.getItem("urlchange")
+            let theme = localStorage.getItem("lc-dark-side")
+            let themecg = localStorage.getItem("themechange")
+            if ((urlchange == undefined || url != urlchange) || (themecg == undefined || theme != themecg)) {
+                let style = document.createElement("style");
+                style.type = "text/css";
+                style.innerHTML = `
+                    a {
+                        color: inherit !important;
+                        text-decoration: inherit !important;
+                    }
+                `;
+                console.log("修改layui a属性style")
+                if (theme == "dark") {
+                    style.innerHTML += `
+                    .layui-menu-body-title {
+                        color : #333 !important;
+                    }
+                    `
                 }
-            `;
-            console.log("修改layui a属性style")
-            if (theme == "dark") {
-                style.innerHTML += `
-                .layui-menu-body-title {
-                    color : #333 !important;
-                }
-                `
+                document.head.appendChild(style);
+                localStorage.setItem("urlchange", url)
+                localStorage.setItem("themechange", theme)
             }
-            document.head.appendChild(style);
-            localStorage.setItem("urlchange", url)
         }
     }
 
@@ -1024,7 +1030,8 @@
         for (const arr of childs) {
             for (let pbidx = 1; pbidx < arr.childNodes.length; pbidx++) {
                 let pb = arr.childNodes[pbidx]
-                let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
+                let pbNameLabel = pb.querySelector(".truncate")
+                let pbName = pbNameLabel.textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
                 let id = pbName2Id[pbName]
                 pbName = pbName.split(" ").join("") //去除中间的空格
@@ -1058,15 +1065,14 @@
                         }
                     }
                 }
-
                 // level渲染
-                if (level && GM_getValue("switchstudylevel")) {
+                if (level && GM_getValue("switchlevel")) {
                     // console.log(pbName, level)
                     let text = document.createElement('span')
                     text.style = nd.getAttribute("style")
                     text.innerHTML = "算术评级: " + level["Level"].toString()
-                    if (hit) text.style.paddingRight = "75px" // 命中之后宽度不一样
-                    else text.style.paddingRight = "80px" 
+                    if (hit) text.style.paddingRight = "125px" // 命中之后宽度不一样
+                    else text.style.paddingRight = "130px" 
                     nd.parentNode.insertBefore(text, nd)
                 }
             }
@@ -1077,7 +1083,6 @@
 
     let pbsidef;
     function getpbside(css_selector) {
-        levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
         let totArr = null
         // 如果传入的是已经找到的node元素, 就不再搜索
         if (css_selector instanceof Element) {
@@ -1092,7 +1097,7 @@
         }
         let childs = totArr.childNodes
         for (const arr of childs) {
-            // 特殊判定， 如果大于30就肯定是每日一日列表
+            // 特殊判定， 如果大于30则是每日一日列表
             let pbidx = 1;
             if (arr.childNodes.length >= 30) pbidx = 0;
             for (; pbidx < arr.childNodes.length; pbidx++) {
@@ -1139,7 +1144,7 @@
                     }
                 }
                 // level渲染
-                if (level && GM_getValue("switchstudylevel")) {
+                if (level && GM_getValue("switchlevel")) {
                     let text = document.createElement('span')
                     text.style = nd.getAttribute("style")
                     text.innerHTML = "算术评级: " + level["Level"].toString()
@@ -1161,77 +1166,93 @@
         key.setAttribute('aria-haspopup',false)
         key.removeAttribute('data-focus-visible-added')
         key.removeAttribute('aria-activedescendant')
-        // console.log(key)
     }
-
     
     // 只刷新一次
     let pbsidefresh = true 
-    function getPbSideData() {
-        // 新版学习计划左侧栏分数显示
+    function getpbsideData() {
+        // 左侧栏分数显示
         let searchParams = location.search
+        levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
         // ?envType=study-plan-v2&envId=leetcode-75
         if (searchParams.indexOf("?") != -1 && pbsidefresh) { 
             let str = searchParams.substring(1); 
             let strs = str.split("="); 
             let code = strs[0];
-            // 参数含有envType就是学习计划
+            let url = window.location.href
+            // 参数含有envType就是使用标签进行渲染
             if (code.includes("envType")) {
-                waitForKeyElements(".overflow-auto", ()=>{
-                    let overflow = document.querySelector(".overflow-auto")
-                    let studyplan = overflow.childNodes[0].childNodes[1];
-                    if(!studyplan) studyf = undefined
-                    if(GM_getValue("switchstudy") && studyplan && pbsidefresh) {
-                        getpbside(studyplan)
-                        console.log("已经刷新侧边栏envType分数...")
-                        pbsidefresh = false
-                    }
-                });
-            
+                let overflow = document.querySelector(".overflow-auto.p-5")
+                if (overflow == null) return
+                let studyplan = overflow.childNodes[0].childNodes[1];
+                if(!studyplan) studyf = undefined
+                if(GM_getValue("switchstudy") && studyplan && pbsidefresh) {
+                    getpbside(studyplan)
+                    console.log("已经刷新侧边栏envType分数...")
+                    pbsidefresh = false
+                }
             }
         } else {
             // 题目页面题库展开栏
-            waitForKeyElements(".overflow-auto", () => {
-                let overflow = document.querySelector(".overflow-auto")
-                let pbarr = overflow.childNodes[0].childNodes[1].childNodes[0];
-                if (pbarr != undefined && pbsidefresh) {
-                    for (const onepb of pbarr.childNodes) {
-                        let pbName = onepb.childNodes[0].childNodes[1].childNodes[0].textContent
-                        let nd = onepb.childNodes[0].childNodes[1].childNodes[1]
-                        pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
-                        let data = pbName.split(".")
-                        pbName = data[1]
-                        let id = data[0]
-                        let darkn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
-                        let lightn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
-                        // rating
-                        if (id && t2rate[id]) {
-                            let ndRate = t2rate[id]["Rating"]
-                            nd.textContent = ndRate
-                        } else {
-                            if (!nd) break
-                            let clr = nd.getAttribute("class")
-                            let flag = true
-                            for (let c in lightn2c) {
-                                if (!flag) break
-                                if (clr.includes(c)) {
-                                    nd.innerHTML = lightn2c[c] 
-                                    flag = false
-                                }
+            let overflow = document.querySelector(".overflow-auto.p-5")
+            if (overflow == null) return
+            let pbarr = overflow.childNodes[0].childNodes[1].childNodes[0];
+            if (pbarr != undefined && pbsidefresh) {
+                for (const onepb of pbarr.childNodes) {
+                    let pbName = onepb.childNodes[0].childNodes[1].childNodes[0].textContent
+                    let nd = onepb.childNodes[0].childNodes[1].childNodes[1]
+                    pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
+                    let data = pbName.split(".")
+                    pbName = data[1]
+                    if (pbName == null) {
+                        pbName = ""
+                    } else {
+                        pbName = pbName.split(" ").join("")
+                    }
+                    let level = levelData[pbName]
+                    // console.log(pbName)
+                    // console.log(level)
+                    let hit = false
+                    let id = data[0]
+                    let darkn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
+                    let lightn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
+                    // rating
+                    if (id && t2rate[id]) {
+                        let ndRate = t2rate[id]["Rating"]
+                        nd.textContent = ndRate
+                        hit = true
+                    } else {
+                        if (!nd) break
+                        let clr = nd.getAttribute("class")
+                        let flag = true
+                        for (let c in lightn2c) {
+                            if (!flag) break
+                            if (clr.includes(c)) {
+                                nd.innerHTML = lightn2c[c] 
+                                flag = false
                             }
-                            for (let c in darkn2c) {
-                                if (!flag) break
-                                if (clr.includes(c)) {
-                                    nd.innerHTML = darkn2c[c] 
-                                    flag = false
-                                }
+                        }
+                        for (let c in darkn2c) {
+                            if (!flag) break
+                            if (clr.includes(c)) {
+                                nd.innerHTML = darkn2c[c] 
+                                flag = false
                             }
                         }
                     }
-                    console.log("已经刷新侧边栏题库分数...")
-                    pbsidefresh = false
+                    // level渲染
+                    if (level && GM_getValue("switchlevel")) {
+                        let text = document.createElement('span')
+                        text.style = nd.getAttribute("style")
+                        text.innerHTML = "算术评级: " + level["Level"].toString()
+                        if (hit) text.style.paddingRight = "75px" // 命中之后宽度不一样
+                        else text.style.paddingRight = "80px" 
+                        nd.parentNode.insertBefore(text, nd)
+                    }
                 }
-            });
+                console.log("已经刷新侧边栏题库分数...")
+                pbsidefresh = false
+            }
         }
     }
 
@@ -1239,7 +1260,7 @@
         if(!GM_getValue("switchpb")) return
         let switchrealoj = GM_getValue("switchrealoj")
         
-        if(GM_getValue("switchpbside")) getPbSideData()
+        if(GM_getValue("switchpbside")) getpbsideData()
 
         // 题目页面
         let curUrl = location.href
@@ -1259,11 +1280,14 @@
                     return
                 }
                 if(GM_getValue("switchpbsearch")) {
+                    // 题目页面才渲染并且监听标签变化
+                    observerpb()
+                    $(document.body).append(`<link href="https://unpkg.com/layui@2.9.6/dist/css/layui.css" rel="stylesheet">`)
                     // 做个搜索框
                     if (document.querySelector("#id-dropdown") == undefined) {
                         let div = document.createElement("div")
                         div.setAttribute("class", "layui-inline")
-                        div.innerHTML += `<input name="" placeholder="请搜索或选择" class="layui-input" id="id-dropdown">`
+                        div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="layui-input" id="id-dropdown">`
                         let center = document.querySelector('.flex .items-center')
                         center = center.childNodes[0].childNodes[0].childNodes[0]
                         center.appendChild(div)
@@ -1278,17 +1302,15 @@
                                     this.elem.attr('data-id', obj.id)
                                 }
                             });
-
-                            $(inst.config.elem).on('keydown', function(event) {
-                                if (event.key === 'Enter') {
-                                    let elem = $(this);
-                                    let value = elem.val().trim();
-                                    elem.removeAttr('data-id');
-                                    let dataNew = findData(value);
-                                    dropdown.reloadData(inst.config.id, {
-                                        data: dataNew
-                                    })
-                                }
+                            
+                            $(inst.config.elem).on('input propertychange', function(event) {
+                                let elem = $(this);
+                                let value = elem.val().trim();
+                                elem.removeAttr('data-id');
+                                let dataNew = findData(value);
+                                dropdown.reloadData(inst.config.id, {
+                                    data: dataNew
+                                })
                             });
 
                             $(inst.config.elem).on('blur', function() {
@@ -1614,7 +1636,7 @@
             }
             if(targetIdx != -1) start = pageLst[targetIdx]
             if (start != "") {
-                let css_selector = "#__next > div > div > div.mx-auto.w-full.grow.md\\:mt-0.mt-\\[50px\\].flex.justify-center.overflow-hidden.p-0.md\\:max-w-none.md\\:p-0.lg\\:max-w-none > div > div.flex.w-full.justify-center > div > div.flex.flex-1 > div > div.flex.w-full.flex-col.gap-4"
+                let css_selector = "div.relative.flex.w-full.flex-col > .flex.w-full.flex-col.gap-4"
                 if(start == 'study') id = setInterval(getStudyData, timeout, css_selector)
                 else id = setInterval(funcLst[targetIdx], timeout)
                 GM_setValue(start, id)
