@@ -179,7 +179,7 @@
 
     // 灵茶相关url
     const teaSheetUrl = "https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz"
-    const lc0x3fsolveUrl = "https://huxulm.github.io/lc-rating/#/search"
+    const lc0x3fsolveUrl = "https://huxulm.github.io/lc-rating/search"
 
     // 用于延时函数的通用id
     let id = ""
