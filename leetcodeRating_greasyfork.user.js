@@ -1256,6 +1256,32 @@
         }
     }
 
+    
+    // 适配黑色主题
+    GM_addStyle(`
+        .dark .leetcodeRating-search,
+        .dark .layui-panel,
+        .dark #id-dropdown,
+        .dark [lay-id=id-dropdown] ul,
+        .dark [lay-id=id-dropdown] ul li,
+        .dark [lay-id=id-dropdown] .layui-menu-body-title a,
+        .dark .leetcodeRating-search input{
+            background-color: rgb(26 26 26/var(--tw-bg-opacity));
+            border-color: hsl(var(--sd-border));
+            color: rgb(200 200 200 / var(--tw-text-opacity)) !important;
+        }
+
+        .dark .layui-input:hover, 
+        .dark .layui-textarea:hover {
+            border-color: #999 !important;
+        }
+
+        .dark .layui-menu-body-title:hover,
+        .dark .layui-menu-body-title a:hover {
+            background-color: var(--fill-quaternary) !important;
+        }
+    `)
+
     function createSearchBtn() {
         if(!GM_getValue("switchpbsearch")) return
         if (document.querySelector("#id-dropdown") == null) {
@@ -1265,6 +1291,10 @@
             // 做个搜索框
             let div = document.createElement("div")
             div.setAttribute("class", "layui-inline")
+
+            // 适配黑色主题
+            div.classList.add('LeetCodeRating-search')
+
             div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="layui-input" id="id-dropdown">`
             let center = document.querySelector('.flex.items-center')
             center = center?.childNodes[0]?.childNodes[0]?.childNodes[0]
