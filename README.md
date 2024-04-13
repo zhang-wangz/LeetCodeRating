@@ -122,13 +122,17 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 - 功能 tag题单页周赛难度评分(动态规划等分类题库)
 
-  对应url为https://leetcode.cn/tag/xxx/problemset/，例如https://leetcode.cn/tag/hash-table/problemset/
+  对应url为https://leetcode.cn/tag/xxx/problemset/
+
+  例如https://leetcode.cn/tag/hash-table/problemset/
 
   ![image-20240413224625280](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413224625280.png)
 
 - 功能 pbList题单页评分
 
-  对应url为https://leetcode.cn/problem-list/xxx/，例如https://leetcode.cn/problem-list/4uhwcjE2/
+  对应url为https://leetcode.cn/problem-list/xxx/
+
+  例如https://leetcode.cn/problem-list/4uhwcjE2/
 
   后面的xxx为力扣生成的题单id
 
@@ -136,13 +140,17 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 - 功能 学习计划周赛难度评分
 
-  对应url https://leetcode.cn/studyplan/xxx/，例如https://leetcode.cn/studyplan/top-interview-150/
+  对应url为https://leetcode.cn/studyplan/xxx/
+
+  例如https://leetcode.cn/studyplan/top-interview-150/
 
   ![image-20240413224920329](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413224920329.png)
 
 - 功能 竞赛页面双栏布局
 
-  对应urlhttps://leetcode.cn/contest/xxx/problems/xxx，例如: https://leetcode.cn/contest/weekly-contest-390/problems/most-frequent-ids/
+  对应url为https://leetcode.cn/contest/xxx/problems/xxx
+
+  例如: https://leetcode.cn/contest/weekly-contest-390/problems/most-frequent-ids/
 
   自动变换双栏，最初来源 better contest page / author ExplodingKonjac
 
@@ -202,6 +210,9 @@ LeetCodeRating遵循 [Contributor Covenant](http://contributor-covenant.org/vers
 ### License
 [License](https://github.com/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
 
-
 ### Supported by
-[![JetBrains Logo (Main) logo](https://camo.githubusercontent.com/5075c80d56620267702a3808e7a926ff51235b2ecd986441c092e3b6b821af83/68747470733a2f2f7265736f75726365732e6a6574627261696e732e636f6d2f73746f726167652f70726f64756374732f636f6d70616e792f6272616e642f6c6f676f732f6a625f6265616d2e737667)](https://jb.gg/OpenSourceSupport)
+
+JeBrains https://jb.gg/OpenSourceSupport
+
+非常感谢！
+
