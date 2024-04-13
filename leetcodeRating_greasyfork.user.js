@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.1.9
+// @version      2.1.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -26,6 +26,7 @@
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js
 // @require      https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/layer.min.js
 // @require      https://unpkg.com/layui@2.9.6/dist/layui.js
+// @require      https://greasyfork.org/scripts/463455-nelementgetter/code/NElementGetter.js?version=1172110
 // @grant        unsafeWindow
 // @note         2022-09-07 1.1.0 支持tag页面和题库页面显示匹配的周赛分难度
 // @note         2022-09-07 1.1.0 分数数据出自零神项目
@@ -153,13 +154,14 @@
 // @note         2024-04-10 2.1.6 4.10二次更新，题目页新增题目搜索功能，位于题目页左上方
 // @note         2024-04-11 2.1.7 4.11 更新，修复layui css导入导致深色模式下a标签style固定为灰色的问题
 // @note         2024-04-11 2.1.8 修复学习计划页面的缺失问题，修复题目页面左侧栏重复bug问题，回退搜索框为即搜即查模式
-// @note         2024-04-11 2.1.8 题目页显示算术评级功能，点击显示功能评级详情
+// @note         2024-04-11 2.1.9 题目页显示算术评级功能，点击显示功能评级详情
+// @note         2024-04-13 2.1.10 恢复题解复制去除版权信息尾巴功能
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.1.9"
+    let version = "2.1.10"
 
 
     // 页面相关url
@@ -369,12 +371,12 @@
             ['switchpbRepo', 'pbRepo function', '题库页周赛难度评分(不包括灵茶)', true, false],
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
             ['switchpbscore', 'pb function', '题目页周赛难度评分', true, true],
+            ['switchcopyright', 'pb function', '题解复制去除版权信息', true, true],
             ['switchcode', 'switchcode function', '题目页代码输入阻止联想', false, true],
             ['switchpbside', 'switchpbside function', '题目页侧边栏分数显示', true, true],
             ['switchpbsearch', 'switchpbsearch function', '题目页题目搜索框', true, true],
             ['switchsearch', 'search function', '题目搜索页周赛难度评分', true, false],
             ['switchtag', 'tag function', 'tag题单页周赛难度评分(动态规划等分类题库)', true, false],
-            // ['switchcompany', 'company function', '公司题单页周赛难度评分', true, false],
             ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
             ['switchstudy', 'studyplan function', '学习计划周赛难度评分', true, false],
             ['switchcontestpage', 'contestpage function', '竞赛页面双栏布局', true, false],
@@ -424,48 +426,27 @@
         }
     }
 
-    // 首次加载重置
-    // 题目页面监听变化
-    localStorage.removeItem("urlchange")
-    localStorage.removeItem("themechange")
-    function observerpb() {
-        let observer = new MutationObserver(function(mutationsList, observer) {
-            // 检查每个变化
-            mutationsList.forEach(function(mutation) {
-                themechange();
-            });
+    function copyNoRight() {
+        new ElementGetter().each('.FN9Jv.WRmCx > div:has(code)', document, (item) => {
+            let nowShow = item.querySelector('div:not(.hidden) > div.group.relative > pre > code')
+            let copyNode = nowShow.parentElement.nextElementSibling.cloneNode(true)
+            nowShow.parentElement.nextElementSibling.setAttribute("hidden", true)
+            copyNode.classList.add("copyNode")
+            copyNode.onclick = function () {
+                let nowShow = item.querySelector('div:not(.hidden) > div.group.relative > pre > code');
+                navigator.clipboard.writeText(nowShow.textContent).then(() => {
+                    layer.msg('复制成功');
+                });
+            };
+            nowShow.parentNode.parentNode.appendChild(copyNode);
         });
-        // 配置 MutationObserver 监听的内容和选项
-        let config = { attributes: true, childList: false, subtree: true };
-        observer.observe(document, config);
-        function themechange() {
-            let url = window.location.href
-            let urlchange = localStorage.getItem("urlchange")
-            let theme = localStorage.getItem("lc-dark-side")
-            let themecg = localStorage.getItem("themechange")
-            if ((urlchange == null || url != urlchange) || (themecg == null || theme != themecg)) {
-                let style = document.createElement("style");
-                style.type = "text/css";
-                style.innerHTML = `
-                    a {
-                        color: inherit !important;
-                        text-decoration: inherit !important;
-                    }
-                `;
-                console.log("修改layui a属性style")
-                if (theme == "dark") {
-                    style.innerHTML += `
-                    .layui-menu-body-title {
-                        color : #333 !important;
-                    }
-                    `
-                }
-                document.head.appendChild(style);
-                localStorage.setItem("urlchange", url)
-                localStorage.setItem("themechange", theme)
-            }
-        }
+        document.addEventListener('copy', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            e.clipboardData.setData('Text', window.getSelection().toString());
+        });
     }
+    if(GM_getValue("switchcopyright")) copyNoRight()
 
 
     // lc 基础req
@@ -664,13 +645,6 @@
         })
         })()
     }
-
-
-    // window.onerror = function(message, source, lineno, colno, error) {
-    //     message.preventDefault()
-    //     console.log("力扣api发生错误:", message.message)
-    //     return true
-    // }
 
     function callback(tag, variables) {
         let data;
@@ -1285,16 +1259,12 @@
     function createSearchBtn() {
         if(!GM_getValue("switchpbsearch")) return
         if (document.querySelector("#id-dropdown") == null) {
-            // 题目页面才渲染并且监听标签变化
-            observerpb()
             $(document.body).append(`<link href="https://unpkg.com/layui@2.9.6/dist/css/layui.css" rel="stylesheet">`)
             // 做个搜索框
             let div = document.createElement("div")
             div.setAttribute("class", "layui-inline")
-
             // 适配黑色主题
             div.classList.add('LeetCodeRating-search')
-
             div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="layui-input" id="id-dropdown">`
             let center = document.querySelector('.flex.items-center')
             center = center?.childNodes[0]?.childNodes[0]?.childNodes[0]
