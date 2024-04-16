@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.0
+// @version      2.2.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -157,12 +157,13 @@
 // @note         2024-04-11 2.1.9 题目页显示算术评级功能，点击显示功能评级详情
 // @note         2024-04-13 2.1.10 恢复题解复制去除版权信息尾巴功能
 // @note         2024-04-13 2.2.0 恢复题解复制去除版权信息尾巴功能并修复bug(2.1.10导致的)
+// @note         2024-04-16 2.2.1 算术评级适配英文题目并修复部分遗留bug
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.0"
+    let version = "2.2.1"
 
 
     // 页面相关url
@@ -190,13 +191,44 @@
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
     // 题目名称-id ContestID_zh-ID
+    // 中文
     let pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
+    // 英文
+    let pbNamee2Id = JSON.parse(GM_getValue("pbNamee2Id", "{}").toString())
     let preDate = GM_getValue("preDate", "")
     // level数据
     let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
+    // 中文
+    let levelTc2Id = JSON.parse(GM_getValue("levelTc2Id", "{}").toString())
+    // 英文
+    let levelTe2Id = JSON.parse(GM_getValue("levelTe2Id", "{}").toString())
     // 是否使用动态布局
     let localVal = localStorage.getItem("used-dynamic-layout")
     let isDynamic = localVal != null ? localVal.includes("true") : false
+
+    function getPbNameId(pbName) {
+        pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
+        pbNamee2Id = JSON.parse(GM_getValue("pbNamee2Id", "{}").toString())
+        let id = null
+        if (pbName2Id[pbName]) {
+            id = pbName2Id[pbName]
+        } else if (pbNamee2Id[pbName]) {
+            id = pbNamee2Id[pbName]
+        }
+        return id
+    }
+
+    function getLevelId(pbName) {
+        levelTc2Id = JSON.parse(GM_getValue("levelTc2Id", "{}").toString())
+        levelTe2Id = JSON.parse(GM_getValue("levelTe2Id", "{}").toString())
+        if (levelTc2Id[pbName]) {
+            return levelTc2Id[pbName]
+        } 
+        if (levelTe2Id[pbName]) {
+            return levelTe2Id[pbName]
+        }
+        return null
+    }
 
     // 同步函数
     function waitForKeyElements (selectorTxt, actionFunction, bWaitOnce, iframeSelector) {
@@ -360,9 +392,6 @@
         rakingUrl = "https://raw.gitmirror.com/zerotrac/leetcode_problem_rating/main/data.json"
         levelUrl = "https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/stormlevel/data.json"
     }
-
-    // 获取必须获取的数据
-    getNeedData()
 
     // 菜单方法定义
     function script_setting(){
@@ -1003,11 +1032,13 @@
             for (let pbidx = 1; pbidx < arr.childNodes.length; pbidx++) {
                 let pb = arr.childNodes[pbidx]
                 let pbNameLabel = pb.querySelector(".truncate")
+                if (pbNameLabel == null) continue
                 let pbName = pbNameLabel.textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
-                let id = pbName2Id[pbName]
-                pbName = pbName.split(" ").join("") //去除中间的空格
-                let level = levelData[pbName]
+                pbName = pbName.trim()
+                let levelId = getLevelId(pbName)
+                let id = getPbNameId(pbName)
+                let level = levelData[levelId]
                 // console.log(pbName, level)
                 let hit = false
                 let darkn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
@@ -1021,18 +1052,19 @@
                 } else {
                     if (!nd) break
                     let clr = nd.getAttribute("class")
+                    if (clr == null) continue
                     let flag = true
                     for (let c in lightn2c) {
                         if (!flag) break
                         if (clr.includes(c)) {
-                            nd.innerHTML = lightn2c[c] 
+                            nd.innerText = lightn2c[c] 
                             flag= false
                         }
                     }
                     for (let c in darkn2c) {
                         if (!flag) break
                         if (clr.includes(c)) {
-                            nd.innerHTML = darkn2c[c] 
+                            nd.innerText = darkn2c[c] 
                             flag= false
                         }
                     }
@@ -1077,14 +1109,8 @@
                 let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
                 let data = pbName.split(".")
-                pbName = data[1]
                 let id = data[0]
-                if (pbName == null) {
-                    pbName = ""
-                } else {
-                    pbName = pbName.split(" ").join("")
-                }
-                let level = levelData[pbName]
+                let level = levelData[id]
                 // console.log(pbName)
                 // console.log(level)
                 let hit = false
@@ -1098,19 +1124,19 @@
                 } else {
                     if (!nd) break
                     let clr = nd.getAttribute("class")
-                    if (clr == null) console.log(nd);
+                    if (clr == null) continue
                     let flag = true
                     for (let c in lightn2c) {
                         if (!flag) break
                         if (clr.includes(c)) {
-                            nd.innerHTML = lightn2c[c] 
+                            nd.innerText = lightn2c[c] 
                             flag= false
                         }
                     }
                     for (let c in darkn2c) {
                         if (!flag) break
                         if (clr.includes(c)) {
-                            nd.innerHTML = darkn2c[c] 
+                            nd.innerText = darkn2c[c] 
                             flag= false
                         }
                     }
@@ -1174,19 +1200,12 @@
                     if (nd == null) return 
                     // 如果为算术，说明当前已被替换过
                     if (nd.textContent.includes("算术")) continue
-                    pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
                     let data = pbName.split(".")
-                    pbName = data[1]
-                    if (pbName == null) {
-                        pbName = ""
-                    } else {
-                        pbName = pbName.split(" ").join("")
-                    }
-                    let level = levelData[pbName]
                     // console.log(pbName)
                     // console.log(level)
                     let hit = false
                     let id = data[0]
+                    let level = levelData[id]
                     let darkn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
                     let lightn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
                     // rating
@@ -1197,6 +1216,7 @@
                     } else {
                         if (!nd) break
                         let clr = nd.getAttribute("class")
+                        if (clr == null) continue
                         // console.log(nd)
                         // console.log(clr)
                         let flag = true
@@ -1231,45 +1251,44 @@
         }
     }
 
-    
-    // 适配黑色主题
-    GM_addStyle(`
-        a {
-            color: inherit !important;
-            text-decoration: inherit !important;
-        }
-        .dark .leetcodeRating-search,
-        .dark .layui-panel,
-        .dark #id-dropdown,
-        .dark [lay-id=id-dropdown] ul,
-        .dark [lay-id=id-dropdown] ul li,
-        .dark [lay-id=id-dropdown] .layui-menu-body-title a,
-        .dark .leetcodeRating-search input{
-            background-color: rgb(26 26 26/var(--tw-bg-opacity));
-            border-color: hsl(var(--sd-border));
-            color: rgb(200 200 200 / var(--tw-text-opacity)) !important;
-        }
-
-        .dark .layui-input:hover, 
-        .dark .layui-textarea:hover {
-            border-color: #999 !important;
-        }
-
-        .dark .layui-menu-body-title:hover,
-        .dark .layui-menu-body-title a:hover {
-            background-color: var(--fill-quaternary) !important;
-        }
-    `)
 
     function createSearchBtn() {
         if(!GM_getValue("switchpbsearch")) return
+        // 适配黑色主题
+        GM_addStyle(`
+            a {
+                color: inherit !important;
+                text-decoration: inherit !important;
+            }
+            .dark .leetcodeRating-search,
+            .dark .layui-panel,
+            .dark #id-dropdown,
+            .dark [lay-id=id-dropdown] ul,
+            .dark [lay-id=id-dropdown] ul li,
+            .dark [lay-id=id-dropdown] .layui-menu-body-title a,
+            .dark .leetcodeRating-search input{
+                background-color: rgb(26 26 26/var(--tw-bg-opacity));
+                border-color: hsl(var(--sd-border));
+                color: rgb(200 200 200 / var(--tw-text-opacity)) !important;
+            }
+
+            .dark .layui-input:hover, 
+            .dark .layui-textarea:hover {
+                border-color: #999 !important;
+            }
+
+            .dark .layui-menu-body-title:hover,
+            .dark .layui-menu-body-title a:hover {
+                background-color: var(--fill-quaternary) !important;
+            }
+        `)
         if (document.querySelector("#id-dropdown") == null) {
             $(document.body).append(`<link href="https://unpkg.com/layui@2.9.6/dist/css/layui.css" rel="stylesheet">`)
             // 做个搜索框
             let div = document.createElement("div")
             div.setAttribute("class", "layui-inline")
             // 适配黑色主题
-            div.classList.add('LeetCodeRating-search')
+            div.classList.add('leetcodeRating-search')
             div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="layui-input" id="id-dropdown">`
             let center = document.querySelector('.flex.items-center')
             center = center?.childNodes[0]?.childNodes[0]?.childNodes[0]
@@ -1345,6 +1364,21 @@
             });
         }
     }
+
+    // code提示功能
+    function codefunc() {
+        if (GM_getValue("switchcode")) {
+            waitForKeyElements(".overflowingContentWidgets", ()=>{
+                $('.overflowingContentWidgets').remove()
+            });
+            let div = document.querySelector('div.h-full.w-full')
+            div.onkeydown = function(event) {
+                if (event.keyCode >= 65 && event.keyCode <= 90 || event.keyCode == 13) {
+                    eventhappend()
+                }
+            }
+        }
+    }
     function getpb() {
         let switchrealoj = GM_getValue("switchrealoj")
         // 左边栏
@@ -1368,13 +1402,8 @@
                 if (t1 != null && t1 == id) {
                     return
                 }
-                let title = data[1]
-                if (title == null ) {
-                    title = ""
-                } else {
-                    title = title.split(" ").join("").trim()
-                }
-                // console.log(title)
+                // code提示功能
+                codefunc()
                 let colorA = ['.text-difficulty-hard', '.text-difficulty-easy','.text-difficulty-medium']
                 let colorSpan;
                 for (const color of colorA) {
@@ -1382,21 +1411,11 @@
                     if (colorSpan) break
                 }
                 if (!colorSpan) {
+                    if(switchrealoj) return
                     console.log("color ele not found")
                     return
                 }
-                // code提示功能
-                if (GM_getValue("switchcode")) {
-                    waitForKeyElements(".overflowingContentWidgets", ()=>{
-                        $('.overflowingContentWidgets').remove()
-                    });
-                    let div = document.querySelector('div.h-full.w-full')
-                    div.onkeydown = function(event) {
-                        if (event.keyCode >= 65 && event.keyCode <= 90 || event.keyCode == 13) {
-                            eventhappend()
-                        }
-                    }
-                }
+
                 // 统计难度分数并且修改
                 let nd = colorSpan.getAttribute("class")
                 let nd2ch = { "text-difficulty-easy": "简单", "text-difficulty-medium": "中等", "text-difficulty-hard": "困难" }
@@ -1415,8 +1434,9 @@
                 // 逻辑，准备做周赛链接,如果已经不存在组件就执行操作
                 let url = chContestUrl
                 let zhUrl = zhContestUrl
-                let tips = colorSpan.parentNode
-                let tipsPa = tips.parentNode
+                let tips = colorSpan?.parentNode
+                if (tips == null) return
+                let tipsPa = tips?.parentNode
                 // tips 一栏的父亲节点第一子元素的位置, 插入后变成竞赛信息位置
                 let tipsChildone = tipsPa.childNodes[1]
                 // 题目内容, 插入后变成原tips栏目
@@ -1437,33 +1457,31 @@
                     let span = document.createElement("span")
                     let span2 = document.createElement("span")
                     let span3 = document.createElement("span")
-                    let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
-                    if (levelData[title] != null) {
-                        let des = "算术评级: " + levelData[title]["Level"].toString()
+                    levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
+                    if (levelData[id] != null) {
+                        // console.log(levelData[id])
+                        let des = "算术评级: " + levelData[id]["Level"].toString()
                         span3.innerText = des
                         span3.onclick = function(e) {
                             e.preventDefault();
                             let des = `
-                                1      无算法要求
-                                2      知道常用数据结构和算法并简单使用
-                                3      理解常用数据结构和算法
-                                4      掌握常用数据结构和算法
-                                5      熟练掌握常用数据结构和算法，初步了解高级数据结构
-                                6      深入理解并灵活应用数据结构和算法，理解高级数据结构
-                                7      结合多方面的数据结构和算法，处理较复杂问题
-                                8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
-                                9      处理复杂问题，对时间复杂度的要求更严格
-                                10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
-                                11     竞赛内容，知识点超出面试范围
+                            1      无算法要求
+                            2      知道常用数据结构和算法并简单使用
+                            3      理解常用数据结构和算法
+                            4      掌握常用数据结构和算法
+                            5      熟练掌握常用数据结构和算法，初步了解高级数据结构
+                            6      深入理解并灵活应用数据结构和算法，理解高级数据结构
+                            7      结合多方面的数据结构和算法，处理较复杂问题
+                            8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
+                            9      处理复杂问题，对时间复杂度的要求更严格
+                            10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
+                            11     竞赛内容，知识点超出面试范围
                             `
                             layer.open({
-                                type: 1 // Page 层类型
-                                ,area: ['700px', '320px']
+                                area: ['700px', '450px']
                                 ,title: '算术评级说明'
-                                ,shade: 0.6 // 遮罩透明度
-                                ,maxmin: true // 允许全屏最小化
-                                ,anim: 5 // 0-6的动画形式，-1不开启
-                                ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${des}</p>`
+                                ,closeBtn:1
+                                ,content: `<p class="containerlingtea" style="color:#000;">${des}</p>`
                             });
                         }
                         abody3.removeAttribute("hidden")
@@ -1499,7 +1517,7 @@
                         abody2.setAttribute("hidden", "true")
                     }
                     abody.setAttribute("style", "padding-right: 10px;")
-                    abody2.setAttribute("style", "padding-top: 1.5px;")
+                    // abody2.setAttribute("style", "padding-top: 1.5px;")
                     abody.appendChild(span)
                     abody2.appendChild(span2)
                     abody3.appendChild(span3)
@@ -1515,8 +1533,8 @@
                     let le = pa.childNodes.length
                     // 存在就直接替换
                     let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
-                    if (levelData[title] != null) {
-                        let des = "算术评级: " + levelData[title]["Level"].toString()
+                    if (levelData[id] != null) {
+                        let des = "算术评级: " + levelData[id]["Level"].toString()
                         pa.childNodes[le - 3].childNodes[0].innerText = des
                         pa.childNodes[le - 3].childNodes[0].onclick = function(e) {
                             e.preventDefault();
@@ -1746,7 +1764,7 @@
         async function getScore() {
             let now = getCurrentDate(1)
             preDate = GM_getValue("preDate", "")
-            if (t2rate["tagVersion6"] == null || (preDate == "" || preDate != now)) {
+            if (t2rate["tagVersion9"] == null || (preDate == "" || preDate != now)) {
                 // 每天重置为空
                 GM_setValue("pbSubmissionInfo", "{}")
                 let res = await new Promise((resolve, reject) => {
@@ -1769,19 +1787,22 @@
                     // 保留唯一标识
                     t2rate = {}
                     pbName2Id = {}
+                    pbNamee2Id = {}
                     let dataStr = res.response
                     let json = eval(dataStr)
                     for (const element of json) {
                         t2rate[element.ID] = element
                         t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
                         pbName2Id[element.TitleZH] = element.ID
+                        pbNamee2Id[element.Title] = element.ID
                     }
-                    t2rate["tagVersion6"] = {}
+                    t2rate["tagVersion9"] = {}
                     console.log("everyday getdate once...")
                     preDate = now
                     GM_setValue("preDate", preDate)
                     GM_setValue("t2ratedb", JSON.stringify(t2rate))
                     GM_setValue("pbName2Id", JSON.stringify(pbName2Id))
+                    GM_setValue("pbNamee2Id", JSON.stringify(pbNamee2Id))
                 }
             }
         }
@@ -1790,7 +1811,7 @@
         // 更新level数据
         async function getPromiseLevel() {
             let week = new Date().getDay()
-            if (levelData["tagVersion20"] == null || week == 1) {
+            if (levelData["tagVersion24"] == null || week == 1) {
                 let res = await new Promise((resolve, reject) => {
                     GM_xmlhttpRequest({
                         method: "get",
@@ -1809,17 +1830,24 @@
                 });
                 if (res.status === 200) {
                     levelData = {}
+                    levelTc2Id = {}
+                    levelTe2Id = {}
                     let dataStr = res.response
                     let json = eval(dataStr)
                     for (const element of json) {
-                        if (typeof element.TitleZH == 'string') {
-                            let title = element.TitleZH.split(" ").join("")
-                            levelData[title] = element
+                        if (typeof element.TitleCn == 'string') {
+                            let titlec = element.TitleCn
+                            let title = element.Title
+                            levelData[element.ID] = element
+                            levelTc2Id[titlec] = element.ID
+                            levelTe2Id[title] = element.ID
                         }
                     }
-                    levelData["tagVersion20"] = {}
+                    levelData["tagVersion24"] = {}
                     console.log("every Monday get level once...")
                     GM_setValue("levelData", JSON.stringify(levelData))
+                    GM_setValue("levelTc2Id", JSON.stringify(levelTc2Id))
+                    GM_setValue("levelTe2Id", JSON.stringify(levelTe2Id))
                 }
             }
         }
@@ -1863,6 +1891,8 @@
             });
         }
     }
+    // 获取必须获取的数据
+    getNeedData()
 
     // 定时启动函数程序
     clearAndStart(location.href, 1, true)
