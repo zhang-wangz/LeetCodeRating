@@ -14,15 +14,16 @@ arr = []
 for d in data:
     v = {}
     v["ID"] = d[0]
-    v['TitleZH'] = d[1]
-    v["Url"] = d[2]
-    v["Ispaid"] = d[3]
-    v["Type"] = d[4]
-    v["Level"] = d[5]
-    v["NextLevel"] = d[6]
-    v["Difficulty"] = d[7]
-    if str(d[8]) == "nan": d[8] = ""
-    v["ContestInfo"] = str(d[8])
+    v["Title"] = d[1]
+    v['TitleCn'] = d[2]
+    v["Url"] = d[3]
+    v["Ispaid"] = d[4]
+    v["Type"] = d[5]
+    v["Level"] = d[6]
+    v["NextLevel"] = d[7]
+    v["Difficulty"] = d[8]
+    if str(d[9]) == "nan": d[9] = ""
+    v["ContestInfo"] = str(d[9])
     arr.append(v)
 with open("./stormlevel/data.json", 'w') as f:
     f.write(json.dumps(arr))
