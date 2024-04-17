@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.2
+// @version      2.2.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -159,12 +159,13 @@
 // @note         2024-04-13 2.2.0 恢复题解复制去除版权信息尾巴功能并修复bug(2.1.10导致的)
 // @note         2024-04-16 2.2.1 算术评级适配英文题目并修复部分遗留bug
 // @note         2024-04-17 2.2.2 修复去除copyright尾巴造成的代码编辑区代码过长时变成省略号的问题
+// @note         2024-04-17 2.2.3 题目页面全区(题目描述，题解，提交页面) a标签css和leetcode原生css冲突问题修复
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.2"
+    let version = "2.2.3"
 
 
     // 页面相关url

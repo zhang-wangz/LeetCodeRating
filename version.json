@@ -1,4 +1,4 @@
 {
-  "version": "2.2.2",
-  "content": "修复去除copyright尾巴造成的代码编辑区代码过长时变成省略号的问题"
+  "version": "2.2.3",
+  "content": "题目页面全区(题目描述，题解，提交页面) a标签css和leetcode原生css冲突问题修复"
 }
