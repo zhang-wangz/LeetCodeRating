@@ -1263,7 +1263,7 @@
     function createSearchBtn() {
         if(!GM_getValue("switchpbsearch")) return
         if (document.querySelector("#id-dropdown") == null) {
-            $(document.body).append(`<link href="https://unpkg.com/leetcoderating@1.0.4/index.min.css" rel="stylesheet">`)
+            $(document.body).append(`<link href="https://unpkg.com/leetcoderating@1.0.5/index.min.css" rel="stylesheet">`)
             // 做个搜索框
             let div = document.createElement("div")
             div.setAttribute("class", "lcr layui-inline")

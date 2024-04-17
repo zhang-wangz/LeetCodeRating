@@ -18,6 +18,7 @@ module.exports = {
   },
   module: {
     rules: [
+      { test: /\.jpe?g$|\.gif$|\.png$|\.svg$|\.woff$|\.ttf$/, loader: "file-loader" },
       {
         test: /\.scss$/,
         use: [
