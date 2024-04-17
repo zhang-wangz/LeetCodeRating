@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.1
+// @version      2.2.2
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -158,12 +158,13 @@
 // @note         2024-04-13 2.1.10 恢复题解复制去除版权信息尾巴功能
 // @note         2024-04-13 2.2.0 恢复题解复制去除版权信息尾巴功能并修复bug(2.1.10导致的)
 // @note         2024-04-16 2.2.1 算术评级适配英文题目并修复部分遗留bug
+// @note         2024-04-17 2.2.2 修复去除copyright尾巴造成的代码编辑区代码过长时变成省略号的问题
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.1"
+    let version = "2.2.2"
 
 
     // 页面相关url
@@ -458,6 +459,18 @@
 
     function copyNoRight() {
         new ElementGetter().each('.FN9Jv.WRmCx > div:has(code)', document, (item) => {
+            addCopy(item)
+            let observer = new MutationObserver(function(mutationsList, observer) {
+                // 检查每个变化
+                mutationsList.forEach(function(mutation) {
+                    addCopy(item)
+                });
+            });
+            // 配置 MutationObserver 监听的内容和选项
+            let config = { attributes: false, childList: true, subtree: false };
+            observer.observe(item, config);
+        });
+        function addCopy(item) {
             let nowShow = item.querySelector('div:not(.hidden) > div.group.relative > pre > code')
             let copyNode = nowShow.parentElement.nextElementSibling.cloneNode(true)
             nowShow.parentElement.nextElementSibling.setAttribute("hidden", true)
@@ -469,12 +482,7 @@
                 });
             };
             nowShow.parentNode.parentNode.appendChild(copyNode);
-        });
-        document.addEventListener('copy', function (e) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            e.clipboardData.setData('Text', window.getSelection().toString());
-        });
+        }
     }
     if(GM_getValue("switchcopyright")) copyNoRight()
 
