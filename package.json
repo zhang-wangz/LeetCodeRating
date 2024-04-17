@@ -1,0 +1,24 @@
+{
+  "name": "leetcoderating",
+  "version": "1.0.4",
+  "description": "<p align=center>\r <img src=\"https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/logo.png\"/>\r   <br>\r   <a title=\"Hits\" target=\"_blank\" href=\"https://github.com/zhang-wangz/LeetCodeRating\"><img src=\"https://hits.b3log.org/zhang-wangz/LeetCodeRating.svg\"></a>\r   <img src=\"https://img.shields.io/github/stars/zhang-wangz/LeetCodeRating?style=flat-square\"/>\r   <img src=\"https://img.shields.io/github/contributors/zhang-wangz/LeetCodeRating?style=flat-square\"/>\r   <img src=\"https://img.shields.io/github/commit-activity/y/zhang-wangz/LeetCodeRating?style=flat-square\"/>\r   <img src=\"https://img.shields.io/github/last-commit/zhang-wangz/LeetCodeRating?style=flat-square\"/>\r   <br>\r   <img src=\"https://img.shields.io/github/issues/zhang-wangz/LeetCodeRating?style=flat-square\"/>\r   <img src=\"https://img.shields.io/github/issues-pr/zhang-wangz/LeetCodeRating?style=flat-square\"/>\r   <img src=\"https://img.shields.io/github/watchers/zhang-wangz/LeetCodeRating?style=flat-square\"/>\r   <img src=\"https://img.shields.io/github/issues-closed/zhang-wangz/LeetCodeRating?style=flat-square\"/>\r   <br>\r   LeetCodeRating，一款显示题目对应周赛难度分的浏览器插件。\r   <br>\r   支持中文和英文双站点，安装英文版本切换请切换github tag为english \r </p>",
+  "main": "scss/index.scss",
+  "scripts": {
+    "build-css": "webpack"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^7.1.1",
+    "mini-css-extract-plugin": "^2.9.0",
+    "sass": "^1.75.0",
+    "sass-loader": "^14.2.1",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "layui": "^2.9.8"
+  }
+}
