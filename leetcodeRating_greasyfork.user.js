@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.3
+// @version      2.2.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -160,12 +160,13 @@
 // @note         2024-04-16 2.2.1 算术评级适配英文题目并修复部分遗留bug
 // @note         2024-04-17 2.2.2 修复去除copyright尾巴造成的代码编辑区代码过长时变成省略号的问题
 // @note         2024-04-17 2.2.3 题目页面全区(题目描述，题解，提交页面) a标签css和leetcode原生css冲突问题修复
+// @note         2024-04-17 2.2.4 题目页css冲突独立成leetcoderatingjs包，去除版本校验只在题库页进行的限制
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.3"
+    let version = "2.2.4"
 
 
     // 页面相关url
@@ -353,7 +354,7 @@
     }`
 
     // css 渲染
-    $(document.body).append(`<link href="https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/theme/default/layer.min.css" rel="stylesheet">`)
+    $(document.body).append(`<link href="https://cdn.bootcdn.net/ajax/libs/layer/3.5.1/theme/default/layer.min.css" rel="stylesheet">`)
     // 监听urlchange事件定义
     function initUrlChange() {
         let isLoad = false
@@ -1264,10 +1265,10 @@
     function createSearchBtn() {
         if(!GM_getValue("switchpbsearch")) return
         if (document.querySelector("#id-dropdown") == null) {
-            $(document.body).append(`<link href="https://unpkg.com/leetcoderating@1.0.5/index.min.css" rel="stylesheet">`)
+            $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.2/index.min.css" rel="stylesheet">`)
             // 做个搜索框
             let div = document.createElement("div")
-            div.setAttribute("class", "lcr layui-inline")
+            div.setAttribute("class", "layui-inline")
             // 适配黑色主题
             div.classList.add('leetcodeRating-search')
             div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="lcr layui-input" id="id-dropdown">`
@@ -1835,42 +1836,42 @@
         getPromiseLevel()
         
     
-        if (location.href.match(allUrl)) {
-            // 版本更新机制
-            GM_xmlhttpRequest({
-                method: "get",
-                url: versionUrl + "?timeStamp=" + new Date().getTime(),
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                onload: function (res) {
-                    if (res.status === 200) {
-                        console.log("enter home page check version once...")
-                        let dataStr = res.response
-                        let json = JSON.parse(dataStr)
-                        let v = json["version"]
-                        let upcontent = json["content"]
-                        if (v != version) {
-                            layer.open({
-                                area: ['400px', '260px'],
-                                content: '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' + v +'啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
-                                yes: function (index, layer0) {
-                                    let c = window.open(sciptUrl + "?timeStamp=" + new Date().getTime())
-                                    c.close()
-                                    layer.close(index)
-                                }
-                            });
-                        } else {
-                            console.log("leetcodeRating难度分插件当前已经是最新版本~")
-                        }
+        
+        // 版本更新机制
+        GM_xmlhttpRequest({
+            method: "get",
+            url: versionUrl + "?timeStamp=" + new Date().getTime(),
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            onload: function (res) {
+                if (res.status === 200) {
+                    console.log("enter home page check version once...")
+                    let dataStr = res.response
+                    let json = JSON.parse(dataStr)
+                    let v = json["version"]
+                    let upcontent = json["content"]
+                    if (v != version) {
+                        layer.open({
+                            area: ['400px', '260px'],
+                            content: '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' + v +'啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
+                            yes: function (index, layer0) {
+                                let c = window.open(sciptUrl + "?timeStamp=" + new Date().getTime())
+                                c.close()
+                                layer.close(index)
+                            }
+                        });
+                    } else {
+                        console.log("leetcodeRating难度分插件当前已经是最新版本~")
                     }
-                },
-                onerror: function (err) {
-                    console.log('error')
-                    console.log(err)
                 }
-            });
-        }
+            },
+            onerror: function (err) {
+                console.log('error')
+                console.log(err)
+            }
+        });
+        
     }
     // 获取必须获取的数据
     getNeedData()

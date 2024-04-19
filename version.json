@@ -1,4 +1,4 @@
 {
-  "version": "2.2.3",
-  "content": "题目页面全区(题目描述，题解，提交页面) a标签css和leetcode原生css冲突问题修复"
+  "version": "2.2.4",
+  "content": "题目页css冲突独立成leetcoderatingjs包，去除版本校验只在题库页进行的限制"
 }
