@@ -1,30 +1,26 @@
 @charset 'UTF-8';
 
 @import "layui";
-.lcr {
-    a {
-        color: inherit !important;
-        text-decoration: inherit !important;
-    }
-    .dark .leetcodeRating-search,
-    .dark .layui-panel,
-    .dark #id-dropdown,
-    .dark [lay-id=id-dropdown] ul,
-    .dark [lay-id=id-dropdown] ul li,
-    .dark [lay-id=id-dropdown] .layui-menu-body-title a,
-    .dark .leetcodeRating-search input{
+.dark {
+    .leetcodeRating-search,
+    .layui-panel,
+    #id-dropdown,
+    [lay-id=id-dropdown] ul,
+    [lay-id=id-dropdown] ul li,
+    [lay-id=id-dropdown] .layui-menu-body-title a,
+    .leetcodeRating-search input{
         background-color: rgb(26 26 26/var(--tw-bg-opacity));
         border-color: hsl(var(--sd-border));
         color: rgb(200 200 200 / var(--tw-text-opacity)) !important;
     }
     
-    .dark .layui-input:hover, 
-    .dark .layui-textarea:hover {
+    .layui-input:hover, 
+    .layui-textarea:hover {
         border-color: #999 !important;
     }
     
-    .dark .layui-menu-body-title:hover,
-    .dark .layui-menu-body-title a:hover {
+    .layui-menu-body-title:hover,
+    .layui-menu-body-title a:hover {
         background-color: var(--fill-quaternary) !important;
     }
 }
