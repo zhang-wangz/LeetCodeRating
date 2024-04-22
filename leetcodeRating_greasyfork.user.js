@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.5
+// @version      2.2.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -161,12 +161,13 @@
 // @note         2024-04-17 2.2.3 题目页面全区(题目描述，题解，提交页面) a标签css和leetcode原生css冲突问题修复
 // @note         2024-04-19 2.2.4 题目页css冲突独立成leetcoderatingjs包，去除版本校验只在题库页进行的限制
 // @note         2024-04-22 2.2.5 插件专属css包去除所有基础标签样式渲染，避免与力扣样式冲突
+// @note         2024-04-22 2.2.6 修改题目页面搜索框查询太频繁导致卡顿的问题，改成没有新输入之后延迟之后再调用查询接口
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.5"
+    let version = "2.2.6"
     // css 渲染
     $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.3/index.min.css" rel="stylesheet">`)
 
@@ -1285,15 +1286,24 @@
                         this.elem.attr('data-id', obj.id)
                     }
                 });
-                
-                $(inst.config.elem).on('input propertychange', function(event) {
-                    let elem = $(this);
-                    let value = elem.val().trim();
-                    elem.removeAttr('data-id');
-                    let dataNew = findData(value);
-                    dropdown.reloadData(inst.config.id, {
-                        data: dataNew
-                    })
+                let elemInput = $(inst.config.elem)
+                let lastQueryTime = '';
+                let timer;
+                elemInput.on('input propertychange', function(event) {
+                    clearTimeout(timer);
+                    timer = setTimeout(function() {
+                        let currentTime = Date.now();
+                        if (currentTime - lastQueryTime >= 800) {
+                            let elem = $(inst.config.elem);
+                            let value = elem.val().trim();
+                            elem.removeAttr('data-id');
+                            let dataNew = findData(value);
+                            dropdown.reloadData(inst.config.id, {
+                                data: dataNew
+                            })
+                            lastQueryTime = currentTime;
+                        }
+                    }, 800);
                 });
 
                 $(inst.config.elem).on('blur', function() {
