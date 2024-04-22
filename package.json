@@ -1,6 +1,6 @@
 {
   "name": "leetcoderatingjs",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": " LeetCodeRating,一款显示题目对应周赛难度分的浏览器插件。该包专门为该浏览器插件服务",
   "main": "scss/index.scss",
   "scripts": {
