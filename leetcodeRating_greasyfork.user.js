@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.4
+// @version      2.2.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -24,7 +24,6 @@
 // @connect      raw.githubusercontents.com
 // @connect      raw.githubusercontent.com
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js
-// @require      https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/layer.min.js
 // @require      https://unpkg.com/layui@2.9.6/dist/layui.js
 // @require      https://greasyfork.org/scripts/463455-nelementgetter/code/NElementGetter.js?version=1172110
 // @grant        unsafeWindow
@@ -160,14 +159,16 @@
 // @note         2024-04-16 2.2.1 算术评级适配英文题目并修复部分遗留bug
 // @note         2024-04-17 2.2.2 修复去除copyright尾巴造成的代码编辑区代码过长时变成省略号的问题
 // @note         2024-04-17 2.2.3 题目页面全区(题目描述，题解，提交页面) a标签css和leetcode原生css冲突问题修复
-// @note         2024-04-17 2.2.4 题目页css冲突独立成leetcoderatingjs包，去除版本校验只在题库页进行的限制
+// @note         2024-04-19 2.2.4 题目页css冲突独立成leetcoderatingjs包，去除版本校验只在题库页进行的限制
+// @note         2024-04-22 2.2.5 插件专属css包去除所有基础标签样式渲染，避免与力扣样式冲突
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.4"
-
+    let version = "2.2.5"
+    // css 渲染
+    $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.3/index.min.css" rel="stylesheet">`)
 
     // 页面相关url
     const allUrl = "https://leetcode.cn/problemset/.*"
@@ -353,8 +354,6 @@
         }
     }`
 
-    // css 渲染
-    $(document.body).append(`<link href="https://cdn.bootcdn.net/ajax/libs/layer/3.5.1/theme/default/layer.min.css" rel="stylesheet">`)
     // 监听urlchange事件定义
     function initUrlChange() {
         let isLoad = false
@@ -438,7 +437,7 @@
             }
             menu_ID[menu_ID.length] = GM_registerMenuCommand(`🏁 当前版本 ${version}`, function () {window.GM_openInTab('https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86', {active: true,insert: true,setParent: true});});
             menu_ID_Content[menu_ID_Content.length] = `🏁 当前版本 ${version}`
-            menu_ID[menu_ID.length+1] = GM_registerMenuCommand(`🏁 企业群号 654726006`, function () {});
+            menu_ID[menu_ID.length+1] = GM_registerMenuCommand(`🏁 企鹅群号 654726006`, function () {});
             menu_ID_Content[menu_ID_Content.length+1] = `🏁 654726006`
         }
 
@@ -1261,11 +1260,9 @@
         }
     }
 
-
     function createSearchBtn() {
         if(!GM_getValue("switchpbsearch")) return
         if (document.querySelector("#id-dropdown") == null) {
-            $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.2/index.min.css" rel="stylesheet">`)
             // 做个搜索框
             let div = document.createElement("div")
             div.setAttribute("class", "layui-inline")
@@ -1846,7 +1843,7 @@
             },
             onload: function (res) {
                 if (res.status === 200) {
-                    console.log("enter home page check version once...")
+                    console.log("check version success...")
                     let dataStr = res.response
                     let json = JSON.parse(dataStr)
                     let v = json["version"]

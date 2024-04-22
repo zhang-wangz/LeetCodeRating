@@ -1,4 +1,4 @@
 {
-  "version": "2.2.4",
-  "content": "题目页css冲突独立成leetcoderatingjs包，去除版本校验只在题库页进行的限制"
+  "version": "2.2.5",
+  "content": "插件专属css包去除所有基础标签样式渲染，避免与力扣样式冲突"
 }
