@@ -1629,9 +1629,11 @@
                 if(start == "study") {
                     id = setInterval(getStudyData, timeout, css_selector)
                 }  else if(start == "pb") {
-                    id = setInterval(getpb, timeout, css_selector)
-                    let pbsideId = setInterval(getpbsideData, timeout, css_selector)
-                    GM_setValue("pbside", pbsideId)
+                    id = setInterval(getpb, timeout)
+                    if(GM_getValue("switchpbside")) {
+                        let pbsideId = setInterval(getpbsideData, timeout)
+                        GM_setValue("pbside", pbsideId)
+                    }
                 } else id = setInterval(funcLst[targetIdx], timeout)
                 GM_setValue(start, id)
             }
