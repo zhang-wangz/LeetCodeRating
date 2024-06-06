@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.8
+// @version      2.2.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -163,12 +163,13 @@
 // @note         2024-04-22 2.2.5 插件专属css包去除所有基础标签样式渲染，避免与力扣样式冲突
 // @note         2024-04-22 2.2.6 修改题目页面搜索框查询太频繁导致卡顿的问题，改成没有新输入之后延迟之后再调用查询接口
 // @note         2024-06-06 2.2.8 (版本存在跳过，是因为修复有误)题目页左侧栏适配ui，题单页适配ui，题目页和题单页优化定时，一定次数后停止运行，防止页面卡顿
+// @note         2024-06-06 2.2.9 同上，该版本为补丁版本
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.8"
+    let version = "2.2.9"
     // css 渲染
     $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.3/index.min.css" rel="stylesheet">`)
 
@@ -1003,7 +1004,7 @@
     }
     // 确认之后不再刷新
     let studyf;
-    let studyCnt = 60;
+    let studyCnt = 0;
     function getStudyData(css_selector) {
         if (!GM_getValue("switchstudy")) return;
         levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
@@ -1092,8 +1093,9 @@
             totArr = document.querySelector(css_selector)
         }
         if (totArr == null) return;
-        let first = totArr.firstChild.childNodes[0].textContent
-        if (pbsidef && pbsidef == first) {
+        if (totArr.firstChild == null) return
+        let first = totArr.firstChild?.childNodes[0]?.textContent
+        if (first && pbsidef && pbsidef == first) {
             // 临时加的pbside
             if (pbsideCnt == 10) clearId("pbside")
             pbsideCnt += 1
@@ -1378,7 +1380,7 @@
         // 如果持续10次都不在描述页面, 则关闭pb定时
         if (!isDescript) {
             // 非des清除定时
-            if(pbCnt == 10) clearId("pb")
+            if(pbCnt == 6) clearId("pb")
             pbCnt += 1
             return
         }
@@ -1390,15 +1392,16 @@
                 pbCnt = 0
                 return
             }
-            let data = t.textContent.split(".")
-            let id = data[0].trim()
-            // console.log(t1, id)
-            if (t1 != null && t1 == id) {
+
+            // console.log(t1, t.textContent)
+            if (t1 != null && t1 == t.textContent) {
                 // des清除定时
-                if (pbCnt == 10) clearId("pb")
+                if (pbCnt == 6) clearId("pb")
                 pbCnt += 1
                 return
             }
+            let data = t.textContent.split(".")
+            let id = data[0].trim()
             // code提示功能
             codefunc()
             let colorA = ['.text-difficulty-hard', '.text-difficulty-easy','.text-difficulty-medium']
@@ -1590,7 +1593,7 @@
                     pa.childNodes[le - 1].setAttribute("hidden", "true")
                 }
             }
-            t1 = id
+            t1 = t.textContent
         }
     }
 
@@ -1601,8 +1604,15 @@
         console.log("clear " + name + " " + id + " success")
     }
 
+    function initCnt() {
+        pbsideCnt = 0
+        pbCnt = 0
+        studyCnt = 0
+    }
+
 
     function clearAndStart(url, timeout, isAddEvent) {
+            initCnt()
             let start = ""
             let targetIdx = -1
             let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search', 'study']
