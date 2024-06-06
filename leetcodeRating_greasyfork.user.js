@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.6
+// @version      2.2.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -162,12 +162,13 @@
 // @note         2024-04-19 2.2.4 题目页css冲突独立成leetcoderatingjs包，去除版本校验只在题库页进行的限制
 // @note         2024-04-22 2.2.5 插件专属css包去除所有基础标签样式渲染，避免与力扣样式冲突
 // @note         2024-04-22 2.2.6 修改题目页面搜索框查询太频繁导致卡顿的问题，改成没有新输入之后延迟之后再调用查询接口
+// @note         2024-06-06 2.2.7 题目页左侧栏适配ui，题单页适配ui，题目页和题单页优化定时，一定次数后停止运行，防止页面卡顿
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.6"
+    let version = "2.2.7"
     // css 渲染
     $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.3/index.min.css" rel="stylesheet">`)
 
@@ -932,48 +933,28 @@
     let pblistt, pblistf;
     function getPblistData() {
         if (!GM_getValue("switchpblist")) return;
-        let arrList = document.querySelectorAll("div[role='rowgroup']")
-        let arr = arrList[0]
-        for (let ele of arrList) {
-            if (ele.childNodes.length != 0) {
-                arr = ele 
-                break
-            }
-        }
+        let arr = document.querySelector("div[data-rbd-droppable-id='droppable']")
         if (arr == null) return
         if (pblistt != null && arr.lastChild && pblistt == arr.lastChild.textContent
             && arr.firstChild && pblistf == arr.firstChild.textContent) {
             return
         }
-        let head = document.querySelector("div[role='row']")
-        // 确认难度序列
-        let rateRefresh = false
-        let headndidx;
-        for (let i = 0; i < head.childNodes.length; i++) {
-            let headEle = head.childNodes[i]
-            if (headEle.textContent.includes("难度")) {
-                headndidx = i
-            }
-            if (headEle.textContent.includes("题目评分")){
-                rateRefresh = true
-            }
-
-        }
         let childs = arr.childNodes
         for (const element of childs) {
             let v = element
-            if (!v.childNodes[1]) return
-            let t = v.childNodes[1].textContent
-            let data = t.split(".")
+            let tp = v.childNodes[0]?.childNodes[0]?.childNodes[1]
+            if (!tp) return
+            let title = tp.childNodes[0]?.textContent
+            if (!title) return
+            let data = title.split(".")
             let id = data[0].trim()
-            let nd = v.childNodes[headndidx].textContent
-            if (t2rate[id] != null && !rateRefresh) {
-                nd = t2rate[id]["Rating"]
-                v.childNodes[headndidx].childNodes[0].innerHTML = nd
+            let nd = tp.childNodes[1]
+            if (t2rate[id] != null) {
+                nd.innerText = t2rate[id]["Rating"]
             } else {
-                let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                let cls = v.childNodes[headndidx].childNodes[0].getAttribute("class")
-                v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[cls]
+                let nd2ch = { "text-[14px] text-sd-easy": "简单", "text-[14px] text-sd-medium": "中等", "text-[14px] text-sd-hard": "困难" }
+                let cls = nd.getAttribute("class")
+                nd.innerText = nd2ch[cls]
             }
         }
         if(arr.lastChild) pblistt = arr.lastChild.textContent
@@ -1020,8 +1001,9 @@
             }
         }
     }
-    // 只确认一次
+    // 确认之后不再刷新
     let studyf;
+    let studyCnt = 60;
     function getStudyData(css_selector) {
         if (!GM_getValue("switchstudy")) return;
         levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
@@ -1033,8 +1015,13 @@
             totArr = document.querySelector(css_selector)
         }
         if (totArr == null) return;
-        let first = totArr.firstChild.childNodes[0].textContent
-        if (studyf && studyf == first) {
+        let first = totArr.firstChild?.childNodes[1]?.textContent
+        if (studyf && first && studyf == first) {
+            // 到达60次数之后删除定时防止卡顿
+            if (studyCnt == 10) {
+                clearId("study")
+            }
+            studyCnt += 1
             return
         }
         let childs = totArr.childNodes
@@ -1091,7 +1078,7 @@
                 }
             }
         }
-        if(totArr.firstChild.childNodes[0]) studyf = totArr.firstChild.childNodes[0].textContent
+        if(totArr.firstChild?.childNodes[1]) studyf = totArr.firstChild?.childNodes[1]?.textContent
         console.log("has refreshed...")
     }
 
@@ -1107,6 +1094,9 @@
         if (totArr == null) return;
         let first = totArr.firstChild.childNodes[0].textContent
         if (pbsidef && pbsidef == first) {
+            // 临时加的pbside
+            if (pbsideCnt == 10) clearId("pbside")
+            pbsideCnt += 1
             return
         }
         let childs = totArr.childNodes
@@ -1175,49 +1165,53 @@
         key.removeAttribute('data-focus-visible-added')
         key.removeAttribute('aria-activedescendant')
     }
-    
+
+    let pbsideCnt = 0
     function getpbsideData() {
         // 左侧栏分数显示
         let searchParams = location.search
         levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
         // ?envType=study-plan-v2&envId=leetcode-75
-        if (searchParams.indexOf("?") != -1) { 
-            let str = searchParams.substring(1); 
-            let strs = str.split("="); 
-            let code = strs[0];
-            // 参数含有envType就是使用标签进行渲染
-            if (code.includes("envType")) {
-                let overflow = document.querySelector(".overflow-auto.p-5")
-                if (overflow == null) return
-                let studyplan = overflow.childNodes[0].childNodes[1];
-                if(!studyplan) studyf = null
-                if(GM_getValue("switchstudy") && studyplan) {
-                    getpbside(studyplan)
-                }
-            }
-        } else {
-            // 题目页面题库展开栏
+        // 类似学习计划的展开栏
+        if (searchParams.includes("envType")
+            && !searchParams.includes("daily-question")
+            && !searchParams.includes("problem-list")) {
             let overflow = document.querySelector(".overflow-auto.p-5")
             if (overflow == null) return
-            let pbarr = overflow?.childNodes[0]?.childNodes[1]?.childNodes[0];
+            let studyplan = overflow.childNodes[0].childNodes[1];
+            if(!studyplan) studyf = null
+            if(GM_getValue("switchstudy") && studyplan) {
+                getpbside(studyplan)
+            }
+        } else {
+            // 普通展开栏
+            let overflow = document.querySelector(".overflow-auto.p-4")
+            if (overflow == null) return
+            let pbarr = overflow?.childNodes[0]?.childNodes[1];
             if (pbarr == null) return
-            if (pbsidef == pbarr.firstChild.textContent) return
+            if (pbarr.firstChild == null) return
+            if (pbsidef == pbarr.firstChild?.textContent) {
+                if (pbsideCnt == 10) clearId("pbside")
+                pbsideCnt += 1
+                return
+            }
             if (pbarr != null) {
                 for (const onepb of pbarr.childNodes) {
-                    let pbName = onepb.childNodes[0]?.childNodes[1]?.childNodes[0]?.textContent
+                    let tp = onepb.childNodes[0]?.childNodes[1]
+                    if (!tp) return
+                    let pbName = tp.childNodes[0]?.textContent
                     if (pbName == null) return
-                    let nd = onepb.childNodes[0]?.childNodes[1]?.childNodes[1]
+                    let nd = tp.childNodes[1]
                     if (nd == null) return 
                     // 如果为算术，说明当前已被替换过
                     if (nd.textContent.includes("算术")) continue
                     let data = pbName.split(".")
                     // console.log(pbName)
-                    // console.log(level)
                     let hit = false
                     let id = data[0]
                     let level = levelData[id]
-                    let darkn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
-                    let lightn2c =  {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
+                    let darkn2c =  {"text-sd-easy": "简单", "text-sd-medium": "中等", "text-sd-hard": "困难" }
+                    let lightn2c =  {"text-sd-easy": "简单", "text-sd-medium": "中等", "text-sd-hard": "困难" }
                     // rating
                     if (id && t2rate[id]) {
                         let ndRate = t2rate[id]["Rating"]
@@ -1227,8 +1221,6 @@
                         if (!nd) break
                         let clr = nd.getAttribute("class")
                         if (clr == null) continue
-                        // console.log(nd)
-                        // console.log(clr)
                         let flag = true
                         for (let c in lightn2c) {
                             if (!flag) break
@@ -1356,104 +1348,194 @@
 
     // code提示功能
     function codefunc() {
-        if (GM_getValue("switchcode")) {
-            waitForKeyElements(".overflowingContentWidgets", ()=>{
-                $('.overflowingContentWidgets').remove()
-            });
-            let div = document.querySelector('div.h-full.w-full')
-            div.onkeydown = function(event) {
-                if (event.keyCode >= 65 && event.keyCode <= 90 || event.keyCode == 13) {
-                    eventhappend()
+        if (!GM_getValue("switchcode")) return
+        if (document.querySelector("#codefunc") == null) {
+                waitForKeyElements(".overflowingContentWidgets", () => {
+                    $('.overflowingContentWidgets').remove()
+                });
+                let div = document.querySelector('div.h-full.w-full')
+                div.onkeydown = function (event) {
+                    if (event.keyCode >= 65 && event.keyCode <= 90 || event.keyCode == 13) {
+                        eventhappend()
+                    }
                 }
+                let flag = document.createElement("div")
+                flag.setAttribute("id", "codefunc")
+                document.body.append(flag)
             }
-        }
     }
+
+
+    let pbCnt = 0
     function getpb() {
         let switchrealoj = GM_getValue("switchrealoj")
-        // 左边栏
-        if(GM_getValue("switchpbside")) getpbsideData()
         // 搜索功能
-        createSearchBtn()
+        if(GM_getValue("switchpbsearch")) createSearchBtn()
         // 题目页面
         let curUrl = location.href
         // 只有描述页才进行加载
         let isDescript = !curUrl.match(regDiss) && !curUrl.match(regSovle) && !curUrl.match(regPbSubmission)
-        if (isDescript) {
-            if (isDynamic) {
-                // 流动布局逻辑
-                let t = document.querySelector(".text-title-large")
-                if (t == null) {
-                    t1 = "unknown"
-                    return
-                }
-                let data = t.textContent.split(".")
-                let id = data[0].trim()
-                if (t1 != null && t1 == id) {
-                    return
-                }
-                // code提示功能
-                codefunc()
-                let colorA = ['.text-difficulty-hard', '.text-difficulty-easy','.text-difficulty-medium']
-                let colorSpan;
-                for (const color of colorA) {
-                    colorSpan = document.querySelector(color)
-                    if (colorSpan) break
-                }
-                if (!colorSpan) {
-                    if(switchrealoj) return
-                    console.log("color ele not found")
-                    return
-                }
+        // 如果持续10次都不在描述页面, 则关闭pb定时
+        if (!isDescript) {
+            // 非des清除定时
+            if(pbCnt == 10) clearId("pb")
+            pbCnt += 1
+            return
+        }
+        // 流动布局逻辑
+        if (isDynamic) {
+            let t = document.querySelector(".text-title-large")
+            if (t == null) {
+                t1 = "unknown"
+                pbCnt = 0
+                return
+            }
+            let data = t.textContent.split(".")
+            let id = data[0].trim()
+            // console.log(t1, id)
+            if (t1 != null && t1 == id) {
+                // des清除定时
+                if (pbCnt == 10) clearId("pb")
+                pbCnt += 1
+                return
+            }
+            // code提示功能
+            codefunc()
+            let colorA = ['.text-difficulty-hard', '.text-difficulty-easy','.text-difficulty-medium']
+            let colorSpan;
+            for (const color of colorA) {
+                colorSpan = document.querySelector(color)
+                if (colorSpan) break
+            }
+            if (!colorSpan) {
+                if(switchrealoj) return
+                console.log("color ele not found")
+                return
+            }
 
-                // 统计难度分数并且修改
-                let nd = colorSpan.getAttribute("class")
-                let nd2ch = { "text-difficulty-easy": "简单", "text-difficulty-medium": "中等", "text-difficulty-hard": "困难" }
-                if (switchrealoj || (t2rate[id] != null && GM_getValue("switchpbscore"))) {
-                    if (switchrealoj) colorSpan.remove()
-                    else if(t2rate[id] != null) colorSpan.innerHTML = t2rate[id]["Rating"]
-                } else {
-                    for (let item in nd2ch) {
-                        if (nd.toString().includes(item)) {
-                            colorSpan.innerHTML = nd2ch[item]
-                            break
-                        }
+            // 统计难度分数并且修改
+            let nd = colorSpan.getAttribute("class")
+            let nd2ch = { "text-difficulty-easy": "简单", "text-difficulty-medium": "中等", "text-difficulty-hard": "困难" }
+            if (switchrealoj || (t2rate[id] != null && GM_getValue("switchpbscore"))) {
+                if (switchrealoj) colorSpan.remove()
+                else if(t2rate[id] != null) colorSpan.innerHTML = t2rate[id]["Rating"]
+            } else {
+                for (let item in nd2ch) {
+                    if (nd.toString().includes(item)) {
+                        colorSpan.innerHTML = nd2ch[item]
+                        break
                     }
                 }
-                
-                // 逻辑，准备做周赛链接,如果已经不存在组件就执行操作
-                let url = chContestUrl
-                let zhUrl = zhContestUrl
-                let tips = colorSpan?.parentNode
-                if (tips == null) return
-                let tipsPa = tips?.parentNode
-                // tips 一栏的父亲节点第一子元素的位置, 插入后变成竞赛信息位置
-                let tipsChildone = tipsPa.childNodes[1]
-                // 题目内容, 插入后变成原tips栏目
-                let pbDescription = tipsPa.childNodes[2]
-                if (pbDescription.getAttribute("data-track-load") != null) {
-                    let divTips = document.createElement("div")
-                    divTips.setAttribute("class", "flex gap-1")
-                    let abody = document.createElement("a")
-                    abody.setAttribute("data-small-spacing", "true")
-                    abody.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
-                    let abody2 = document.createElement("a")
-                    abody2.setAttribute("data-small-spacing", "true")
-                    abody2.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
-                    
-                    let abody3 = document.createElement("a")
-                    abody2.setAttribute("data-small-spacing", "true")
-                    abody2.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
-                    let span = document.createElement("span")
-                    let span2 = document.createElement("span")
-                    let span3 = document.createElement("span")
-                    levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
-                    if (levelData[id] != null) {
-                        // console.log(levelData[id])
-                        let des = "算术评级: " + levelData[id]["Level"].toString()
-                        span3.innerText = des
-                        span3.onclick = function(e) {
-                            e.preventDefault();
-                            let des = `
+            }
+
+            // 逻辑，准备做周赛链接,如果已经不存在组件就执行操作
+            let url = chContestUrl
+            let zhUrl = zhContestUrl
+            let tips = colorSpan?.parentNode
+            if (tips == null) return
+            let tipsPa = tips?.parentNode
+            // tips 一栏的父亲节点第一子元素的位置, 插入后变成竞赛信息位置
+            let tipsChildone = tipsPa.childNodes[1]
+            // 题目内容, 插入后变成原tips栏目
+            let pbDescription = tipsPa.childNodes[2]
+            if (pbDescription.getAttribute("data-track-load") != null) {
+                let divTips = document.createElement("div")
+                divTips.setAttribute("class", "flex gap-1")
+                let abody = document.createElement("a")
+                abody.setAttribute("data-small-spacing", "true")
+                abody.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
+                let abody2 = document.createElement("a")
+                abody2.setAttribute("data-small-spacing", "true")
+                abody2.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
+
+                let abody3 = document.createElement("a")
+                abody2.setAttribute("data-small-spacing", "true")
+                abody2.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
+                let span = document.createElement("span")
+                let span2 = document.createElement("span")
+                let span3 = document.createElement("span")
+                levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
+                if (levelData[id] != null) {
+                    // console.log(levelData[id])
+                    let des = "算术评级: " + levelData[id]["Level"].toString()
+                    span3.innerText = des
+                    span3.onclick = function(e) {
+                        e.preventDefault();
+                        let des = `
+                        1      无算法要求
+                        2      知道常用数据结构和算法并简单使用
+                        3      理解常用数据结构和算法
+                        4      掌握常用数据结构和算法
+                        5      熟练掌握常用数据结构和算法，初步了解高级数据结构
+                        6      深入理解并灵活应用数据结构和算法，理解高级数据结构
+                        7      结合多方面的数据结构和算法，处理较复杂问题
+                        8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
+                        9      处理复杂问题，对时间复杂度的要求更严格
+                        10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
+                        11     竞赛内容，知识点超出面试范围
+                        `
+                        layer.open({
+                            area: ['700px', '450px']
+                            ,title: '算术评级说明'
+                            ,closeBtn:1
+                            ,content: `<p class="containerlingtea" style="color:#000;">${des}</p>`
+                        });
+                    }
+                    abody3.removeAttribute("hidden")
+                } else {
+                    span3.innerText = "未知评级"
+                    abody3.setAttribute("hidden", "true")
+                }
+                // ContestID_zh  ContestSlug
+                abody3.setAttribute("href", "")
+                abody3.setAttribute("style", "padding-right: 10px;")
+                abody3.setAttribute("target", "_blank")
+                if (t2rate[id] != null) {
+                    let contestUrl;
+                    let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                    if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
+                    span.innerText = t2rate[id]["ContestID_zh"]
+                    span2.innerText = t2rate[id]["ProblemIndex"]
+                    abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
+                    abody.setAttribute("target", "_blank")
+                    abody.removeAttribute("hidden")
+                    abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                    abody2.setAttribute("target", "_blank")
+                    if(switchrealoj) abody2.setAttribute("hidden", true)
+                    else abody2.removeAttribute("hidden")
+                } else {
+                    span.innerText = "对应周赛未知"
+                    abody.setAttribute("href", "")
+                    abody.setAttribute("target", "_self")
+                    abody.setAttribute("hidden", "true")
+                    span2.innerText = "未知"
+                    abody2.setAttribute("href", "")
+                    abody2.setAttribute("target", "_self")
+                    abody2.setAttribute("hidden", "true")
+                }
+                abody.setAttribute("style", "padding-right: 10px;")
+                // abody2.setAttribute("style", "padding-top: 1.5px;")
+                abody.appendChild(span)
+                abody2.appendChild(span2)
+                abody3.appendChild(span3)
+                divTips.appendChild(abody3)
+                divTips.appendChild(abody)
+                divTips.appendChild(abody2)
+                tipsPa.insertBefore(divTips, tips)
+            } else if ( tipsChildone.childNodes != null
+                        && tipsChildone.childNodes.length >= 2
+                        && (tipsChildone.childNodes[2].textContent.includes("Q")
+                        || tipsChildone.childNodes[2].textContent.includes("未知"))) {
+                let pa = tipsChildone
+                let le = pa.childNodes.length
+                // 存在就直接替换
+                let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
+                if (levelData[id] != null) {
+                    let des = "算术评级: " + levelData[id]["Level"].toString()
+                    pa.childNodes[le - 3].childNodes[0].innerText = des
+                    pa.childNodes[le - 3].childNodes[0].onclick = function(e) {
+                        e.preventDefault();
+                        let des = `
                             1      无算法要求
                             2      知道常用数据结构和算法并简单使用
                             3      理解常用数据结构和算法
@@ -1465,252 +1547,58 @@
                             9      处理复杂问题，对时间复杂度的要求更严格
                             10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
                             11     竞赛内容，知识点超出面试范围
-                            `
-                            layer.open({
-                                area: ['700px', '450px']
-                                ,title: '算术评级说明'
-                                ,closeBtn:1
-                                ,content: `<p class="containerlingtea" style="color:#000;">${des}</p>`
-                            });
-                        }
-                        abody3.removeAttribute("hidden")
-                    } else {
-                        span3.innerText = "未知评级"
-                        abody3.setAttribute("hidden", "true")
+                        `
+                        layer.open({
+                            type: 1 // Page 层类型
+                            ,area: ['700px', '320px']
+                            ,title: '算术评级说明'
+                            ,shade: 0.6 // 遮罩透明度
+                            ,maxmin: true // 允许全屏最小化
+                            ,anim: 5 // 0-6的动画形式，-1不开启
+                            ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${des}</p>`
+                        });
                     }
-                    // ContestID_zh  ContestSlug
-                    abody3.setAttribute("href", "")
-                    abody3.setAttribute("style", "padding-right: 10px;")
-                    abody3.setAttribute("target", "_blank")
-                    if (t2rate[id] != null) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        span.innerText = t2rate[id]["ContestID_zh"]
-                        span2.innerText = t2rate[id]["ProblemIndex"]
-                        abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        abody.setAttribute("target", "_blank")
-                        abody.removeAttribute("hidden")
-                        abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        abody2.setAttribute("target", "_blank")
-                        if(switchrealoj) abody2.setAttribute("hidden", true)
-                        else abody2.removeAttribute("hidden")
-                    } else {
-                        span.innerText = "对应周赛未知"
-                        abody.setAttribute("href", "")
-                        abody.setAttribute("target", "_self")
-                        abody.setAttribute("hidden", "true")
-                        span2.innerText = "未知"
-                        abody2.setAttribute("href", "")
-                        abody2.setAttribute("target", "_self")
-                        abody2.setAttribute("hidden", "true")
-                    }
-                    abody.setAttribute("style", "padding-right: 10px;")
-                    // abody2.setAttribute("style", "padding-top: 1.5px;")
-                    abody.appendChild(span)
-                    abody2.appendChild(span2)
-                    abody3.appendChild(span3)
-                    divTips.appendChild(abody3)
-                    divTips.appendChild(abody)
-                    divTips.appendChild(abody2)
-                    tipsPa.insertBefore(divTips, tips)
-                } else if ( tipsChildone.childNodes != null
-                            && tipsChildone.childNodes.length >= 2 
-                            && (tipsChildone.childNodes[2].textContent.includes("Q") 
-                            || tipsChildone.childNodes[2].textContent.includes("未知"))) { 
-                    let pa = tipsChildone
-                    let le = pa.childNodes.length
-                    // 存在就直接替换
-                    let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
-                    if (levelData[id] != null) {
-                        let des = "算术评级: " + levelData[id]["Level"].toString()
-                        pa.childNodes[le - 3].childNodes[0].innerText = des
-                        pa.childNodes[le - 3].childNodes[0].onclick = function(e) {
-                            e.preventDefault();
-                            let des = `
-                                1      无算法要求
-                                2      知道常用数据结构和算法并简单使用
-                                3      理解常用数据结构和算法
-                                4      掌握常用数据结构和算法
-                                5      熟练掌握常用数据结构和算法，初步了解高级数据结构
-                                6      深入理解并灵活应用数据结构和算法，理解高级数据结构
-                                7      结合多方面的数据结构和算法，处理较复杂问题
-                                8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
-                                9      处理复杂问题，对时间复杂度的要求更严格
-                                10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
-                                11     竞赛内容，知识点超出面试范围
-                            `
-                            layer.open({
-                                type: 1 // Page 层类型
-                                ,area: ['700px', '320px']
-                                ,title: '算术评级说明'
-                                ,shade: 0.6 // 遮罩透明度
-                                ,maxmin: true // 允许全屏最小化
-                                ,anim: 5 // 0-6的动画形式，-1不开启
-                                ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${des}</p>`
-                            });
-                        }
-                        pa.childNodes[le - 3].removeAttribute("hidden")
-                    } else {
-                        pa.childNodes[le - 3].childNodes[0].innerText = "未知评级"
-                        pa.childNodes[le - 3].childNodes[0].setAttribute("hidden", "true")
-                    }
-                    // ContestID_zh  ContestSlug
-                    if (t2rate[id] != null) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        pa.childNodes[le - 2].setAttribute("target", "_blank")
-                        pa.childNodes[le - 2].removeAttribute("hidden")
-
-                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                        pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        pa.childNodes[le - 1].setAttribute("target", "_blank")
-                        if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
-                        else pa.childNodes[le - 1].removeAttribute("hidden")
-                    } else {
-                        pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
-                        pa.childNodes[le - 2].setAttribute("href", "")
-                        pa.childNodes[le - 2].setAttribute("target", "_self")
-                        pa.childNodes[le - 2].setAttribute("hidden", "true")
-
-                        pa.childNodes[le - 1].childNodes[0].innerText = "未知"
-                        pa.childNodes[le - 1].setAttribute("href", "")
-                        pa.childNodes[le - 1].setAttribute("target", "_self")
-                        pa.childNodes[le - 1].setAttribute("hidden", "true")
-                    }
-                }
-                t1 = id
-            } else {
-                // 新版逻辑
-                let t = document.querySelector(".text-lg")
-                if (t == null) {
-                    t1 = "unknown"
-                    return
-                }
-                // let pb = location.href
-                // let titleTag = pb.substring(pb.indexOf("problems")+9, pb.indexOf("description")-1)
-                let data = t.textContent.split(".")
-                let id = data[0].trim()
-                let colorA = ['.text-pink', '.text-olive','.text-yellow']
-                let colorSpan;
-                for (const color of colorA) {
-                    colorSpan = document.querySelector(color)
-                    if (colorSpan) break
-                }
-                if (!colorSpan) {
-                    console.log("color ele not found")
-                    return
-                }
-                let pa = colorSpan.parentNode
-                if (t1 != null && t1 == id) {
-                    return
-                }
-                if (GM_getValue("switchcode")) {
-                    waitForKeyElements(".overflowingContentWidgets", ()=>{
-                        $('.overflowingContentWidgets').remove()
-                    });
-                    let div = document.querySelector('div.h-full.w-full')
-                    div.onkeydown = function(event) {
-                        if (event.keyCode >= 65 && event.keyCode <= 90 || event.keyCode == 13) {
-                            eventhappend()
-                        }
-                    }
-                }
-
-                // 新版统计难度分数并且修改
-                let nd = colorSpan.getAttribute("class")
-                let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                if (switchrealoj || (t2rate[id] != null)) {
-                    if (switchrealoj) colorSpan.remove()
-                    else if(t2rate[id] != null) colorSpan.innerHTML = t2rate[id]["Rating"]
+                    pa.childNodes[le - 3].removeAttribute("hidden")
                 } else {
-                    for (let item in nd2ch) {
-                        if (nd.toString().includes(item)) {
-                            colorSpan.innerHTML = nd2ch[item]
-                            break
-                        }
-                    }
+                    pa.childNodes[le - 3].childNodes[0].innerText = "未知评级"
+                    pa.childNodes[le - 3].childNodes[0].setAttribute("hidden", "true")
                 }
-                // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
-                let url = chContestUrl
-                let zhUrl = zhContestUrl
-                let q = pa.lastChild
-                let le = pa.childNodes.length
-                if (q.textContent == "") {
-                    let abody = document.createElement("a")
-                    abody.setAttribute("data-small-spacing", "true")
-                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
+                // ContestID_zh  ContestSlug
+                if (t2rate[id] != null) {
+                    let contestUrl;
+                    let num = getcontestNumber(t2rate[id]["ContestSlug"])
+                    if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
+                    pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
+                    pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
+                    pa.childNodes[le - 2].setAttribute("target", "_blank")
+                    pa.childNodes[le - 2].removeAttribute("hidden")
 
-                    let abody2 = document.createElement("a")
-                    abody2.setAttribute("data-small-spacing", "true")
-                    abody2.setAttribute("class", "css-nabodd-Button e167268t1")
+                    pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
+                    pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                    pa.childNodes[le - 1].setAttribute("target", "_blank")
+                    if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
+                    else pa.childNodes[le - 1].removeAttribute("hidden")
+                } else {
+                    pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
+                    pa.childNodes[le - 2].setAttribute("href", "")
+                    pa.childNodes[le - 2].setAttribute("target", "_self")
+                    pa.childNodes[le - 2].setAttribute("hidden", "true")
 
-                    let span = document.createElement("span")
-                    let span2 = document.createElement("span")
-                    // ContestID_zh  ContestSlug
-                    if (t2rate[id] != null) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        span.innerText = t2rate[id]["ContestID_zh"]
-                        span2.innerText = t2rate[id]["ProblemIndex"]
-
-                        abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        abody.setAttribute("target", "_blank")
-                        abody.removeAttribute("hidden")
-
-                        abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        abody2.setAttribute("target", "_blank")
-                        if(switchrealoj) abody2.setAttribute("hidden", true)
-                        else abody2.removeAttribute("hidden")
-                    } else {
-                        span.innerText = "对应周赛未知"
-                        abody.setAttribute("href", "")
-                        abody.setAttribute("target", "_self")
-                        abody.setAttribute("hidden", "true")
-
-                        span2.innerText = "未知"
-                        abody2.setAttribute("href", "")
-                        abody2.setAttribute("target", "_self")
-                        abody2.setAttribute("hidden", "true")
-                    }
-                    abody.appendChild(span)
-                    abody2.appendChild(span2)
-                    pa.appendChild(abody)
-                    pa.appendChild(abody2)
-                } else if(q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
-                    if (t2rate[id] != null) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        pa.childNodes[le - 2].setAttribute("target", "_blank")
-                        pa.childNodes[le - 2].removeAttribute("hidden")
-
-                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                        pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        pa.childNodes[le - 1].setAttribute("target", "_blank")
-                        if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
-                        else pa.childNodes[le - 1].removeAttribute("hidden")
-                    } else {
-                        pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
-                        pa.childNodes[le - 2].setAttribute("href", "")
-                        pa.childNodes[le - 2].setAttribute("target", "_self")
-                        pa.childNodes[le - 2].setAttribute("hidden", "true")
-
-                        pa.childNodes[le - 1].childNodes[0].innerText = "未知"
-                        pa.childNodes[le - 1].setAttribute("href", "")
-                        pa.childNodes[le - 1].setAttribute("target", "_self")
-                        pa.childNodes[le - 1].setAttribute("hidden", "true")
-                    }
+                    pa.childNodes[le - 1].childNodes[0].innerText = "未知"
+                    pa.childNodes[le - 1].setAttribute("href", "")
+                    pa.childNodes[le - 1].setAttribute("target", "_self")
+                    pa.childNodes[le - 1].setAttribute("hidden", "true")
                 }
-                t1 = id
             }
+            t1 = id
         }
+    }
+
+    function clearId(name) {
+        // 'all', 'tag', 'pb', 'company', 'pblist', 'search', 'study'
+        let tmp = GM_getValue(name, -1)
+        clearInterval(tmp)
+        console.log("clear " + name + " " + id + " success")
     }
 
 
@@ -1724,17 +1612,27 @@
                 const element = urlLst[index];
                 if (url.match(element)) {
                     targetIdx = index
-                    // console.log(targetIdx, url)
                 } else if (!url.match(element)) {
+                    // 清理其他的
                     let tmp = GM_getValue(pageLst[index], -1)
                     clearInterval(tmp)
                 }
             }
-            if(targetIdx != -1) start = pageLst[targetIdx]
+            if (targetIdx != -1) start = pageLst[targetIdx]
             if (start != "") {
+                // 清理重复运行
+                let preId = GM_getValue(start)
+                if (preId != null) {
+                    clearInterval(preId)
+                }
                 let css_selector = "div.relative.flex.w-full.flex-col > .flex.w-full.flex-col.gap-4"
-                if(start == 'study') id = setInterval(getStudyData, timeout, css_selector)
-                else id = setInterval(funcLst[targetIdx], timeout)
+                if(start == "study") {
+                    id = setInterval(getStudyData, timeout, css_selector)
+                }  else if(start == "pb") {
+                    id = setInterval(getpb, timeout, css_selector)
+                    let pbsideId = setInterval(getpbsideData, timeout, css_selector)
+                    GM_setValue("pbside", pbsideId)
+                } else id = setInterval(funcLst[targetIdx], timeout)
                 GM_setValue(start, id)
             }
             if (isAddEvent) {
