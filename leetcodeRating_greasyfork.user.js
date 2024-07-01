@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.9
+// @version      2.2.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -164,12 +164,13 @@
 // @note         2024-04-22 2.2.6 修改题目页面搜索框查询太频繁导致卡顿的问题，改成没有新输入之后延迟之后再调用查询接口
 // @note         2024-06-06 2.2.8 (版本存在跳过，是因为修复有误)题目页左侧栏适配ui，题单页适配ui，题目页和题单页优化定时，一定次数后停止运行，防止页面卡顿
 // @note         2024-06-06 2.2.9 同上，该版本为补丁版本
+// @note         2024-07-01 2.2.10 hi，兄弟们，自从2.2.0版本开始因为功能逐渐增多，定时器数量管理问题导致的页面变卡问题在这个版本终于全部解决啦！
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.9"
+    let version = "2.2.10"
     // css 渲染
     $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.3/index.min.css" rel="stylesheet">`)
 
@@ -741,8 +742,8 @@
     if(GM_getValue("switchdelvip")) intercept(); else restore()
 
 
-    let t1, le // pb
     let tFirst, tLast  // all
+    let lcCnt = 0
     function getData() {
         let switchpbRepo = GM_getValue("switchpbRepo")
         let switchTea = GM_getValue("switchTea")
@@ -764,6 +765,11 @@
         if ((!switchpbRepo || (tFirst && tFirst == arr.childNodes[first].textContent && tLast && tLast == lastchild.textContent))
             && (!switchTea || arr.childNodes[0].childNodes[2].textContent == "灵神题解集")
             && (!switchrealoj) || lastchild.textContent.includes("隐藏")) {
+            // 到达次数之后删除定时防止卡顿
+            if (lcCnt == shortCnt) {
+                clearId("all")
+            }
+            lcCnt += 1
             return
         }
         
@@ -840,6 +846,7 @@
     }
 
     let tagt, tagf;
+    let tagCnt = 0;
     function getTagData() {
         if (!GM_getValue("switchtag")) return;
         // 筛选更新
@@ -849,6 +856,11 @@
         head = head.parentNode
         if (tagt && arr.lastChild && tagt == arr.lastChild.textContent
             && tagf && arr.firstChild && tagf == arr.firstChild.textContent) {
+            // 到达次数之后删除定时防止卡顿
+            if (tagCnt == shortCnt) {
+                clearId("tag")
+            }
+            tagCnt += 1
             return
         }
         let rateRefresh = false
@@ -885,8 +897,28 @@
         if(arr.firstChild) tagf = arr.firstChild.textContent
         console.log("has refreshed...")
     }
+    if (location.href.match(tagUrl)) {
+        new ElementGetter().each('.ant-table-tbody', document, (item) => {
+            let observer = new MutationObserver(function(mutationsList, observer) {
+                // 检查每个变化
+                mutationsList.forEach(function(mutation) {
+                    initCnt()
+                    let preId = GM_getValue("tag")
+                    if (preId != null) {
+                        clearInterval(preId)
+                    }
+                    id = setInterval(getTagData, 500);
+                    GM_setValue("tag", id)
+                });
+            });
+            // 配置 MutationObserver 监听的内容和选项
+            let config = { attributes: false, childList: true, subtree: false };
+            observer.observe(item, config);
+        });
+    }
 
     let companyt, companyf;
+    let companyCnt = 0;
     function getCompanyData() {
         if (!GM_getValue("switchcompany")) return;
         let arr = document.querySelector(".ant-table-tbody")
@@ -895,6 +927,11 @@
         head = head.parentNode
         if (companyt && arr.lastChild && companyt == arr.lastChild.textContent
             && companyf && arr.firstChild && companyf == arr.firstChild.textContent) {
+            // 到达次数之后删除定时防止卡顿
+            if (companyCnt == shortCnt) {
+                clearId("company")
+            }
+            companyCnt += 1
             return
         }
         // 确认难度序列
@@ -932,12 +969,18 @@
     }
 
     let pblistt, pblistf;
+    let pbListCnt = 0;
     function getPblistData() {
         if (!GM_getValue("switchpblist")) return;
         let arr = document.querySelector("div[data-rbd-droppable-id='droppable']")
         if (arr == null) return
         if (pblistt != null && arr.lastChild && pblistt == arr.lastChild.textContent
             && arr.firstChild && pblistf == arr.firstChild.textContent) {
+            // 到达次数之后删除定时防止卡顿
+            if (pbListCnt == normalCnt) {
+                clearId("pblist")
+            }
+            pbListCnt += 1
             return
         }
         let childs = arr.childNodes
@@ -1018,8 +1061,8 @@
         if (totArr == null) return;
         let first = totArr.firstChild?.childNodes[1]?.textContent
         if (studyf && first && studyf == first) {
-            // 到达60次数之后删除定时防止卡顿
-            if (studyCnt == 10) {
+            // 到达次数之后删除定时防止卡顿
+            if (studyCnt == shortCnt) {
                 clearId("study")
             }
             studyCnt += 1
@@ -1084,6 +1127,7 @@
     }
 
     let pbsidef;
+    let pbsidee;
     function getpbside(css_selector) {
         let totArr = null
         // 如果传入的是已经找到的node元素, 就不再搜索
@@ -1095,9 +1139,12 @@
         if (totArr == null) return;
         if (totArr.firstChild == null) return
         let first = totArr.firstChild?.childNodes[0]?.textContent
-        if (first && pbsidef && pbsidef == first) {
+        let last = totArr.lastChild?.childNodes[0]?.textContent
+        if (first && pbsidef && pbsidef == first 
+            && last && pbsidee && pbsidee == last
+        ) {
             // 临时加的pbside
-            if (pbsideCnt == 10) clearId("pbside")
+            if (pbsideCnt == normalCnt) clearId("pbside")
             pbsideCnt += 1
             return
         }
@@ -1154,7 +1201,8 @@
                 }
             }
         }
-        if(totArr.firstChild.childNodes[0]) pbsidef = totArr.firstChild.childNodes[0].textContent
+        if(totArr.firstChild?.childNodes[0]) pbsidef = totArr.firstChild.childNodes[0].textContent
+        if(totArr.lastChild?.childNodes[0]) pbsidee = totArr.lastChild.childNodes[0].textContent
         console.log("已经刷新侧边栏envType分数...")
     }
 
@@ -1192,19 +1240,32 @@
             let pbarr = overflow?.childNodes[0]?.childNodes[1];
             if (pbarr == null) return
             if (pbarr.firstChild == null) return
-            if (pbsidef == pbarr.firstChild?.textContent) {
-                if (pbsideCnt == 10) clearId("pbside")
+            if (pbarr.lastChild == null) return
+            if (pbsidef == pbarr.firstChild?.textContent
+                && pbsidee == pbarr.lastChild?.textContent
+            ) {
+                if (pbsideCnt == normalCnt) clearId("pbside")
                 pbsideCnt += 1
                 return
             }
             if (pbarr != null) {
                 for (const onepb of pbarr.childNodes) {
                     let tp = onepb.childNodes[0]?.childNodes[1]
-                    if (!tp) return
+                    if (!tp) {
+                        // console.log(tp)
+                        continue
+                    }
                     let pbName = tp.childNodes[0]?.textContent
-                    if (pbName == null) return
+                    if (pbName == null) {
+                        continue
+                        // pbName = tp.childNodes[0]?.textContent
+                        // console.log(pbName)
+                    }
                     let nd = tp.childNodes[1]
-                    if (nd == null) return 
+                    if (nd == null) {
+                        // console.log(nd)
+                        continue 
+                    }
                     // 如果为算术，说明当前已被替换过
                     if (nd.textContent.includes("算术")) continue
                     let data = pbName.split(".")
@@ -1250,6 +1311,8 @@
                     }
                 }
                 pbsidef = pbarr.firstChild.textContent
+                pbsidee = pbarr.lastChild.textContent
+                // console.log(pbsidef, pbsidee)
                 console.log("已经刷新侧边栏题库分数...")
             }
         }
@@ -1367,7 +1430,7 @@
             }
     }
 
-
+    let t1 // pb
     let pbCnt = 0
     function getpb() {
         let switchrealoj = GM_getValue("switchrealoj")
@@ -1380,7 +1443,7 @@
         // 如果持续10次都不在描述页面, 则关闭pb定时
         if (!isDescript) {
             // 非des清除定时
-            if(pbCnt == 6) clearId("pb")
+            if(pbCnt == shortCnt) clearId("pb")
             pbCnt += 1
             return
         }
@@ -1396,7 +1459,7 @@
             // console.log(t1, t.textContent)
             if (t1 != null && t1 == t.textContent) {
                 // des清除定时
-                if (pbCnt == 6) clearId("pb")
+                if (pbCnt == shortCnt) clearId("pb")
                 pbCnt += 1
                 return
             }
@@ -1603,11 +1666,19 @@
         clearInterval(tmp)
         console.log("clear " + name + " " + id + " success")
     }
-
+    
+    let shortCnt = 3;
+    let normalCnt = 5;
     function initCnt() {
-        pbsideCnt = 0
-        pbCnt = 0
-        studyCnt = 0
+        // 卡顿问题页面修复
+        // 搜索页面为自下拉，所以需要无限刷新，无法更改，这一点不会造成卡顿，所以剔除计划
+        lcCnt = 0 // ✅
+        tagCnt = 0 
+        pbCnt = 0 // ✅
+        pbsideCnt = 0 // ✅
+        companyCnt = 0  // ❌，因为已经搁置(需要vip)，所以暂时关闭该功能
+        pbListCnt = 0 // ✅
+        studyCnt = 0 // ✅
     }
 
 
@@ -1638,13 +1709,17 @@
                 let css_selector = "div.relative.flex.w-full.flex-col > .flex.w-full.flex-col.gap-4"
                 if(start == "study") {
                     id = setInterval(getStudyData, timeout, css_selector)
-                }  else if(start == "pb") {
+                } else if(start == "pb") {
                     id = setInterval(getpb, timeout)
                     if(GM_getValue("switchpbside")) {
                         let pbsideId = setInterval(getpbsideData, timeout)
                         GM_setValue("pbside", pbsideId)
                     }
-                } else id = setInterval(funcLst[targetIdx], timeout)
+                } else if(start == "tag") {
+                    id = setInterval(getTagData, timeout);
+                } else {
+                    id = setInterval(funcLst[targetIdx], timeout)
+                }
                 GM_setValue(start, id)
             }
             if (isAddEvent) {
@@ -1794,7 +1869,7 @@
     getNeedData()
 
     // 定时启动函数程序
-    clearAndStart(location.href, 1, true)
+    clearAndStart(location.href, 1000, true)
     GM_addStyle(`
         .versioncontent {
             white-space: pre-wrap;
