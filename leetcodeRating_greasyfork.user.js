@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.2.10
+// @version      2.3.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -23,7 +23,7 @@
 // @connect      raw.gitmirror.com
 // @connect      raw.githubusercontents.com
 // @connect      raw.githubusercontent.com
-// @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js
+// @require      https://unpkg.com/jquery@3.5.1/dist/jquery.min.js
 // @require      https://unpkg.com/layui@2.9.6/dist/layui.js
 // @require      https://greasyfork.org/scripts/463455-nelementgetter/code/NElementGetter.js?version=1172110
 // @grant        unsafeWindow
@@ -165,12 +165,13 @@
 // @note         2024-06-06 2.2.8 (版本存在跳过，是因为修复有误)题目页左侧栏适配ui，题单页适配ui，题目页和题单页优化定时，一定次数后停止运行，防止页面卡顿
 // @note         2024-06-06 2.2.9 同上，该版本为补丁版本
 // @note         2024-07-01 2.2.10 hi，兄弟们，自从2.2.0版本开始因为功能逐渐增多，定时器数量管理问题导致的页面变卡问题在这个版本终于全部解决啦！
+// @note         2024-07-01 2.3.0 2.2.10的补丁版本
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    let version = "2.2.10"
+    let version = "2.3.0"
     // css 渲染
     $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.3/index.min.css" rel="stylesheet">`)
 
