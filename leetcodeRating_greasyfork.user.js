@@ -183,6 +183,7 @@
     const pbUrl = "https://leetcode.cn/problems/.*"
     const searchUrl = "https://leetcode.cn/search/.*"
     const studyUrl = "https://leetcode.cn/studyplan/.*"
+    const problemUrl = "https://leetcode.cn/problemset"
 
     // req相关url
     const lcnojgo = "https://leetcode.cn/graphql/noj-go/"
@@ -1967,7 +1968,7 @@ if (GM_getValue("switchperson")) {
     jQuery(document).ready(function ($) {
         $("#spig").mousedown(function (e) {
             if(e.which == 3){
-                showMessage(`秘密通道:<br/> <a href="${allUrl}" title="题库">题库</a>`,10000);
+                showMessage(`秘密通道:<br/> <a href="${problemUrl}" title="题库">题库</a>`,10000);
             }
         });
         $("#spig").bind("contextmenu", function(e) {
