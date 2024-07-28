@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.2
+// @version      2.3.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -168,12 +168,13 @@
 // @note         2024-07-01 2.3.0 2.2.10的补丁版本
 // @note         2024-07-02 2.3.1 上线讨论区题目链接后面显示题目完成情况功能，具体功能说明转移github查看(https://github.com/zhang-wangz/LeetCodeRating)～
 // @note         2024-07-02 2.3.2 2.3.1补丁
+// @note         2024-07-02 2.3.3 2.3.1补丁，提供讨论区题目完成情况可选择显示在最前面
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.2"
+    let version = "2.3.3"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -435,6 +436,7 @@
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
             ['switchpbstatus', 'pbstatus function', '讨论区题目显示完成状态(测试阶段)', true, true],
+            ['switchpbstatusLocation', 'switchpbstatusLocation function', '讨论区题目显示完成状态(方位改变为最前方)(测试阶段)', false, true],
             ['switchpbstatusBtn', 'pbstatusBtn function', '题目页和讨论页添加同步题目状态按钮(测试阶段)', true, true],
             ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
@@ -641,12 +643,12 @@
                 return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="h-[18px] w-[18px]  text-green-s dark:text-dark-green-s"><path fill-rule="evenodd" d="M20 12.005v-.828a1 1 0 112 0v.829a10 10 0 11-5.93-9.14 1 1 0 01-.814 1.826A8 8 0 1020 12.005zM8.593 10.852a1 1 0 011.414 0L12 12.844l8.293-8.3a1 1 0 011.415 1.413l-9 9.009a1 1 0 01-1.415 0l-2.7-2.7a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
             case 2:
                 return `<svg width="20" height="20">
-                            <circle cx="10" cy="12" r="8" stroke="black" stroke-width="0" fill="red"></circle>
+                            <circle cx="8" cy="13" r="7" stroke="black" stroke-width="0" fill="red"></circle>
                         </svg>`;
             // code3 的时候需要调整style，所以设置了class，调整在css中
             case 3:
                 return `<svg width="20" height="21">
-                            <circle class="mycircle" cx="12" cy="13" r="7" style="stroke:black;stroke-width:2;fill:white;"></circle>
+                            <circle class="mycircle" cx="8" cy="13" r="7" style="stroke:black;stroke-width:2;fill:white;"></circle>
                         </svg>`;
             default: return "";
         }
@@ -675,10 +677,15 @@
         // 获取元素的父节点
         link.setAttribute("linkId", "leetcodeRating");
         const parent = link.parentNode;
-        if (link.nextSibling) {
-            parent.insertBefore(iconEle, link.nextSibling);
+        // 改变方位
+        if (GM_getValue("switchpbstatusLocation")) {
+            parent.insertBefore(iconEle, link);
         } else {
-            parent.appendChild(iconEle);
+            if (link.nextSibling) {
+                parent.insertBefore(iconEle, link.nextSibling);
+            } else {
+                parent.appendChild(iconEle);
+            }
         }
         pbstatusMap[link.href] = true;
     }
