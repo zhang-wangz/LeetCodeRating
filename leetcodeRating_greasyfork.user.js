@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.0
+// @version      2.3.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -166,24 +166,35 @@
 // @note         2024-06-06 2.2.9 同上，该版本为补丁版本
 // @note         2024-07-01 2.2.10 hi，兄弟们，自从2.2.0版本开始因为功能逐渐增多，定时器数量管理问题导致的页面变卡问题在这个版本终于全部解决啦！
 // @note         2024-07-01 2.3.0 2.2.10的补丁版本
+// @note         2024-07-02 2.3.1 上线讨论区题目链接后面显示题目完成情况功能，具体功能说明转移github查看(https://github.com/zhang-wangz/LeetCodeRating)～
 // ==/UserScript==
 
-(function () {
+(async function () {
     'use strict';
 
-    let version = "2.3.0"
+    let version = "2.3.1"
+    let pbstatusVersion = "version9"
+    const dummySend = XMLHttpRequest.prototype.send;
+    const originalOpen = XMLHttpRequest.prototype.open;
     // css 渲染
-    $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.3/index.min.css" rel="stylesheet">`)
+    $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.6/index.min.css" rel="stylesheet">`)
 
     // 页面相关url
     const allUrl = "https://leetcode.cn/problemset/.*"
     const tagUrl = "https://leetcode.cn/tag/.*"
     const companyUrl = "https://leetcode.cn/company/.*"
     const pblistUrl = "https://leetcode.cn/problem-list/.*"
-    const pbUrl = "https://leetcode.cn/problems/.*"
+    const pbUrl = "https://leetcode.*/problems/.*"
+    // 限定pbstatus使用
+    const pbSolutionUrl = "https://leetcode.*/problems/.*/solution/"
+    // 题目提交检查url
+    // https://leetcode.cn/submissions/detail/550056752/check/
+    // const checkUrl = "https://leetcode.cn/submissions/detail/[0-9]*/check/.*"
+
     const searchUrl = "https://leetcode.cn/search/.*"
     const studyUrl = "https://leetcode.cn/studyplan/.*"
     const problemUrl = "https://leetcode.cn/problemset"
+    const discussUrl = "https://leetcode.cn/circle/discuss/.*"
 
     // req相关url
     const lcnojgo = "https://leetcode.cn/graphql/noj-go/"
@@ -200,6 +211,8 @@
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+    // pbstatus数据, 单独使用localStorage存储
+    let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString())
     // 题目名称-id ContestID_zh-ID
     // 中文
     let pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
@@ -233,7 +246,7 @@
         levelTe2Id = JSON.parse(GM_getValue("levelTe2Id", "{}").toString())
         if (levelTc2Id[pbName]) {
             return levelTc2Id[pbName]
-        } 
+        }
         if (levelTe2Id[pbName]) {
             return levelTe2Id[pbName]
         }
@@ -316,7 +329,6 @@
 
 
     // 常量数据
-    const dummySend = XMLHttpRequest.prototype.send
     const regDiss = '.*//leetcode.cn/problems/.*/discussion/.*'
     const regSovle = '.*//leetcode.cn/problems/.*/solutions/.*'
     const regPbSubmission = '.*//leetcode.cn/problems/.*/submissions/.*';
@@ -421,6 +433,8 @@
             ['switchlevel', 'studyplan level function', '算术评级(显示左侧栏和学习计划中)', true, false],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
+            ['switchpbstatus', 'pbstatus function', '讨论区题目显示完成状态(测试阶段)', true, true],
+            ['switchpbstatusBtn', 'pbstatusBtn function', '题目页和讨论页添加同步题目状态按钮(测试阶段)', true, true],
             ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
         for (const element of menu_ALL){ // 如果读取到的值为 null 就写入默认值
@@ -537,6 +551,226 @@
         }
     }
 
+    function allPbPostData(skip, limit) {
+        return {
+            "query":
+                `query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
+                problemsetQuestionList(
+                    categorySlug: $categorySlug
+                    limit: $limit
+                    skip: $skip
+                    filters: $filters
+                ) {
+                    hasMore
+                    total
+                    questions {
+                    acRate
+                    difficulty
+                    freqBar
+                    frontendQuestionId
+                    isFavor
+                    paidOnly
+                    solutionNum
+                    status
+                    title
+                    titleCn
+                    titleSlug
+                    topicTags {
+                        name
+                        nameTranslated
+                        id
+                        slug
+                    }
+                    extra {
+                        hasVideoSolution
+                        topCompanyTags {
+                        imgUrl
+                        slug
+                        numSubscribed
+                        }
+                    }
+                    }
+                }
+            }`,
+            "variables": {
+            "categorySlug": "all-code-essentials",
+            "skip": skip,
+            "limit": limit,
+            "filters": {}
+            }
+        }
+    }
+
+    function getpbCnt() {
+        let total = 0;
+        let headers = {
+            'Content-Type': 'application/json'
+        };
+        ajaxReq("POST", lcgraphql, headers, allPbPostData(0, 0), res => {
+            total = res.data.problemsetQuestionList.total;
+        })
+        return total;
+    }
+
+    // 从题目链接提取slug
+    // 在这之前需要匹配出所有符合条件的a标签链接
+    function getSlug(problemUrl) {
+        let preUrl = "https://leetcode-cn.com/problems/";
+        let nowurl = "https://leetcode.cn/problems/";
+        if (problemUrl.startsWith(preUrl))
+            return problemUrl.replace(preUrl, '').split('/')[0];
+        return problemUrl.replace(nowurl, '').split('/')[0];
+    }
+
+    // 获取题目状态
+    function getpbStatus(pburl) {
+        let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
+        let titleSlug = getSlug(pburl);
+        return pbstatus[titleSlug] == null ? "NOT_STARTED": pbstatus[titleSlug]["status"];
+    };
+
+    function getPbstatusIcon(code) {
+        switch(code) {
+            case 1:
+                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="h-[18px] w-[18px]  text-green-s dark:text-dark-green-s"><path fill-rule="evenodd" d="M20 12.005v-.828a1 1 0 112 0v.829a10 10 0 11-5.93-9.14 1 1 0 01-.814 1.826A8 8 0 1020 12.005zM8.593 10.852a1 1 0 011.414 0L12 12.844l8.293-8.3a1 1 0 011.415 1.413l-9 9.009a1 1 0 01-1.415 0l-2.7-2.7a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+            case 2:
+                return `<svg width="20" height="20">
+                            <circle cx="10" cy="12" r="8" stroke="black" stroke-width="0" fill="red"></circle>
+                        </svg>`;
+            // code3 的时候需要调整style，所以设置了class，调整在css中
+            case 3:
+                return `<svg width="20" height="21">
+                            <circle class="mycircle" cx="12" cy="13" r="7" style="stroke:black;stroke-width:2;fill:white;"></circle>
+                        </svg>`;
+            default: return "";
+        }
+    }
+
+    let pbstatusMap = {};
+    function handleLink(link) {
+        if (link.href.includes("daily-question")) {
+            pbstatusMap[link.href] = true;
+            return;
+        }
+        let linkId = link.getAttribute("linkId");
+        if(linkId != null && linkId == "leetcodeRating") {
+            console.log(getSlug(link.href) + "已经替换..., 略过");
+            return;
+        }
+        let status = getpbStatus(link.href);
+        // console.log(status);
+        // 1 ac 2 tried 3 not_started
+        let code = status == 'NOT_STARTED'? 3 : status == 'AC'? 1 : 2;
+        // console.log(code);
+        let iconStr = getPbstatusIcon(code);
+        let iconEle = document.createElement("span");
+        iconEle.innerHTML = iconStr;
+        // console.log(iconEle);
+        // 获取元素的父节点
+        link.setAttribute("linkId", "leetcodeRating");
+        const parent = link.parentNode;
+        if (link.nextSibling) {
+            parent.insertBefore(iconEle, link.nextSibling);
+        } else {
+            parent.appendChild(iconEle);
+        }
+        pbstatusMap[link.href] = true;
+    }
+
+    function createstatusBtn() {
+        if(document.querySelector("#statusBtn")) return;
+        let span = document.createElement("span");
+        span.setAttribute("data-small-spacing", "true");
+        span.setAttribute("id", "statusBtn");
+        // 判断同步按钮
+        if (GM_getValue("switchpbstatusBtn")) {
+            // console.log(levelData[id])
+            span.innerHTML = `<i style="font-size:12px;" class="layui-icon layui-icon-refresh"></i> 同步题目状态`
+            span.onclick = function(e) {
+                e.preventDefault();
+                layer.open({
+                    area: ['550px', '300px']
+                    ,title: '同步所有题目状态'
+                    ,closeBtn: 1
+                    ,content: `${pbstatusContent}`
+                });
+            }
+            // 使用layui的渲染
+            layuiload();
+        }
+        let userinfo = document.querySelector(".css-5d7bnq-QuestionInfoContainer.e2v1tt11");
+        span.setAttribute("class", userinfo.lastChild.getAttribute("class"));
+        span.setAttribute("class", span.getAttribute("class")+" hover:text-blue-s");
+        span.setAttribute("style", "cursor:pointer");
+        userinfo.appendChild(span);
+    }
+
+
+    function waitOprpbStatus() {
+        if (GM_getValue("switchpbstatus") && window.location.href.match(discussUrl)) {
+            new ElementGetter().each(".css-se33k0-QuestionContent", document, (item) => {
+                let observer = new MutationObserver(function(mutationsList, observer) {
+                    // 检查变化
+                    mutationsList.forEach(function(mutation) {
+                        createstatusBtn();
+                        // 获取所有的<a>标签
+                        let links = document.querySelectorAll('a');
+                        // 过滤出符合条件的<a>标签
+                        let matchingLinks = Array.from(links).filter(link => {
+                            return !pbstatusMap[link.href]
+                            && link.href.match(pbUrl)
+                            && !link.href.match(pbSolutionUrl);
+                        });
+                        // 符合条件的<a>标签
+                        matchingLinks.forEach(link => {
+                            handleLink(link);
+                        });
+                    });
+                });
+                // 配置 MutationObserver 监听的内容和选项
+                let config = { attributes: false, childList: true, subtree: true};
+                observer.observe(item, config);
+            });
+        }
+    }
+    waitOprpbStatus();
+
+    function pbsubmitListen() {
+        var originalFetch = fetch;
+        window.unsafeWindow.fetch = function() {
+            return originalFetch.apply(this, arguments).then(function(response) {
+                let checkUrl = "https://leetcode.cn/submissions/detail/[0-9]*/check/.*"
+                let clonedResponse = response.clone();
+                clonedResponse.text().then(function(bodyText) {
+                    if(clonedResponse.url.match(checkUrl) && clonedResponse.status == 200 && clonedResponse.ok) {
+                        // console.log('HTTP请求完成：', arguments[0]);
+                        let resp = JSON.parse(bodyText);
+                        // console.log('响应数据：', resp);
+                        if (resp && resp.status_msg && resp.status_msg.includes("Accepted")) {
+                            let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
+                            let slug = getSlug(location.href);
+                            if (!pbstatus[slug]) pbstatus[slug] = {};
+                            pbstatus[slug]["status"] = "AC";
+                            GM_setValue("pbstatus", JSON.stringify(pbstatus));
+                            console.log("提交成功，当前题目状态已更新");
+                        } else if (resp && resp.status_msg && !resp.status_msg.includes("Accepted"))  {
+                            let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
+                            let slug = getSlug(location.href);
+                            if (!pbstatus[slug]) pbstatus[slug] = {};
+                            pbstatus[slug]["status"] = "TRIED";
+                            GM_setValue("pbstatus", JSON.stringify(pbstatus));
+                            console.log("提交失败，当前题目状态已更新");
+                        }
+                    }
+                });
+                return response;
+            });
+        };
+    };
+    if(GM_getValue("switchpbstatus") && location.href.match(pbUrl)) pbsubmitListen();
+
+
+
     // 获取数字
     function getcontestNumber(url) {
         return parseInt(url.substr(15));
@@ -565,7 +799,7 @@
         // 精确到分
         else if (format == 2) {
             time = year + "-" + month + "-" + date + " " + hour + ":" + minu + ":" + sec;
-        } 
+        }
         else if (format == 3) {
             time = year + "/" + month + "/" + date;
         }
@@ -703,7 +937,6 @@
     }
 
     // 写一个拦截题库页面的工具
-    const originalOpen = XMLHttpRequest.prototype.open
     function intercept() {
         XMLHttpRequest.prototype.open = function newOpen(method, url, async, user, password, disbaleIntercept) {
             if (!disbaleIntercept && method.toLocaleLowerCase() === 'post' && url === `/graphql/`) {
@@ -754,7 +987,7 @@
         let arr = arrList[0]
         for (let ele of arrList) {
             if (ele.childNodes.length != 0) {
-                arr = ele 
+                arr = ele
                 break
             }
         }
@@ -774,7 +1007,7 @@
             lcCnt += 1
             return
         }
-        
+
         t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
 
         // 灵茶题目渲染
@@ -1078,6 +1311,7 @@
                 if (pbNameLabel == null) continue
                 let pbName = pbNameLabel.textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
+                let pbhtml = pb?.childNodes[0]?.childNodes[1]?.childNodes[0]?.childNodes[0]
                 pbName = pbName.trim()
                 let levelId = getLevelId(pbName)
                 let id = getPbNameId(pbName)
@@ -1100,14 +1334,14 @@
                     for (let c in lightn2c) {
                         if (!flag) break
                         if (clr.includes(c)) {
-                            nd.innerText = lightn2c[c] 
+                            nd.innerText = lightn2c[c]
                             flag= false
                         }
                     }
                     for (let c in darkn2c) {
                         if (!flag) break
                         if (clr.includes(c)) {
-                            nd.innerText = darkn2c[c] 
+                            nd.innerText = darkn2c[c]
                             flag= false
                         }
                     }
@@ -1116,10 +1350,11 @@
                 if (level && GM_getValue("switchlevel")) {
                     // console.log(pbName, level)
                     let text = document.createElement('span')
+                    text.setAttribute("class", pbhtml.getAttribute("class"));
                     text.style = nd.getAttribute("style")
                     text.innerHTML = "算术评级: " + level["Level"].toString()
                     if (hit) text.style.paddingRight = "125px" // 命中之后宽度不一样
-                    else text.style.paddingRight = "130px" 
+                    else text.style.paddingRight = "130px"
                     nd.parentNode.insertBefore(text, nd)
                 }
             }
@@ -1142,7 +1377,7 @@
         if (totArr.firstChild == null) return
         let first = totArr.firstChild?.childNodes[0]?.textContent
         let last = totArr.lastChild?.childNodes[0]?.textContent
-        if (first && pbsidef && pbsidef == first 
+        if (first && pbsidef && pbsidef == first
             && last && pbsidee && pbsidee == last
         ) {
             // 临时加的pbside
@@ -1159,6 +1394,7 @@
                 let pb = arr.childNodes[pbidx]
                 let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
+                let pbhtml = pb?.childNodes[0]?.childNodes[1]?.childNodes[0]?.childNodes[0]
                 let data = pbName.split(".")
                 let id = data[0]
                 let level = levelData[id]
@@ -1180,14 +1416,14 @@
                     for (let c in lightn2c) {
                         if (!flag) break
                         if (clr.includes(c)) {
-                            nd.innerText = lightn2c[c] 
+                            nd.innerText = lightn2c[c]
                             flag= false
                         }
                     }
                     for (let c in darkn2c) {
                         if (!flag) break
                         if (clr.includes(c)) {
-                            nd.innerText = darkn2c[c] 
+                            nd.innerText = darkn2c[c]
                             flag= false
                         }
                     }
@@ -1195,10 +1431,11 @@
                 // level渲染
                 if (level && GM_getValue("switchlevel")) {
                     let text = document.createElement('span')
+                    text.setAttribute("class", pbhtml.getAttribute("class"));
                     text.style = nd.getAttribute("style")
                     text.innerHTML = "算术评级: " + level["Level"].toString()
                     if (hit) text.style.paddingRight = "75px" // 命中之后宽度不一样
-                    else text.style.paddingRight = "80px" 
+                    else text.style.paddingRight = "80px"
                     nd.parentNode.insertBefore(text, nd)
                 }
             }
@@ -1264,9 +1501,10 @@
                         // console.log(pbName)
                     }
                     let nd = tp.childNodes[1]
+                    let pbhtml = tp.childNodes[0]?.childNodes[0]
                     if (nd == null) {
                         // console.log(nd)
-                        continue 
+                        continue
                     }
                     // 如果为算术，说明当前已被替换过
                     if (nd.textContent.includes("算术")) continue
@@ -1290,14 +1528,14 @@
                         for (let c in lightn2c) {
                             if (!flag) break
                             if (clr.includes(c)) {
-                                nd.innerText = lightn2c[c] 
+                                nd.innerText = lightn2c[c]
                                 flag = false
                             }
                         }
                         for (let c in darkn2c) {
                             if (!flag) break
                             if (clr.includes(c)) {
-                                nd.innerText = darkn2c[c] 
+                                nd.innerText = darkn2c[c]
                                 flag = false
                             }
                         }
@@ -1305,10 +1543,11 @@
                     // level渲染
                     if (level && GM_getValue("switchlevel")) {
                         let text = document.createElement('span')
+                        text.setAttribute("class", pbhtml.getAttribute("class"));
                         text.style = nd.getAttribute("style")
                         text.innerHTML = "算术评级: " + level["Level"].toString()
                         if (hit) text.style.paddingRight = "75px" // 命中之后宽度不一样
-                        else text.style.paddingRight = "80px" 
+                        else text.style.paddingRight = "80px"
                         nd.parentNode.insertBefore(text, nd)
                     }
                 }
@@ -1431,7 +1670,88 @@
                 document.body.append(flag)
             }
     }
-
+    // 因为字符显示问题，暂时去除
+    // <span class="layui-progress-text myfont">0%</span>
+    let pbstatusContent = `
+        <div style="text-align: center;">
+            <strong class="myfont"> 希望有大佬可以美化这丑丑的界面～ =v= <strong>
+            <p style="padding-top: 10px;"></p>
+            <div class="layui-progress layui-progress-big" lay-showpercent="true" lay-filter="demo-filter-progress">
+                <div class="layui-progress-bar" lay-percent="0%">
+                </div>
+            </div>
+            <p style="padding-top: 20px;"></p>
+            <div class="layui-btn-container" style="">
+                <button id="statusasyc" class="layui-btn layui-btn-radius" lay-on="loading">同步所有问题状态按钮</button>
+            </div>
+        </div>
+        `;
+    let levelContent = `
+        1      无算法要求
+        2      知道常用数据结构和算法并简单使用
+        3      理解常用数据结构和算法
+        4      掌握常用数据结构和算法
+        5      熟练掌握常用数据结构和算法，初步了解高级数据结构
+        6      深入理解并灵活应用数据结构和算法，理解高级数据结构
+        7      结合多方面的数据结构和算法，处理较复杂问题
+        8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
+        9      处理复杂问题，对时间复杂度的要求更严格
+        10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
+        11     竞赛内容，知识点超出面试范围
+        `;
+    function layuiload() {
+        // 使用layui的渲染
+        layui.use(function(){
+            var element = layui.element;
+            var util = layui.util;
+            // 普通事件
+            util.on('lay-on', {
+                // loading
+                loading: function(othis){
+                    var DISABLED = 'layui-btn-disabled';
+                    if(othis.hasClass(DISABLED)) return;
+                    othis.addClass(DISABLED);
+                    let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
+                    // let cnt = Math.trunc((getpbCnt() + 99) / 100);
+                    let cnt = 10;
+                    let headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    let skip = 0;
+                    var timer = setInterval(function () {
+                        ajaxReq("POST", lcgraphql, headers, allPbPostData(skip, 100), res => {
+                            let questions = res.data.problemsetQuestionList.questions;
+                            for(let pb of questions) {
+                                pbstatus[pb.titleSlug] = {
+                                    "titleSlug" : pb.titleSlug,
+                                    "id": pb.frontendQuestionId,
+                                    "status": pb.status,
+                                    "title": pb.title,
+                                    "titleCn": pb.titleCn,
+                                    "difficulty": pb.difficulty
+                                }
+                            }
+                            // console.log(questions);
+                        });
+                        skip += 100;
+                        // skip / 100 是当前已经进行的次数
+                        let showval = Math.trunc(skip / 100 / cnt * 100);
+                        // console.log(skip / 100, cnt);
+                        // console.log(showval)
+                        if (skip / 100 >= cnt) {
+                            showval = 100;
+                            clearInterval(timer);
+                            // othis.removeClass(DISABLED);
+                        }
+                        element.progress('demo-filter-progress', showval+'%');
+                        if(showval == 100) console.log("同步所有题目状态完成...");
+                    }, 300+Math.random()*1000);
+                    pbstatus[pbstatusVersion] = {};
+                    GM_setValue("pbstatus", JSON.stringify(pbstatus));
+                }
+            });
+        });
+    }
     let t1 // pb
     let pbCnt = 0
     function getpb() {
@@ -1517,11 +1837,40 @@
                 abody2.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
 
                 let abody3 = document.createElement("a")
-                abody2.setAttribute("data-small-spacing", "true")
-                abody2.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
+                abody3.setAttribute("data-small-spacing", "true")
+                abody3.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
+
+                let abody4 = document.createElement("p")
+                abody4.setAttribute("data-small-spacing", "true")
+                abody4.setAttribute("class", "css-nabodd-Button e167268t1 hover:text-blue-s")
+
                 let span = document.createElement("span")
                 let span2 = document.createElement("span")
                 let span3 = document.createElement("span")
+                let span4 = document.createElement("span");
+                // 判断同步按钮
+                if (GM_getValue("switchpbstatusBtn")) {
+                    // console.log(levelData[id])
+                    span4.innerHTML = `<i style="font-size:12px" class="layui-icon layui-icon-refresh"></i>&nbsp;同步题目状态`
+                    span4.onclick = function(e) {
+                        e.preventDefault();
+                        layer.open({
+                            area: ['550px', '300px']
+                            ,title: '同步所有题目状态'
+                            ,closeBtn: 1
+                            ,content: `${pbstatusContent}`
+                        });
+                    }
+                    span4.setAttribute("style", "cursor:pointer;");
+                    // 使用layui的渲染
+                    layuiload();
+                    abody4.removeAttribute("hidden")
+                } else {
+                    span4.innerText = "未知按钮"
+                    abody4.setAttribute("hidden", "true")
+                }
+                abody4.setAttribute("style", "padding-left: 10px;")
+
                 levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
                 if (levelData[id] != null) {
                     // console.log(levelData[id])
@@ -1529,24 +1878,11 @@
                     span3.innerText = des
                     span3.onclick = function(e) {
                         e.preventDefault();
-                        let des = `
-                        1      无算法要求
-                        2      知道常用数据结构和算法并简单使用
-                        3      理解常用数据结构和算法
-                        4      掌握常用数据结构和算法
-                        5      熟练掌握常用数据结构和算法，初步了解高级数据结构
-                        6      深入理解并灵活应用数据结构和算法，理解高级数据结构
-                        7      结合多方面的数据结构和算法，处理较复杂问题
-                        8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
-                        9      处理复杂问题，对时间复杂度的要求更严格
-                        10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
-                        11     竞赛内容，知识点超出面试范围
-                        `
                         layer.open({
                             area: ['700px', '450px']
                             ,title: '算术评级说明'
                             ,closeBtn:1
-                            ,content: `<p class="containerlingtea" style="color:#000;">${des}</p>`
+                            ,content: `<p class="containerlingtea" style="color:#000;">${levelContent}</p>`
                         });
                     }
                     abody3.removeAttribute("hidden")
@@ -1558,6 +1894,7 @@
                 abody3.setAttribute("href", "")
                 abody3.setAttribute("style", "padding-right: 10px;")
                 abody3.setAttribute("target", "_blank")
+
                 if (t2rate[id] != null) {
                     let contestUrl;
                     let num = getcontestNumber(t2rate[id]["ContestSlug"])
@@ -1586,9 +1923,11 @@
                 abody.appendChild(span)
                 abody2.appendChild(span2)
                 abody3.appendChild(span3)
+                abody4.appendChild(span4)
                 divTips.appendChild(abody3)
                 divTips.appendChild(abody)
                 divTips.appendChild(abody2)
+                divTips.appendChild(abody4)
                 tipsPa.insertBefore(divTips, tips)
             } else if ( tipsChildone.childNodes != null
                         && tipsChildone.childNodes.length >= 2
@@ -1596,12 +1935,22 @@
                         || tipsChildone.childNodes[2].textContent.includes("未知"))) {
                 let pa = tipsChildone
                 let le = pa.childNodes.length
+
+                // 判断同步按钮
+                if (GM_getValue("switchpbstatusBtn")) {
+                    // 使用layui的渲染, 前面已经添加渲染按钮，所以这里不用重新添加
+                    pa.childNodes[le - 1].removeAttribute("hidden")
+                } else {
+                    pa.childNodes[le - 1].childNodes[0].innerText = "未知按钮"
+                    pa.childNodes[le - 1].setAttribute("hidden", "true")
+                }
+
                 // 存在就直接替换
                 let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
                 if (levelData[id] != null) {
                     let des = "算术评级: " + levelData[id]["Level"].toString()
-                    pa.childNodes[le - 3].childNodes[0].innerText = des
-                    pa.childNodes[le - 3].childNodes[0].onclick = function(e) {
+                    pa.childNodes[le - 4].childNodes[0].innerText = des
+                    pa.childNodes[le - 4].childNodes[0].onclick = function(e) {
                         e.preventDefault();
                         let des = `
                             1      无算法要求
@@ -1626,36 +1975,36 @@
                             ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${des}</p>`
                         });
                     }
-                    pa.childNodes[le - 3].removeAttribute("hidden")
+                    pa.childNodes[le - 4].removeAttribute("hidden")
                 } else {
-                    pa.childNodes[le - 3].childNodes[0].innerText = "未知评级"
-                    pa.childNodes[le - 3].childNodes[0].setAttribute("hidden", "true")
+                    pa.childNodes[le - 4].childNodes[0].innerText = "未知评级"
+                    pa.childNodes[le - 4].setAttribute("hidden", "true")
                 }
                 // ContestID_zh  ContestSlug
                 if (t2rate[id] != null) {
                     let contestUrl;
                     let num = getcontestNumber(t2rate[id]["ContestSlug"])
                     if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                    pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
-                    pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                    pa.childNodes[le - 2].setAttribute("target", "_blank")
-                    pa.childNodes[le - 2].removeAttribute("hidden")
+                    pa.childNodes[le - 3].childNodes[0].innerText = t2rate[id]["ContestID_zh"]
+                    pa.childNodes[le - 3].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
+                    pa.childNodes[le - 3].setAttribute("target", "_blank")
+                    pa.childNodes[le - 3].removeAttribute("hidden")
 
-                    pa.childNodes[le - 1].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                    pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                    pa.childNodes[le - 1].setAttribute("target", "_blank")
-                    if(switchrealoj) pa.childNodes[le - 1].setAttribute("hidden", "true")
-                    else pa.childNodes[le - 1].removeAttribute("hidden")
+                    pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
+                    pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
+                    pa.childNodes[le - 2].setAttribute("target", "_blank")
+                    if(switchrealoj) pa.childNodes[le - 2].setAttribute("hidden", "true")
+                    else pa.childNodes[le - 2].removeAttribute("hidden")
                 } else {
-                    pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
+                    pa.childNodes[le - 3].childNodes[0].innerText = "对应周赛未知"
+                    pa.childNodes[le - 3].setAttribute("href", "")
+                    pa.childNodes[le - 3].setAttribute("target", "_self")
+                    pa.childNodes[le - 3].setAttribute("hidden", "true")
+
+                    pa.childNodes[le - 2].childNodes[0].innerText = "未知"
                     pa.childNodes[le - 2].setAttribute("href", "")
                     pa.childNodes[le - 2].setAttribute("target", "_self")
                     pa.childNodes[le - 2].setAttribute("hidden", "true")
-
-                    pa.childNodes[le - 1].childNodes[0].innerText = "未知"
-                    pa.childNodes[le - 1].setAttribute("href", "")
-                    pa.childNodes[le - 1].setAttribute("target", "_self")
-                    pa.childNodes[le - 1].setAttribute("hidden", "true")
                 }
             }
             t1 = t.textContent
@@ -1668,14 +2017,14 @@
         clearInterval(tmp)
         console.log("clear " + name + " " + id + " success")
     }
-    
+
     let shortCnt = 3;
     let normalCnt = 5;
     function initCnt() {
         // 卡顿问题页面修复
         // 搜索页面为自下拉，所以需要无限刷新，无法更改，这一点不会造成卡顿，所以剔除计划
         lcCnt = 0 // ✅
-        tagCnt = 0 
+        tagCnt = 0
         pbCnt = 0 // ✅
         pbsideCnt = 0 // ✅
         companyCnt = 0  // ❌，因为已经搁置(需要vip)，所以暂时关闭该功能
@@ -1773,7 +2122,7 @@
                         pbNamee2Id[element.Title] = element.ID
                     }
                     t2rate["tagVersion9"] = {}
-                    console.log("everyday getdate once...")
+                    console.log("everyday getdata once...")
                     preDate = now
                     GM_setValue("preDate", preDate)
                     GM_setValue("t2ratedb", JSON.stringify(t2rate))
@@ -1828,9 +2177,7 @@
             }
         }
         getPromiseLevel()
-        
-    
-        
+
         // 版本更新机制
         GM_xmlhttpRequest({
             method: "get",
@@ -1865,10 +2212,32 @@
                 console.log(err)
             }
         });
-        
     }
     // 获取必须获取的数据
-    getNeedData()
+    getNeedData();
+
+    // 如果pbstatus数据开关已打开且需要更新
+    if(GM_getValue("switchpbstatus")) {
+        (function() {
+            let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
+            if (pbstatus[pbstatusVersion]) {
+                console.log("已经同步过初始题目状态数据...");
+                return;
+            }
+            let syncLayer = layer.confirm('检测本地没有题目数据状态，即将开始初始化进行所有题目状态，是否开始同步? <br/> tips:(该检测和开启讨论区展示题目状态功能有关)', {icon: 3}, function(){
+                layer.close(syncLayer);
+                let loadIndex = layer.open({
+                    area: ['550px', '300px']
+                    ,title: '同步所有题目状态'
+                    ,closeBtn: 1
+                    ,content: `${pbstatusContent}`
+                });
+                layuiload();
+            }, function(){
+                // do nothong
+            });
+        })();
+    } 
 
     // 定时启动函数程序
     clearAndStart(location.href, 1000, true)
@@ -1885,7 +2254,6 @@ if (GM_getValue("switchperson")) {
     // url数据
     let imgUrl = "https://i.ibb.co/89XdTMf/Spig.png"
 //    let imgUrl = "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/assets/samplespig.png"
-    let checkUrl = "https://leetcode.cn/submissions/detail/.*/check/"
 
     const isindex = true
     const visitor = "主人"
@@ -2004,6 +2372,7 @@ if (GM_getValue("switchperson")) {
     }
     // 监听分数提交
     let addListener2 = () => {
+        let checkUrl = "https://leetcode.cn/submissions/detail/[0-9]*/check/.*"
         XMLHttpRequest.prototype.send = function (str) {
             const _onreadystatechange = this.onreadystatechange;
             this.onreadystatechange = (...args) => {
@@ -2025,7 +2394,7 @@ if (GM_getValue("switchperson")) {
             return dummySend.call(this, str);
         }
     }
-    addListener2()
+    addListener2();
 
     // 鼠标在消息上时
     jQuery(document).ready(function ($) {

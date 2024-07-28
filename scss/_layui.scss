@@ -107,6 +107,16 @@
     visibility: hidden !important
 }
 
+@font-face {
+	font-family:layui-icon;
+    src:url(https://unpkg.com/layui@2.9.6/dist/font/iconfont.eot?v=282);
+    src:url(https://unpkg.com/layui@2.9.6/dist/font/iconfont.eot?v=282#iefix) format('embedded-opentype'),
+    url(https://unpkg.com/layui@2.9.6/dist/font/iconfont.woff2?v=282) format('woff2'),
+    url(https://unpkg.com/layui@2.9.6/dist/font/iconfont.woff?v=282) format('woff'),
+    url(https://unpkg.com/layui@2.9.6/dist/font/iconfont.ttf?v=282) format('truetype'),
+    url(https://unpkg.com/layui@2.9.6/dist/font/iconfont.svg?v=282#layui-icon) format('svg')
+}
+
 .layui-icon {
     font-family: layui-icon !important;
     font-size: 16px;

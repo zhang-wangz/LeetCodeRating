@@ -1,4 +1,4 @@
 {
-  "version": "2.3.0",
-  "content": "hi，兄弟们，自从2.2.0版本开始因为功能逐渐增多，定时器数量管理问题导致的页面变卡问题在这个版本终于全部解决啦！"
+  "version": "2.3.1",
+  "content": "上线(讨论区题目链接后面显示题目完成情况)相关功能，具体功能说明转移github(https://github.com/zhang-wangz/LeetCodeRating)查看～"
 }

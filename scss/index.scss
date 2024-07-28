@@ -13,7 +13,17 @@
         border-color: hsl(var(--sd-border));
         color: rgb(200 200 200 / var(--tw-text-opacity)) !important;
     }
+
+    .mycircle {
+        stroke:white;
+        stroke-width:2;
+        fill:white;
+    }
     
+    .myfont {
+        color:black;
+    }
+
     .layui-input:hover, 
     .layui-textarea:hover {
         border-color: #999 !important;
