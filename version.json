@@ -1,4 +1,4 @@
 {
-  "version": "2.3.1",
-  "content": "上线(讨论区题目链接后面显示题目完成情况)相关功能，具体功能说明转移github(https://github.com/zhang-wangz/LeetCodeRating)查看～"
+  "version": "2.3.2",
+  "content": "上线(讨论区题目链接后面显示题目完成情况)相关功能，具体功能说明转移github(https://github.com/zhang-wangz/LeetCodeRating)查看～ <br/> tips:2.3.1补丁,修复不同系统之间async数据的问题"
 }

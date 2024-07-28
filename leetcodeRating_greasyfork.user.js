@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.1
+// @version      2.3.2
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -167,13 +167,14 @@
 // @note         2024-07-01 2.2.10 hi，兄弟们，自从2.2.0版本开始因为功能逐渐增多，定时器数量管理问题导致的页面变卡问题在这个版本终于全部解决啦！
 // @note         2024-07-01 2.3.0 2.2.10的补丁版本
 // @note         2024-07-02 2.3.1 上线讨论区题目链接后面显示题目完成情况功能，具体功能说明转移github查看(https://github.com/zhang-wangz/LeetCodeRating)～
+// @note         2024-07-02 2.3.2 2.3.1补丁
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.1"
-    let pbstatusVersion = "version9"
+    let version = "2.3.2"
+    let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
     // css 渲染
@@ -521,6 +522,11 @@
         baseReq("POST", reqUrl, query, variables, successFuc)
     }
 
+    // 基础函数休眠
+    async function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     let lcTheme = (mode) => {
         let headers = {
             accept: '*/*',
@@ -677,7 +683,7 @@
         pbstatusMap[link.href] = true;
     }
 
-    function createstatusBtn() {
+    async function createstatusBtn() {
         if(document.querySelector("#statusBtn")) return;
         let span = document.createElement("span");
         span.setAttribute("data-small-spacing", "true");
@@ -687,12 +693,12 @@
             // console.log(levelData[id])
             span.innerHTML = `<i style="font-size:12px;" class="layui-icon layui-icon-refresh"></i> 同步题目状态`
             span.onclick = function(e) {
-                e.preventDefault();
                 layer.open({
-                    area: ['550px', '300px']
-                    ,title: '同步所有题目状态'
-                    ,closeBtn: 1
-                    ,content: `${pbstatusContent}`
+                    type: 1,
+                    content: `${pbstatusContent}`,
+                    title: '同步所有题目状态',
+                    area: ['550px', '250px'],
+                    shade: 0.6, 
                 });
             }
             // 使用layui的渲染
@@ -1699,26 +1705,25 @@
         10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
         11     竞赛内容，知识点超出面试范围
         `;
-    function layuiload() {
+    async function layuiload() {
         // 使用layui的渲染
         layui.use(function(){
-            var element = layui.element;
-            var util = layui.util;
+            let element = layui.element;
+            let util = layui.util;
+            let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
             // 普通事件
             util.on('lay-on', {
                 // loading
                 loading: function(othis){
-                    var DISABLED = 'layui-btn-disabled';
+                    let DISABLED = 'layui-btn-disabled';
                     if(othis.hasClass(DISABLED)) return;
                     othis.addClass(DISABLED);
-                    let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
-                    // let cnt = Math.trunc((getpbCnt() + 99) / 100);
-                    let cnt = 10;
+                    let cnt = Math.trunc((getpbCnt() + 99) / 100);
                     let headers = {
                         'Content-Type': 'application/json'
                     };
                     let skip = 0;
-                    var timer = setInterval(function () {
+                    let timer = setInterval(async function () {
                         ajaxReq("POST", lcgraphql, headers, allPbPostData(skip, 100), res => {
                             let questions = res.data.problemsetQuestionList.questions;
                             for(let pb of questions) {
@@ -1731,23 +1736,25 @@
                                     "difficulty": pb.difficulty
                                 }
                             }
-                            // console.log(questions);
                         });
                         skip += 100;
                         // skip / 100 是当前已经进行的次数
                         let showval = Math.trunc(skip / 100 / cnt * 100);
-                        // console.log(skip / 100, cnt);
-                        // console.log(showval)
                         if (skip / 100 >= cnt) {
                             showval = 100;
                             clearInterval(timer);
-                            // othis.removeClass(DISABLED);
                         }
                         element.progress('demo-filter-progress', showval+'%');
-                        if(showval == 100) console.log("同步所有题目状态完成...");
+                        if(showval == 100) {
+                            pbstatus[pbstatusVersion] = {};
+                            GM_setValue("pbstatus", JSON.stringify(pbstatus));
+                            console.log("同步所有题目状态完成...");
+                            await sleep(1000);
+                            layer.msg("同步所有题目状态完成!");
+                            await sleep(1000);
+                            layer.closeAll();
+                        }
                     }, 300+Math.random()*1000);
-                    pbstatus[pbstatusVersion] = {};
-                    GM_setValue("pbstatus", JSON.stringify(pbstatus));
                 }
             });
         });
@@ -1853,12 +1860,12 @@
                     // console.log(levelData[id])
                     span4.innerHTML = `<i style="font-size:12px" class="layui-icon layui-icon-refresh"></i>&nbsp;同步题目状态`
                     span4.onclick = function(e) {
-                        e.preventDefault();
                         layer.open({
-                            area: ['550px', '300px']
-                            ,title: '同步所有题目状态'
-                            ,closeBtn: 1
-                            ,content: `${pbstatusContent}`
+                            type: 1,
+                            content: `${pbstatusContent}`,
+                            title: '同步所有题目状态',
+                            area: ['550px', '250px'],
+                            shade: 0.6, 
                         });
                     }
                     span4.setAttribute("style", "cursor:pointer;");
@@ -1879,10 +1886,13 @@
                     span3.onclick = function(e) {
                         e.preventDefault();
                         layer.open({
-                            area: ['700px', '450px']
+                            type: 1 // Page 层类型
+                            ,area: ['700px', '450px']
                             ,title: '算术评级说明'
-                            ,closeBtn:1
-                            ,content: `<p class="containerlingtea" style="color:#000;">${levelContent}</p>`
+                            ,shade: 0.6 // 遮罩透明度
+                            ,maxmin: true // 允许全屏最小化
+                            ,anim: 5 // 0-6的动画形式，-1不开启
+                            ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${des}</p>`
                         });
                     }
                     abody3.removeAttribute("hidden")
@@ -1967,7 +1977,7 @@
                         `
                         layer.open({
                             type: 1 // Page 层类型
-                            ,area: ['700px', '320px']
+                            ,area: ['700px', '450px']
                             ,title: '算术评级说明'
                             ,shade: 0.6 // 遮罩透明度
                             ,maxmin: true // 允许全屏最小化
@@ -2226,11 +2236,12 @@
             }
             let syncLayer = layer.confirm('检测本地没有题目数据状态，即将开始初始化进行所有题目状态，是否开始同步? <br/> tips:(该检测和开启讨论区展示题目状态功能有关)', {icon: 3}, function(){
                 layer.close(syncLayer);
-                let loadIndex = layer.open({
-                    area: ['550px', '300px']
-                    ,title: '同步所有题目状态'
-                    ,closeBtn: 1
-                    ,content: `${pbstatusContent}`
+                layer.open({
+                    type: 1,
+                    content: `${pbstatusContent}`,
+                    title: '同步所有题目状态',
+                    area: ['550px', '250px'],
+                    shade: 0.6, 
                 });
                 layuiload();
             }, function(){
