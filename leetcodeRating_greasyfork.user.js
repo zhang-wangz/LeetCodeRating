@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.5
+// @version      2.3.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -171,12 +171,13 @@
 // @note         2024-07-28 2.3.3 2.3.1补丁，提供讨论区题目完成情况可选择显示在最前面
 // @note         2024-07-29 2.3.4 2.3.1补丁，提供题解区相关题目链接显示完成情况
 // @note         2024-07-29 2.3.5 修复2.3.4补丁包题解区a标签识别的bug问题
+// @note         2024-07-29 2.3.6 2.3.1补丁 根据不同页面调整题目完成状态显示ui
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.5"
+    let version = "2.3.6"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -649,19 +650,19 @@
             case 1:
                 return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="myiconsvg h-[18px] w-[18px]  text-green-s dark:text-dark-green-s"><path fill-rule="evenodd" d="M20 12.005v-.828a1 1 0 112 0v.829a10 10 0 11-5.93-9.14 1 1 0 01-.814 1.826A8 8 0 1020 12.005zM8.593 10.852a1 1 0 011.414 0L12 12.844l8.293-8.3a1 1 0 011.415 1.413l-9 9.009a1 1 0 01-1.415 0l-2.7-2.7a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
             case 2:
-                return `<svg class="myiconsvg" width="20" height="20">
-                            <circle cx="8" cy="13" r="7" stroke="black" stroke-width="0" fill="red"></circle>
+                return `<svg class="myiconsvg" width="21" height="20">
+                            <circle class="mycircle2" stroke="black" stroke-width="0" fill="red"></circle>
                         </svg>`;
             // code3 的时候需要调整style，所以设置了class，调整在css中
             case 3:
-                return `<svg class="myiconsvg" width="20" height="21">
-                            <circle class="mycircle" cx="8" cy="13" r="7" style="stroke:black;stroke-width:2;fill:white;"></circle>
+                return `<svg class="myiconsvg" width="21" height="20">
+                            <circle class="mycircle" stroke="black" stroke-width="2" fill="white"></circle>
                         </svg>`;
             default: return "";
         }
     }
 
-    function handleLink(link) {
+    function handleLink(link, whetherSolution) {
         // 每日一题或者是标签icon内容，不做更改直接跳过
         // no-underline是标题
         if (link.href.includes("daily-question") 
@@ -735,6 +736,66 @@
 
 
     // 监听变化
+    // 改变大小
+    let whetherSolution = location.href.match(pbUrl);
+    if (whetherSolution) {
+        if(GM_getValue("switchpbstatusLocation")) {
+            GM_addStyle(`
+                circle.mycircle {
+                    cx: 9;
+                    cy: 9;
+                    r: 7; 
+                }
+                circle.mycircle2 {
+                    cx: 9;
+                    cy: 9;
+                    r: 8; 
+                }
+            `)
+        } else {
+            GM_addStyle(`
+                circle.mycircle {
+                    cx: 13;
+                    cy: 9;
+                    r: 7; 
+                }
+                circle.mycircle2 {
+                    cx: 13;
+                    cy: 9;
+                    r: 8; 
+                }
+            `)
+        }
+    } else {
+        console.log(GM_getValue("switchpbstatusLocation"))
+        if(GM_getValue("switchpbstatusLocation")) {
+            GM_addStyle(`
+                circle.mycircle {
+                    cx: 8;
+                    cy: 12;
+                    r: 7; 
+                }
+                circle.mycircle2 {
+                    cx: 8;
+                    cy: 12;
+                    r: 8;  
+                }
+            `)
+        } else {
+            GM_addStyle(`
+                circle.mycircle {
+                    cx: 13;
+                    cy: 12;
+                    r: 7; 
+                }
+                circle.mycircle2 {
+                    cx: 13;
+                    cy: 12;
+                    r: 8;  
+                }
+            `)
+        }
+    }
     function waitOprpbStatus() {
         if (GM_getValue("switchpbstatus")) {
             if(window.location.href.match(discussUrl) || window.location.href.match(pbUrl)) {
@@ -754,6 +815,7 @@
                             }
                             // 只有讨论区和题解区进行a标签制作
                             if(window.location.href.match(discussUrl) || window.location.href.match(pbSolutionDetailUrl)) {
+                                let whetherSolution = window.location.href.match(pbSolutionDetailUrl);
                                 // 获取所有的<a>标签
                                 let links = document.querySelectorAll('a');
                                 // 过滤出符合条件的<a>标签
@@ -765,7 +827,7 @@
                                 // console.log(matchingLinks);
                                 // 符合条件的<a>标签
                                 matchingLinks.forEach(link => {
-                                    handleLink(link);
+                                    handleLink(link, whetherSolution);
                                 });
                             }
                         });
