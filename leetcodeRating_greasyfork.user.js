@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.3
+// @version      2.3.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -166,29 +166,32 @@
 // @note         2024-06-06 2.2.9 同上，该版本为补丁版本
 // @note         2024-07-01 2.2.10 hi，兄弟们，自从2.2.0版本开始因为功能逐渐增多，定时器数量管理问题导致的页面变卡问题在这个版本终于全部解决啦！
 // @note         2024-07-01 2.3.0 2.2.10的补丁版本
-// @note         2024-07-02 2.3.1 上线讨论区题目链接后面显示题目完成情况功能，具体功能说明转移github查看(https://github.com/zhang-wangz/LeetCodeRating)～
-// @note         2024-07-02 2.3.2 2.3.1补丁
-// @note         2024-07-02 2.3.3 2.3.1补丁，提供讨论区题目完成情况可选择显示在最前面
+// @note         2024-07-27 2.3.1 上线讨论区题目链接后面显示题目完成情况功能，具体功能说明转移github查看(https://github.com/zhang-wangz/LeetCodeRating)～
+// @note         2024-07-28 2.3.2 2.3.1补丁
+// @note         2024-07-28 2.3.3 2.3.1补丁，提供讨论区题目完成情况可选择显示在最前面
+// @note         2024-07-29 2.3.4 2.3.1补丁，提供题解区相关题目链接显示完成情况
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.3"
+    let version = "2.3.4"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
     // css 渲染
-    $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.6/index.min.css" rel="stylesheet">`)
+    $(document.body).append(`<link href="https://unpkg.com/leetcoderatingjs@1.0.7/index.min.css" rel="stylesheet">`)
 
     // 页面相关url
     const allUrl = "https://leetcode.cn/problemset/.*"
     const tagUrl = "https://leetcode.cn/tag/.*"
     const companyUrl = "https://leetcode.cn/company/.*"
     const pblistUrl = "https://leetcode.cn/problem-list/.*"
-    const pbUrl = "https://leetcode.*/problems/.*"
-    // 限定pbstatus使用
-    const pbSolutionUrl = "https://leetcode.*/problems/.*/solution/"
+    const pbUrl = "https://leetcode.{2,5}/problems/.*"
+    // 限定pbstatus使用, 不匹配题解链接
+    const pbSolutionUrl = "https://leetcode.{2,5}/problems/.*/solution.*"
+    // 现在的solution规则，以前是/solution/字母xxx
+    const pbSolutionDetailUrl = "https://leetcode.{2,5}/problems/.*/solutions/[0-9]*/.*"
     // 题目提交检查url
     // https://leetcode.cn/submissions/detail/550056752/check/
     // const checkUrl = "https://leetcode.cn/submissions/detail/[0-9]*/check/.*"
@@ -213,7 +216,7 @@
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
-    // pbstatus数据, 单独使用localStorage存储
+    // pbstatus数据
     let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString())
     // 题目名称-id ContestID_zh-ID
     // 中文
@@ -435,9 +438,9 @@
             ['switchlevel', 'studyplan level function', '算术评级(显示左侧栏和学习计划中)', true, false],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
-            ['switchpbstatus', 'pbstatus function', '讨论区题目显示完成状态(测试阶段)', true, true],
-            ['switchpbstatusLocation', 'switchpbstatusLocation function', '讨论区题目显示完成状态(方位改变为最前方)(测试阶段)', false, true],
-            ['switchpbstatusBtn', 'pbstatusBtn function', '题目页和讨论页添加同步题目状态按钮(测试阶段)', true, true],
+            ['switchpbstatus', 'pbstatus function', '讨论区和题解区显示题目完成状态', true, true],
+            ['switchpbstatusLocation', 'switchpbstatusLocation function', '题目显示完成状态(位置改为左方)', false, true],
+            ['switchpbstatusBtn', 'pbstatusBtn function', '讨论区和题目区添加同步题目状态按钮', true, true],
             ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
         for (const element of menu_ALL){ // 如果读取到的值为 null 就写入默认值
@@ -640,14 +643,14 @@
     function getPbstatusIcon(code) {
         switch(code) {
             case 1:
-                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="h-[18px] w-[18px]  text-green-s dark:text-dark-green-s"><path fill-rule="evenodd" d="M20 12.005v-.828a1 1 0 112 0v.829a10 10 0 11-5.93-9.14 1 1 0 01-.814 1.826A8 8 0 1020 12.005zM8.593 10.852a1 1 0 011.414 0L12 12.844l8.293-8.3a1 1 0 011.415 1.413l-9 9.009a1 1 0 01-1.415 0l-2.7-2.7a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="myiconsvg h-[18px] w-[18px]  text-green-s dark:text-dark-green-s"><path fill-rule="evenodd" d="M20 12.005v-.828a1 1 0 112 0v.829a10 10 0 11-5.93-9.14 1 1 0 01-.814 1.826A8 8 0 1020 12.005zM8.593 10.852a1 1 0 011.414 0L12 12.844l8.293-8.3a1 1 0 011.415 1.413l-9 9.009a1 1 0 01-1.415 0l-2.7-2.7a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
             case 2:
-                return `<svg width="20" height="20">
+                return `<svg class="myiconsvg" width="20" height="20">
                             <circle cx="8" cy="13" r="7" stroke="black" stroke-width="0" fill="red"></circle>
                         </svg>`;
             // code3 的时候需要调整style，所以设置了class，调整在css中
             case 3:
-                return `<svg width="20" height="21">
+                return `<svg class="myiconsvg" width="20" height="21">
                             <circle class="mycircle" cx="8" cy="13" r="7" style="stroke:black;stroke-width:2;fill:white;"></circle>
                         </svg>`;
             default: return "";
@@ -656,7 +659,16 @@
 
     let pbstatusMap = {};
     function handleLink(link) {
-        if (link.href.includes("daily-question")) {
+        // 每日一题或者是标签icon内容，不做更改直接跳过
+        if (link.href.includes("daily-question") 
+            || link.getAttribute("data-state")) {
+            pbstatusMap[link.href] = true;
+            return;
+        }
+        // 如果在题目页，点击到题解区之后进行渲染，会把标题(力扣官方标题本身也是个a标签)也渲染进去，所以这里排除一下
+        let slug = getSlug(link.href);
+        let nowUrlSlug = getSlug(location.href);
+        if (slug && nowUrlSlug && slug == nowUrlSlug) {
             pbstatusMap[link.href] = true;
             return;
         }
@@ -719,31 +731,46 @@
     }
 
 
+    // 监听变化
     function waitOprpbStatus() {
-        if (GM_getValue("switchpbstatus") && window.location.href.match(discussUrl)) {
-            new ElementGetter().each(".css-se33k0-QuestionContent", document, (item) => {
-                let observer = new MutationObserver(function(mutationsList, observer) {
-                    // 检查变化
-                    mutationsList.forEach(function(mutation) {
-                        createstatusBtn();
-                        // 获取所有的<a>标签
-                        let links = document.querySelectorAll('a');
-                        // 过滤出符合条件的<a>标签
-                        let matchingLinks = Array.from(links).filter(link => {
-                            return !pbstatusMap[link.href]
-                            && link.href.match(pbUrl)
-                            && !link.href.match(pbSolutionUrl);
-                        });
-                        // 符合条件的<a>标签
-                        matchingLinks.forEach(link => {
-                            handleLink(link);
+        if (GM_getValue("switchpbstatus")) {
+            if(window.location.href.match(discussUrl) || window.location.href.match(pbUrl)) {
+                let css_flag = "";
+                if(window.location.href.match(discussUrl)) {
+                    css_flag = ".css-se33k0-QuestionContent";
+                } else {
+                    css_flag = "#qd-content";
+                }
+                new ElementGetter().each(css_flag, document, (item) => {
+                    let observer = new MutationObserver(function(mutationsList, observer) {
+                        // 检查变化
+                        mutationsList.forEach(function(mutation) {
+                            // 只有讨论区才制作同步按钮，题解区不做更改
+                            if(window.location.href.match(discussUrl)) {
+                                createstatusBtn();
+                            }
+                            // 只有讨论区和题解区进行a标签制作
+                            if(window.location.href.match(discussUrl) || window.location.href.match(pbSolutionDetailUrl)) {
+                                // 获取所有的<a>标签
+                                let links = document.querySelectorAll('a');
+                                // 过滤出符合条件的<a>标签
+                                let matchingLinks = Array.from(links).filter(link => {
+                                    return !pbstatusMap[link.href]
+                                    && link.href.match(pbUrl)
+                                    && !link.href.match(pbSolutionUrl);
+                                });
+                                // 符合条件的<a>标签
+                                matchingLinks.forEach(link => {
+                                    handleLink(link);
+                                });
+                            }
                         });
                     });
+                    // 配置 MutationObserver 监听的内容和选项
+                    let config = { attributes: false, childList: true, subtree: true};
+                    observer.observe(item, config);
                 });
-                // 配置 MutationObserver 监听的内容和选项
-                let config = { attributes: false, childList: true, subtree: true};
-                observer.observe(item, config);
-            });
+            }
         }
     }
     waitOprpbStatus();

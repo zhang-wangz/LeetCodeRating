@@ -1,6 +1,12 @@
 @charset 'UTF-8';
 
 @import "layui";
+
+// 修改icon svg的标签style
+.myiconsvg {
+    display: inline !important;
+}
+
 .dark {
     .leetcodeRating-search,
     .layui-panel,
