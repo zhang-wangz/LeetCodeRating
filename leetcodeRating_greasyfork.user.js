@@ -2305,7 +2305,7 @@
                     let upcontent = json["content"]
                     if (v != version) {
                         layer.open({
-                            area: ['400px', '260px'],
+                            area: ['500px', '300px'],
                             content: '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' + v +'啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
                             yes: function (index, layer0) {
                                 let c = window.open(sciptUrl + "?timeStamp=" + new Date().getTime())
