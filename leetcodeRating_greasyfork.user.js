@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.4
+// @version      2.3.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -170,12 +170,13 @@
 // @note         2024-07-28 2.3.2 2.3.1补丁
 // @note         2024-07-28 2.3.3 2.3.1补丁，提供讨论区题目完成情况可选择显示在最前面
 // @note         2024-07-29 2.3.4 2.3.1补丁，提供题解区相关题目链接显示完成情况
+// @note         2024-07-29 2.3.5 修复2.3.4补丁包题解区a标签识别的bug问题
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.4"
+    let version = "2.3.5"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -630,13 +631,16 @@
         let nowurl = "https://leetcode.cn/problems/";
         if (problemUrl.startsWith(preUrl))
             return problemUrl.replace(preUrl, '').split('/')[0];
-        return problemUrl.replace(nowurl, '').split('/')[0];
+        else if(problemUrl.startsWith(nowurl))
+            return problemUrl.replace(nowurl, '').split('/')[0];
+        return null;
     }
 
     // 获取题目状态
     function getpbStatus(pburl) {
         let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
         let titleSlug = getSlug(pburl);
+        if (!titleSlug) return null;
         return pbstatus[titleSlug] == null ? "NOT_STARTED": pbstatus[titleSlug]["status"];
     };
 
@@ -657,27 +661,27 @@
         }
     }
 
-    let pbstatusMap = {};
     function handleLink(link) {
         // 每日一题或者是标签icon内容，不做更改直接跳过
+        // no-underline是标题
         if (link.href.includes("daily-question") 
-            || link.getAttribute("data-state")) {
-            pbstatusMap[link.href] = true;
+            || link.getAttribute("data-state")
+            || link.getAttribute("class")?.includes("no-underline")) {
+            link.setAttribute("linkId", "leetcodeRating");
             return;
         }
-        // 如果在题目页，点击到题解区之后进行渲染，会把标题(力扣官方标题本身也是个a标签)也渲染进去，所以这里排除一下
-        let slug = getSlug(link.href);
-        let nowUrlSlug = getSlug(location.href);
-        if (slug && nowUrlSlug && slug == nowUrlSlug) {
-            pbstatusMap[link.href] = true;
-            return;
-        }
+        // console.log(link)
+        // console.log(link.href)
         let linkId = link.getAttribute("linkId");
         if(linkId != null && linkId == "leetcodeRating") {
             console.log(getSlug(link.href) + "已经替换..., 略过");
             return;
         }
         let status = getpbStatus(link.href);
+        if (!status) {
+            link.setAttribute("linkId", "leetcodeRating");
+            return;
+        }
         // console.log(status);
         // 1 ac 2 tried 3 not_started
         let code = status == 'NOT_STARTED'? 3 : status == 'AC'? 1 : 2;
@@ -699,7 +703,6 @@
                 parent.appendChild(iconEle);
             }
         }
-        pbstatusMap[link.href] = true;
     }
 
     async function createstatusBtn() {
@@ -755,10 +758,11 @@
                                 let links = document.querySelectorAll('a');
                                 // 过滤出符合条件的<a>标签
                                 let matchingLinks = Array.from(links).filter(link => {
-                                    return !pbstatusMap[link.href]
+                                    return !link.getAttribute("linkId")
                                     && link.href.match(pbUrl)
                                     && !link.href.match(pbSolutionUrl);
                                 });
+                                // console.log(matchingLinks);
                                 // 符合条件的<a>标签
                                 matchingLinks.forEach(link => {
                                     handleLink(link);
@@ -786,14 +790,14 @@
                         // console.log('HTTP请求完成：', arguments[0]);
                         let resp = JSON.parse(bodyText);
                         // console.log('响应数据：', resp);
-                        if (resp && resp.status_msg && resp.status_msg.includes("Accepted")) {
+                        if (resp?.status_msg?.includes("Accepted")) {
                             let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
                             let slug = getSlug(location.href);
                             if (!pbstatus[slug]) pbstatus[slug] = {};
                             pbstatus[slug]["status"] = "AC";
                             GM_setValue("pbstatus", JSON.stringify(pbstatus));
                             console.log("提交成功，当前题目状态已更新");
-                        } else if (resp && resp.status_msg && !resp.status_msg.includes("Accepted"))  {
+                        } else if (resp?.status_msg && !resp.status_msg.includes("Accepted"))  {
                             let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
                             let slug = getSlug(location.href);
                             if (!pbstatus[slug]) pbstatus[slug] = {};
