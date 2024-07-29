@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.6
+// @version      2.3.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -172,12 +172,13 @@
 // @note         2024-07-29 2.3.4 2.3.1补丁，提供题解区相关题目链接显示完成情况
 // @note         2024-07-29 2.3.5 修复2.3.4补丁包题解区a标签识别的bug问题
 // @note         2024-07-29 2.3.6 2.3.1补丁 根据不同页面调整题目完成状态显示ui
+// @note         2024-07-29 2.3.7 2.3.1补丁 修改新功能对老域名leetcode-cn.com的适配，有些题解和讨论区使用的题目仍为老域名进行跳转
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.6"
+    let version = "2.3.7"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -189,11 +190,11 @@
     const tagUrl = "https://leetcode.cn/tag/.*"
     const companyUrl = "https://leetcode.cn/company/.*"
     const pblistUrl = "https://leetcode.cn/problem-list/.*"
-    const pbUrl = "https://leetcode.{2,5}/problems/.*"
+    const pbUrl = "https://leetcode.{2,7}/problems/.*"
     // 限定pbstatus使用, 不匹配题解链接
-    const pbSolutionUrl = "https://leetcode.{2,5}/problems/.*/solution.*"
+    const pbSolutionUrl = "https://leetcode.{2,7}/problems/.*/solution.*"
     // 现在的solution规则，以前是/solution/字母xxx
-    const pbSolutionDetailUrl = "https://leetcode.{2,5}/problems/.*/solutions/[0-9]*/.*"
+    const pbSolutionDetailUrl = "https://leetcode.{2,7}/problems/.*/solutions/[0-9]*/.*"
     // 题目提交检查url
     // https://leetcode.cn/submissions/detail/550056752/check/
     // const checkUrl = "https://leetcode.cn/submissions/detail/[0-9]*/check/.*"
