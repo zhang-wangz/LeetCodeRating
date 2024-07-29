@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.7
+// @version      2.3.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -173,12 +173,13 @@
 // @note         2024-07-29 2.3.5 修复2.3.4补丁包题解区a标签识别的bug问题
 // @note         2024-07-29 2.3.6 2.3.1补丁 根据不同页面调整题目完成状态显示ui
 // @note         2024-07-29 2.3.7 2.3.1补丁 修改新功能对老域名leetcode-cn.com的适配，有些题解和讨论区使用的题目仍为老域名进行跳转
+// @note         2024-07-29 2.3.8 2.3.1补丁 修复新功能设计时，不小心去除了算术评级说明弹窗的问题
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.7"
+    let version = "2.3.8"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -1993,7 +1994,7 @@
                             ,shade: 0.6 // 遮罩透明度
                             ,maxmin: true // 允许全屏最小化
                             ,anim: 5 // 0-6的动画形式，-1不开启
-                            ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${des}</p>`
+                            ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${levelContent}</p>`
                         });
                     }
                     abody3.removeAttribute("hidden")
@@ -2063,19 +2064,6 @@
                     pa.childNodes[le - 4].childNodes[0].innerText = des
                     pa.childNodes[le - 4].childNodes[0].onclick = function(e) {
                         e.preventDefault();
-                        let des = `
-                            1      无算法要求
-                            2      知道常用数据结构和算法并简单使用
-                            3      理解常用数据结构和算法
-                            4      掌握常用数据结构和算法
-                            5      熟练掌握常用数据结构和算法，初步了解高级数据结构
-                            6      深入理解并灵活应用数据结构和算法，理解高级数据结构
-                            7      结合多方面的数据结构和算法，处理较复杂问题
-                            8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
-                            9      处理复杂问题，对时间复杂度的要求更严格
-                            10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
-                            11     竞赛内容，知识点超出面试范围
-                        `
                         layer.open({
                             type: 1 // Page 层类型
                             ,area: ['700px', '450px']
@@ -2083,7 +2071,7 @@
                             ,shade: 0.6 // 遮罩透明度
                             ,maxmin: true // 允许全屏最小化
                             ,anim: 5 // 0-6的动画形式，-1不开启
-                            ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${des}</p>`
+                            ,content: `<p class="containerlingtea" style="padding:10px;color:#000;">${levelContent}</p>`
                         });
                     }
                     pa.childNodes[le - 4].removeAttribute("hidden")

@@ -1,4 +1,4 @@
 {
-  "version": "2.3.7",
-  "content": "tips: 补丁包2.3.7修改新功能对老域名leetcode-cn.com的适配，有些题解和讨论区使用的题目链接仍使用老域名进行跳转；<br/> 上线(讨论区题目链接后面显示题目完成情况)相关功能，具体功能说明转移github(https://github.com/zhang-wangz/LeetCodeRating)查看～"
+  "version": "2.3.8",
+  "content": "tips: 补丁包2.3.8 修复新功能设计时，不小心去除了算术评级说明弹窗的问题；<br/> 上线(讨论区题目链接后面显示题目完成情况)相关功能，具体功能说明转移github(https://github.com/zhang-wangz/LeetCodeRating)查看～"
 }
