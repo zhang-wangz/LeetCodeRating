@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.8
+// @version      2.3.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -174,12 +174,13 @@
 // @note         2024-07-29 2.3.6 2.3.1补丁 根据不同页面调整题目完成状态显示ui
 // @note         2024-07-29 2.3.7 2.3.1补丁 修改新功能对老域名leetcode-cn.com的适配，有些题解和讨论区使用的题目仍为老域名进行跳转
 // @note         2024-07-29 2.3.8 2.3.1补丁 修复新功能设计时，不小心去除了算术评级说明弹窗的问题
+// @note         2024-07-30 2.3.9 2.3.1补丁 修改题目完成情况ui(尝试过icon)更贴近力扣官方设计，修复如果有历史提交ac，但最新提交失败的情况下更新题目状态为notac的问题
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.8"
+    let version = "2.3.9"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -647,14 +648,13 @@
         return pbstatus[titleSlug] == null ? "NOT_STARTED": pbstatus[titleSlug]["status"];
     };
 
+    // 1 ac 2 tried 3 not_started
     function getPbstatusIcon(code) {
         switch(code) {
             case 1:
                 return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="myiconsvg h-[18px] w-[18px]  text-green-s dark:text-dark-green-s"><path fill-rule="evenodd" d="M20 12.005v-.828a1 1 0 112 0v.829a10 10 0 11-5.93-9.14 1 1 0 01-.814 1.826A8 8 0 1020 12.005zM8.593 10.852a1 1 0 011.414 0L12 12.844l8.293-8.3a1 1 0 011.415 1.413l-9 9.009a1 1 0 01-1.415 0l-2.7-2.7a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
             case 2:
-                return `<svg class="myiconsvg" width="21" height="20">
-                            <circle class="mycircle2" stroke="black" stroke-width="0" fill="red"></circle>
-                        </svg>`;
+                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.6 0 12.5 14" width="1.2em" height="1.2em" fill="currentColor" class="myiconsvg text-message-warning dark:text-message-warning"><path d="M6.998 7v-.6a.6.6 0 00-.6.6h.6zm.05 0h.6a.6.6 0 00-.6-.6V7zm0 .045v.6a.6.6 0 00.6-.6h-.6zm-.05 0h-.6a.6.6 0 00.6.6v-.6zm5-.045a5 5 0 01-5 5v1.2a6.2 6.2 0 006.2-6.2h-1.2zm-5 5a5 5 0 01-5-5h-1.2a6.2 6.2 0 006.2 6.2V12zm-5-5a5 5 0 015-5V.8A6.2 6.2 0 00.798 7h1.2zm5-5a5 5 0 015 5h1.2a6.2 6.2 0 00-6.2-6.2V2zm2.2 5a2.2 2.2 0 01-2.2 2.2v1.2a3.4 3.4 0 003.4-3.4h-1.2zm-2.2 2.2a2.2 2.2 0 01-2.2-2.2h-1.2a3.4 3.4 0 003.4 3.4V9.2zM4.798 7a2.2 2.2 0 012.2-2.2V3.6a3.4 3.4 0 00-3.4 3.4h1.2zm2.2-2.2a2.2 2.2 0 012.2 2.2h1.2a3.4 3.4 0 00-3.4-3.4v1.2zm0 2.8h.05V6.4h-.05v1.2zm-.55-.6v.045h1.2V7h-1.2zm.6-.555h-.05v1.2h.05v-1.2zm.55.6V7h-1.2v.045h1.2z"></path></svg>`;
             // code3 的时候需要调整style，所以设置了class，调整在css中
             case 3:
                 return `<svg class="myiconsvg" width="21" height="20">
@@ -664,7 +664,7 @@
         }
     }
 
-    function handleLink(link, whetherSolution) {
+    function handleLink(link) {
         // 每日一题或者是标签icon内容，不做更改直接跳过
         // no-underline是标题
         if (link.href.includes("daily-question") 
@@ -748,11 +748,6 @@
                     cy: 9;
                     r: 7; 
                 }
-                circle.mycircle2 {
-                    cx: 9;
-                    cy: 9;
-                    r: 8; 
-                }
             `)
         } else {
             GM_addStyle(`
@@ -760,11 +755,6 @@
                     cx: 13;
                     cy: 9;
                     r: 7; 
-                }
-                circle.mycircle2 {
-                    cx: 13;
-                    cy: 9;
-                    r: 8; 
                 }
             `)
         }
@@ -777,11 +767,6 @@
                     cy: 12;
                     r: 7; 
                 }
-                circle.mycircle2 {
-                    cx: 8;
-                    cy: 12;
-                    r: 8;  
-                }
             `)
         } else {
             GM_addStyle(`
@@ -789,11 +774,6 @@
                     cx: 13;
                     cy: 12;
                     r: 7; 
-                }
-                circle.mycircle2 {
-                    cx: 13;
-                    cy: 12;
-                    r: 8;  
                 }
             `)
         }
@@ -817,7 +797,6 @@
                             }
                             // 只有讨论区和题解区进行a标签制作
                             if(window.location.href.match(discussUrl) || window.location.href.match(pbSolutionDetailUrl)) {
-                                let whetherSolution = window.location.href.match(pbSolutionDetailUrl);
                                 // 获取所有的<a>标签
                                 let links = document.querySelectorAll('a');
                                 // 过滤出符合条件的<a>标签
@@ -829,7 +808,7 @@
                                 // console.log(matchingLinks);
                                 // 符合条件的<a>标签
                                 matchingLinks.forEach(link => {
-                                    handleLink(link, whetherSolution);
+                                    handleLink(link);
                                 });
                             }
                         });
@@ -864,10 +843,35 @@
                         } else if (resp?.status_msg && !resp.status_msg.includes("Accepted"))  {
                             let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
                             let slug = getSlug(location.href);
-                            if (!pbstatus[slug]) pbstatus[slug] = {};
-                            pbstatus[slug]["status"] = "TRIED";
-                            GM_setValue("pbstatus", JSON.stringify(pbstatus));
-                            console.log("提交失败，当前题目状态已更新");
+                            // 同步一下之前的记录是什么状态
+                            let query = "\n    query userQuestionStatus($titleSlug: String!) {\n  question(titleSlug: $titleSlug) {\n    status\n  }\n}\n    ";
+                            let headers = {
+                                'Content-Type': 'application/json'
+                            };
+                            let postdata = {
+                                "query": query,
+                                "variables": {
+                                    "titleSlug": slug
+                                },
+                                "operationName": "userQuestionStatus"
+                            }
+                            let status;
+                            ajaxReq("POST", lcgraphql, headers, postdata, response => {
+                                status = response.data.question.status;
+                            });
+                            // 如果之前为ac状态，那么停止更新，直接返回
+                            if(status && status == 'ac') {
+                                if (!pbstatus[slug]) pbstatus[slug] = {};
+                                pbstatus[slug]["status"] = "AC";
+                                GM_setValue("pbstatus", JSON.stringify(pbstatus));
+                                console.log("提交失败,但是之前已经ac过该题，所以状态为ac");
+                            } else {
+                                // 之前没有提交过或者提交过但是没有ac的状态，那么仍然更新为提交失败状态
+                                if (!pbstatus[slug]) pbstatus[slug] = {};
+                                pbstatus[slug]["status"] = "TRIED";
+                                GM_setValue("pbstatus", JSON.stringify(pbstatus));
+                                console.log("提交失败, 当前题目状态已更新");
+                            }
                         }
                     }
                 });
