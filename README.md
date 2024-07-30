@@ -57,45 +57,45 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
  ##### 2.3.1 新功能速递，来自灵佬建议~
   用户更新到2.3.1之后，在任意界面打开会提示初始化所有题目状态，点击确认
 
-![image-20240728090853004](images/image-20240728090853004.png)
+![image-20240728090853004](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728090853004.png)
 
 弹出同步弹窗后，点击同步按钮，等待同步结束后，点击右上角x号即同步结束
 
-![image-20240728090958907](images/image-20240728090958907.png)
+![image-20240728090958907](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728090958907.png)
 
  同步结束后，可在任意讨论区查看题目链接后面的标识，白圈代表用户没做过该题，绿色勾表示已ac，红色代表尝试过但是最终没有ac。
 
-![image-20240728091107894](images/image-20240728091107894.png)
+![image-20240728091107894](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091107894.png)
 
 2024.7.29 新增加题解区显示完成情况，如下图：
 
-![image-20240729092718834](images/image-20240729092718834.png)
+![image-20240729092718834](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240729092718834.png)
 
 
 
 另外，当有新的题目提交时，插件会自动更新用户做题状态，无需手动操作。缺点是如果用户关闭插件，那么讨论区的题目状态可能和用户的lc状态不会时时保持一致。
 
-![image-20240728091317858](images/image-20240728091317858.png)
+![image-20240728091317858](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091317858.png)
 
 为了避免以上的情况出现，插件另外提供了两个手动同步按钮在界面上，分别在题目页面和讨论区页面
 
-![image-20240728091447599](images/image-20240728091447599.png)
+![image-20240728091447599](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091447599.png)
 
-![image-20240728091459269](images/image-20240728091459269.png)
+![image-20240728091459269](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091459269.png)
 
 两个按钮打开的是同一个弹窗，和初始化同步的过程一致
 
-![image-20240728091527059](images/image-20240728091527059.png)
+![image-20240728091527059](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091527059.png)
 
 以上两个功能依赖于油猴插件界面的两个开关，点击即可关闭功能，更新2.3.1之后默认为开启状态
 
-![image-20240728091638492](images/image-20240728091638492.png)
+![image-20240728091638492](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091638492.png)
 
 2.3.3补丁更新， 新增加一个按钮，默认关闭，点击开启之后，讨论区题目状态挪到最前面。
 
-![image-20240728182436862](images/image-20240728182436862.png)
+![image-20240728182436862](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728182436862.png)
 
-![image-20240728182445984](images/image-20240728182445984.png)
+![image-20240728182445984](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728182445984.png)
 
 
 
