@@ -64,6 +64,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 ![image-20240728090958907](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728090958907.png)
 
  同步结束后，可在任意讨论区查看题目链接后面的标识，白圈代表用户没做过该题，绿色勾表示已ac，红色代表尝试过但是最终没有ac。
+ 2.3.9补丁包更新， 尝试过但是最终没有ac的情况下，图标改成了力扣官方使用的黄色双环进行代替，贴合设计。
 
 ![image-20240728091107894](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091107894.png)
 
