@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.10
+// @version      2.4.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -176,12 +176,13 @@
 // @note         2024-07-29 2.3.8 2.3.1补丁 修复新功能设计时，不小心去除了算术评级说明弹窗的问题
 // @note         2024-07-30 2.3.9 2.3.1补丁 修改题目完成情况ui(尝试过icon)更贴近力扣官方设计，修复如果有历史提交ac，但最新提交失败的情况下更新题目状态为notac的问题
 // @note         2024-07-31 2.3.10 2.3.1补丁 修复讨论区如果没有关注讨论发布者或者讨论发布者没有携带徽章的情况下无法触发observer监听导致不能添加ac情况的bug, 拓展ac显示范围至讨论区发布讨论时的预览和题目页发布讨论，详细可以自己测试体验~
+// @note         2024-07-31 2.4.0 2.3.1补丁 修复2.3.10的题目页拓展之后没有考虑lc需要时间请求后台刷新a标签的问题造成新增加题目页的识别错误bug
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.10"
+    let version = "2.4.0"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -668,15 +669,16 @@
     function handleLink(link) {
         // 每日一题或者是标签icon内容，不做更改直接跳过
         // no-underline是标题
+        // rounded排除每日一题的火花和题目侧边栏，火花一开始刷新时候href为空，直到lc请求接口之后才显示每日一题链接，所以有一瞬间的时间会错误识别
         if (link.href.includes("daily-question") 
+            || link.getAttribute("class")?.includes("rounded")
             || link.getAttribute("data-state")
             || link.getAttribute("class")?.includes("no-underline")) {
-                // console.log(link)
             link.setAttribute("linkId", "leetcodeRating");
             return;
         }
-        // console.log(link)
         // console.log(link.href)
+        // console.log(link)
         let linkId = link.getAttribute("linkId");
         if(linkId != null && linkId == "leetcodeRating") {
             console.log(getSlug(link.href) + "已经替换..., 略过");
@@ -814,7 +816,7 @@
                     css_flag = "#qd-content";
                 }
                 new ElementGetter().each(css_flag, document, (item) => {
-                    realOpr();
+                    if(window.location.href.match(discussUrl)) realOpr();
                     let observer = new MutationObserver(function(mutationsList, observer) {
                         // 检查变化
                         mutationsList.forEach(function(mutation) {
@@ -2014,8 +2016,7 @@
                     span3.innerText = "未知评级"
                     abody3.setAttribute("hidden", "true")
                 }
-                // ContestID_zh  ContestSlug
-                abody3.setAttribute("href", "")
+                abody3.setAttribute("href", "/xxx")
                 abody3.setAttribute("style", "padding-right: 10px;")
                 abody3.setAttribute("target", "_blank")
 
@@ -2034,11 +2035,11 @@
                     else abody2.removeAttribute("hidden")
                 } else {
                     span.innerText = "对应周赛未知"
-                    abody.setAttribute("href", "")
+                    abody.setAttribute("href", "/xxx")
                     abody.setAttribute("target", "_self")
                     abody.setAttribute("hidden", "true")
                     span2.innerText = "未知"
-                    abody2.setAttribute("href", "")
+                    abody2.setAttribute("href", "/xxx")
                     abody2.setAttribute("target", "_self")
                     abody2.setAttribute("hidden", "true")
                 }
@@ -2090,6 +2091,7 @@
                 } else {
                     pa.childNodes[le - 4].childNodes[0].innerText = "未知评级"
                     pa.childNodes[le - 4].setAttribute("hidden", "true")
+                    pa.childNodes[le - 4].setAttribute("href", "/xxx")
                 }
                 // ContestID_zh  ContestSlug
                 if (t2rate[id] != null) {
@@ -2108,12 +2110,13 @@
                     else pa.childNodes[le - 2].removeAttribute("hidden")
                 } else {
                     pa.childNodes[le - 3].childNodes[0].innerText = "对应周赛未知"
-                    pa.childNodes[le - 3].setAttribute("href", "")
+                    // 不填写的话默认为当前url
+                    pa.childNodes[le - 3].setAttribute("href", "/xxx")
                     pa.childNodes[le - 3].setAttribute("target", "_self")
                     pa.childNodes[le - 3].setAttribute("hidden", "true")
 
                     pa.childNodes[le - 2].childNodes[0].innerText = "未知"
-                    pa.childNodes[le - 2].setAttribute("href", "")
+                    pa.childNodes[le - 2].setAttribute("href", "/xxx")
                     pa.childNodes[le - 2].setAttribute("target", "_self")
                     pa.childNodes[le - 2].setAttribute("hidden", "true")
                 }
