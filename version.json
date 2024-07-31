@@ -1,4 +1,4 @@
 {
-  "version": "2.3.9",
-  "content": "tips: 补丁包2.3.9 修改题目完成情况ui(尝试过的icon)更贴近力扣官方设计; 修复如果有历史提交ac，但最新提交失败的情况下错误更新题目状态为notac的问题; <br/> 上线(讨论区题目链接后面显示题目完成情况)相关功能，具体功能说明转移github(https://github.com/zhang-wangz/LeetCodeRating)查看～"
+  "version": "2.3.10",
+  "content": "tips: 补丁包2.3.10 修复讨论区如果没有关注讨论发布者或者讨论发布者没有携带徽章的情况下无法触发observer监听导致不能添加ac情况的bug, 拓展ac完成情况显示至讨论区发布讨论时的预览和题目页发布讨论，详细可以自己测试体验~; <br/> 上线(讨论区题目链接后面显示题目完成情况)相关功能，具体功能说明转移github(https://github.com/zhang-wangz/LeetCodeRating)查看～"
 }

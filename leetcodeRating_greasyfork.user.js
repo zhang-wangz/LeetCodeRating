@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.3.9
+// @version      2.3.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -175,12 +175,13 @@
 // @note         2024-07-29 2.3.7 2.3.1补丁 修改新功能对老域名leetcode-cn.com的适配，有些题解和讨论区使用的题目仍为老域名进行跳转
 // @note         2024-07-29 2.3.8 2.3.1补丁 修复新功能设计时，不小心去除了算术评级说明弹窗的问题
 // @note         2024-07-30 2.3.9 2.3.1补丁 修改题目完成情况ui(尝试过icon)更贴近力扣官方设计，修复如果有历史提交ac，但最新提交失败的情况下更新题目状态为notac的问题
+// @note         2024-07-31 2.3.10 2.3.1补丁 修复讨论区如果没有关注讨论发布者或者讨论发布者没有携带徽章的情况下无法触发observer监听导致不能添加ac情况的bug, 拓展ac显示范围至讨论区发布讨论时的预览和题目页发布讨论，详细可以自己测试体验~
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.3.9"
+    let version = "2.3.10"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -443,9 +444,9 @@
             ['switchlevel', 'studyplan level function', '算术评级(显示左侧栏和学习计划中)', true, false],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
-            ['switchpbstatus', 'pbstatus function', '讨论区和题解区显示题目完成状态', true, true],
+            ['switchpbstatus', 'pbstatus function', '讨论区和题目页显示题目完成状态', true, true],
             ['switchpbstatusLocation', 'switchpbstatusLocation function', '题目显示完成状态(位置改为左方)', false, true],
-            ['switchpbstatusBtn', 'pbstatusBtn function', '讨论区和题目区添加同步题目状态按钮', true, true],
+            ['switchpbstatusBtn', 'pbstatusBtn function', '讨论区和题目页添加同步题目状态按钮', true, true],
             ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
         for (const element of menu_ALL){ // 如果读取到的值为 null 就写入默认值
@@ -670,6 +671,7 @@
         if (link.href.includes("daily-question") 
             || link.getAttribute("data-state")
             || link.getAttribute("class")?.includes("no-underline")) {
+                // console.log(link)
             link.setAttribute("linkId", "leetcodeRating");
             return;
         }
@@ -729,11 +731,12 @@
             // 使用layui的渲染
             layuiload();
         }
-        let userinfo = document.querySelector(".css-5d7bnq-QuestionInfoContainer.e2v1tt11");
-        span.setAttribute("class", userinfo.lastChild.getAttribute("class"));
-        span.setAttribute("class", span.getAttribute("class")+" hover:text-blue-s");
-        span.setAttribute("style", "cursor:pointer");
-        userinfo.appendChild(span);
+        new ElementGetter().each(".css-5d7bnq-QuestionInfoContainer.e2v1tt11", document, (userinfo) => {
+            span.setAttribute("class", userinfo.lastChild.getAttribute("class"));
+            span.setAttribute("class", span.getAttribute("class")+" hover:text-blue-s");
+            span.setAttribute("style", "cursor:pointer");
+            userinfo.appendChild(span);
+        });
     }
 
 
@@ -778,39 +781,44 @@
             `)
         }
     }
+
+    function realOpr() {
+        // 只有讨论区才制作同步按钮，题解区不做更改
+        if(window.location.href.match(discussUrl)) {
+            createstatusBtn();
+        }
+        // 只有讨论区和题目页进行a标签制作
+        if(window.location.href.match(discussUrl) || window.location.href.match(pbUrl)) {
+            // 获取所有的<a>标签
+            let links = document.querySelectorAll('a');
+            // 过滤出符合条件的<a>标签
+            let matchingLinks = Array.from(links).filter(link => {
+                return !link.getAttribute("linkId")
+                && link.href.match(pbUrl)
+                && !link.href.match(pbSolutionUrl);
+            });
+            // console.log(matchingLinks);
+            // 符合条件的<a>标签
+            matchingLinks.forEach(link => {
+                handleLink(link);
+            });
+        }
+    }
     function waitOprpbStatus() {
         if (GM_getValue("switchpbstatus")) {
             if(window.location.href.match(discussUrl) || window.location.href.match(pbUrl)) {
                 let css_flag = "";
                 if(window.location.href.match(discussUrl)) {
-                    css_flag = ".css-se33k0-QuestionContent";
+                    css_flag = ".css-qciawt-Wrapper";
                 } else {
                     css_flag = "#qd-content";
                 }
                 new ElementGetter().each(css_flag, document, (item) => {
+                    realOpr();
                     let observer = new MutationObserver(function(mutationsList, observer) {
                         // 检查变化
                         mutationsList.forEach(function(mutation) {
-                            // 只有讨论区才制作同步按钮，题解区不做更改
-                            if(window.location.href.match(discussUrl)) {
-                                createstatusBtn();
-                            }
-                            // 只有讨论区和题解区进行a标签制作
-                            if(window.location.href.match(discussUrl) || window.location.href.match(pbSolutionDetailUrl)) {
-                                // 获取所有的<a>标签
-                                let links = document.querySelectorAll('a');
-                                // 过滤出符合条件的<a>标签
-                                let matchingLinks = Array.from(links).filter(link => {
-                                    return !link.getAttribute("linkId")
-                                    && link.href.match(pbUrl)
-                                    && !link.href.match(pbSolutionUrl);
-                                });
-                                // console.log(matchingLinks);
-                                // 符合条件的<a>标签
-                                matchingLinks.forEach(link => {
-                                    handleLink(link);
-                                });
-                            }
+                            realOpr();
                         });
                     });
                     // 配置 MutationObserver 监听的内容和选项
