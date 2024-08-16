@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.4.0
+// @version      2.4.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -177,12 +177,13 @@
 // @note         2024-07-30 2.3.9 2.3.1补丁 修改题目完成情况ui(尝试过icon)更贴近力扣官方设计，修复如果有历史提交ac，但最新提交失败的情况下更新题目状态为notac的问题
 // @note         2024-07-31 2.3.10 2.3.1补丁 修复讨论区如果没有关注讨论发布者或者讨论发布者没有携带徽章的情况下无法触发observer监听导致不能添加ac情况的bug, 拓展ac显示范围至讨论区发布讨论时的预览和题目页发布讨论，详细可以自己测试体验~
 // @note         2024-07-31 2.4.0 2.3.1补丁 修复2.3.10的题目页拓展之后没有考虑lc需要时间请求后台刷新a标签的问题造成新增加题目页的识别错误bug
+// @note         2024-08-16 2.4.1 上线新功能<每天最多只更新一次>，勾选后如果有更新，最多只会弹框一次，更新之后剩余如果再有更新会在第二天才弹窗
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.4.0"
+    let version = "2.4.1"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -230,7 +231,9 @@
     let pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
     // 英文
     let pbNamee2Id = JSON.parse(GM_getValue("pbNamee2Id", "{}").toString())
+    // preDate为更新分数使用，preDate1为更新版本使用
     let preDate = GM_getValue("preDate", "")
+    let preDate1 =  GM_getValue("preDate1", "")
     // level数据
     let levelData = JSON.parse(GM_getValue("levelData", "{}").toString())
     // 中文
@@ -429,6 +432,7 @@
     function script_setting(){
         let menu_ALL = [
             ['switchvpn', 'vpn', '是否使用cdn访问数据', false, false],
+            ['switchupdate', 'switchupdate', '是否每天最多只更新一次', true, true],
             ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
             ['switchpbRepo', 'pbRepo function', '题库页周赛难度评分(不包括灵茶)', true, false],
             ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
@@ -764,7 +768,6 @@
             `)
         }
     } else {
-        console.log(GM_getValue("switchpbstatusLocation"))
         if(GM_getValue("switchpbstatusLocation")) {
             GM_addStyle(`
                 circle.mycircle {
@@ -1877,6 +1880,7 @@
     }
     let t1 // pb
     let pbCnt = 0
+    let pbCnt2 = 0
     function getpb() {
         let switchrealoj = GM_getValue("switchrealoj")
         // 搜索功能
@@ -1894,10 +1898,13 @@
         }
         // 流动布局逻辑
         if (isDynamic) {
+            // pb其他页面时刷新多次后也直接关闭
             let t = document.querySelector(".text-title-large")
             if (t == null) {
                 t1 = "unknown"
                 pbCnt = 0
+                if (pbCnt2 == shortCnt) clearId("pb")
+                pbCnt2 += 1
                 return
             }
 
@@ -2140,6 +2147,7 @@
         lcCnt = 0 // ✅
         tagCnt = 0
         pbCnt = 0 // ✅
+        pbCnt2 = 0 // ✅
         pbsideCnt = 0 // ✅
         companyCnt = 0  // ❌，因为已经搁置(需要vip)，所以暂时关闭该功能
         pbListCnt = 0 // ✅
@@ -2293,6 +2301,9 @@
         getPromiseLevel()
 
         // 版本更新机制
+        let now = getCurrentDate(1)
+        preDate1 = GM_getValue("preDate1", "")
+        let checkVersionLayer = GM_getValue("switchupdate")? (preDate1 == "" || preDate1 != now):true;
         GM_xmlhttpRequest({
             method: "get",
             url: versionUrl + "?timeStamp=" + new Date().getTime(),
@@ -2307,15 +2318,23 @@
                     let v = json["version"]
                     let upcontent = json["content"]
                     if (v != version) {
-                        layer.open({
-                            area: ['500px', '300px'],
-                            content: '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' + v +'啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
-                            yes: function (index, layer0) {
-                                let c = window.open(sciptUrl + "?timeStamp=" + new Date().getTime())
-                                c.close()
-                                layer.close(index)
-                            }
-                        });
+                        if (checkVersionLayer) {
+                            console.log("弹窗更新栏一次..")
+                            layer.open({
+                                area: ['500px', '300px'],
+                                content: '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' + v +'啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
+                                yes: function (index, layer0) {
+                                    let c = window.open(sciptUrl + "?timeStamp=" + new Date().getTime())
+                                    c.close()
+                                    layer.close(index)
+                                    preDate1 = now
+                                    GM_setValue("preDate1", preDate1)
+                                    console.log("update preDate1 success")
+                                }
+                            });
+                        } else {
+                            console.log("有新的版本，但是已经弹窗过且开启了最多只更新一次功能，等待明天弹窗..")
+                        }
                     } else {
                         console.log("leetcodeRating难度分插件当前已经是最新版本~")
                     }
