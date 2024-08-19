@@ -247,7 +247,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 ```
 // @note    2023-09-07 1.1.9 (更新描述)
 ```
-LeetCodeRating遵循 [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) 行为规范。
+LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org/version/1/3/0/code-of-conduct/) 行为规范。
 
 ### :heart: [捐助](https://www.showdoc.com.cn/2069209189620830)特别鸣谢
 #### 捐助者是否有*与捐助大哥们是否匿名有关！嘿嘿！
