@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.4.1
+// @version      2.4.2
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -178,12 +178,13 @@
 // @note         2024-07-31 2.3.10 2.3.1补丁 修复讨论区如果没有关注讨论发布者或者讨论发布者没有携带徽章的情况下无法触发observer监听导致不能添加ac情况的bug, 拓展ac显示范围至讨论区发布讨论时的预览和题目页发布讨论，详细可以自己测试体验~
 // @note         2024-07-31 2.4.0 2.3.1补丁 修复2.3.10的题目页拓展之后没有考虑lc需要时间请求后台刷新a标签的问题造成新增加题目页的识别错误bug
 // @note         2024-08-16 2.4.1 上线新功能<每天最多只更新一次>，勾选后如果有更新，最多只会弹框一次，更新之后剩余如果再有更新会在第二天才弹窗
+// @note         2024-09-29 2.4.2 修复因官方ui调整和请求参数调整而失效的题库页vip题目筛选功能和题目页算术评分和竞赛信息显示功能
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.4.1"
+    let version = "2.4.2"
     let pbstatusVersion = "version11"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -522,7 +523,7 @@
             nowShow.parentNode.parentNode.appendChild(copyNode);
         }
     }
-    if(GM_getValue("switchcopyright")) copyNoRight()
+    if(GM_getValue("switchcopyright") && location.href.match(pbUrl)) copyNoRight()
 
 
     // lc 基础req
@@ -674,7 +675,7 @@
         // 每日一题或者是标签icon内容，不做更改直接跳过
         // no-underline是标题
         // rounded排除每日一题的火花和题目侧边栏，火花一开始刷新时候href为空，直到lc请求接口之后才显示每日一题链接，所以有一瞬间的时间会错误识别
-        if (link.href.includes("daily-question") 
+        if (link.href.includes("daily-question")
             || link.getAttribute("class")?.includes("rounded")
             || link.getAttribute("data-state")
             || link.getAttribute("class")?.includes("no-underline")) {
@@ -731,7 +732,7 @@
                     content: `${pbstatusContent}`,
                     title: '同步所有题目状态',
                     area: ['550px', '250px'],
-                    shade: 0.6, 
+                    shade: 0.6,
                 });
             }
             // 使用layui的渲染
@@ -755,7 +756,7 @@
                 circle.mycircle {
                     cx: 9;
                     cy: 9;
-                    r: 7; 
+                    r: 7;
                 }
             `)
         } else {
@@ -763,7 +764,7 @@
                 circle.mycircle {
                     cx: 13;
                     cy: 9;
-                    r: 7; 
+                    r: 7;
                 }
             `)
         }
@@ -773,7 +774,7 @@
                 circle.mycircle {
                     cx: 8;
                     cy: 12;
-                    r: 7; 
+                    r: 7;
                 }
             `)
         } else {
@@ -781,7 +782,7 @@
                 circle.mycircle {
                     cx: 13;
                     cy: 12;
-                    r: 7; 
+                    r: 7;
                 }
             `)
         }
@@ -1050,33 +1051,31 @@
         })()
     }
 
-    function callback(tag, variables) {
+    function callback(body) {
         let data;
-        if (tag == 'query problemsetQuestionList') {
-            postReq(lcgraphql, queryProblemsetQuestionList, variables, (res) => {
-                res.data.problemsetQuestionList.questions = res.data.problemsetQuestionList.questions.filter(e => !e.paidOnly)
-                data = res
-            })
-        }
+        body.key = "leetcodeRatingReq";
+        ajaxReq("POST", lcgraphql, null, body, (res) => {
+            // console.log(res);
+            res.data.problemsetQuestionList.questions = res.data.problemsetQuestionList.questions.filter(e => !e.paidOnly)
+            data = res
+        })
         return data
     }
 
     // 写一个拦截题库页面的工具
     function intercept() {
         XMLHttpRequest.prototype.open = function newOpen(method, url, async, user, password, disbaleIntercept) {
-            if (!disbaleIntercept && method.toLocaleLowerCase() === 'post' && url === `/graphql/`) {
+            if (!disbaleIntercept && method.toLocaleLowerCase().includes('post') && url.includes(`/graphql/`)) {
                 const originalSend = this.send
                 this.send = async str => {
                     try {
                         if (typeof str === 'string') {
-                            let tag
                             const body = JSON.parse(str)
-                            if ( body.query && body.query.includes('query problemsetQuestionList')) {
-                                tag = 'query problemsetQuestionList'
+                            if (body?.query?.includes('query problemsetQuestionList') && !body.key) {
                                 for (const key of ['response', 'responseText']) {
                                     Object.defineProperty(this, key, {
                                         get: function() {
-                                            const data = callback(tag, body.variables)
+                                            const data = callback(body)
                                             return JSON.stringify(data)
                                         },
                                         configurable: true,
@@ -1122,7 +1121,7 @@
         }
         let lastchild = arr.lastChild
         let first = switchTea ? 1 : 0
-        if ((!switchpbRepo || (tFirst && tFirst == arr.childNodes[first].textContent && tLast && tLast == lastchild.textContent))
+        if ((!switchpbRepo || (tFirst && tFirst == arr?.childNodes[first]?.textContent && tLast && tLast == lastchild?.textContent))
             && (!switchTea || arr.childNodes[0].childNodes[2].textContent == "灵神题解集")
             && (!switchrealoj) || lastchild.textContent.includes("隐藏")) {
             // 到达次数之后删除定时防止卡顿
@@ -1199,8 +1198,8 @@
                     v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[cls]
                 }
             }
-            tFirst = arr.childNodes[first].textContent
-            tLast = lastchild.textContent
+            tFirst = arr?.childNodes[first]?.textContent
+            tLast = lastchild?.textContent
             console.log("has refreshed problemlist...")
         }
     }
@@ -1956,7 +1955,7 @@
             let tipsChildone = tipsPa.childNodes[1]
             // 题目内容, 插入后变成原tips栏目
             let pbDescription = tipsPa.childNodes[2]
-            if (pbDescription.getAttribute("data-track-load") != null) {
+            if (pbDescription?.childNodes[0]?.getAttribute("data-track-load") != null) {
                 let divTips = document.createElement("div")
                 divTips.setAttribute("class", "flex gap-1")
                 let abody = document.createElement("a")
@@ -1988,7 +1987,7 @@
                             content: `${pbstatusContent}`,
                             title: '同步所有题目状态',
                             area: ['550px', '250px'],
-                            shade: 0.6, 
+                            shade: 0.6,
                         });
                     }
                     span4.setAttribute("style", "cursor:pointer;");
@@ -2364,14 +2363,14 @@
                     content: `${pbstatusContent}`,
                     title: '同步所有题目状态',
                     area: ['550px', '250px'],
-                    shade: 0.6, 
+                    shade: 0.6,
                 });
                 layuiload();
             }, function(){
                 // do nothong
             });
         })();
-    } 
+    }
 
     // 定时启动函数程序
     clearAndStart(location.href, 1000, true)
