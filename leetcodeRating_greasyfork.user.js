@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.4.2
+// @version      2.4.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
 // @author       小东是个阳光蛋(力扣名)
@@ -179,13 +179,14 @@
 // @note         2024-07-31 2.4.0 2.3.1补丁 修复2.3.10的题目页拓展之后没有考虑lc需要时间请求后台刷新a标签的问题造成新增加题目页的识别错误bug
 // @note         2024-08-16 2.4.1 上线新功能<每天最多只更新一次>，勾选后如果有更新，最多只会弹框一次，更新之后剩余如果再有更新会在第二天才弹窗
 // @note         2024-09-29 2.4.2 修复因官方ui调整和请求参数调整而失效的题库页vip题目筛选功能和题目页算术评分和竞赛信息显示功能
+// @note         2024-10-06 2.4.3 修复题目状态初始化同步弹窗在力扣暗色主题下显示异常的问题
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.4.2"
-    let pbstatusVersion = "version11"
+    let version = "2.4.3"
+    let pbstatusVersion = "version13"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
     // css 渲染
@@ -348,45 +349,6 @@
     const regDiss = '.*//leetcode.cn/problems/.*/discussion/.*'
     const regSovle = '.*//leetcode.cn/problems/.*/solutions/.*'
     const regPbSubmission = '.*//leetcode.cn/problems/.*/submissions/.*';
-    const queryProblemsetQuestionList = `
-    query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
-        problemsetQuestionList(
-            categorySlug: $categorySlug
-            limit: $limit
-            skip: $skip
-            filters: $filters
-        ) {
-            hasMore
-            total
-            questions {
-            acRate
-            difficulty
-            freqBar
-            frontendQuestionId
-            isFavor
-            paidOnly
-            solutionNum
-            status
-            title
-            titleCn
-            titleSlug
-            topicTags {
-                name
-                nameTranslated
-                id
-                slug
-            }
-            extra {
-                hasVideoSolution
-                topCompanyTags {
-                imgUrl
-                slug
-                numSubscribed
-                }
-            }
-            }
-        }
-    }`
 
     // 监听urlchange事件定义
     function initUrlChange() {
@@ -575,7 +537,7 @@
     }
 
     function allPbPostData(skip, limit) {
-        return {
+        let reqs = {
             "query":
                 `query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
                 problemsetQuestionList(
@@ -616,12 +578,14 @@
                 }
             }`,
             "variables": {
-            "categorySlug": "all-code-essentials",
-            "skip": skip,
-            "limit": limit,
-            "filters": {}
+                "categorySlug": "all-code-essentials",
+                "skip": skip,
+                "limit": limit,
+                "filters": {}
             }
-        }
+        };
+        reqs.key = "LeetcodeRating";
+        return reqs;
     }
 
     function getpbCnt() {
@@ -2324,7 +2288,7 @@
                                 content: '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' + v +'啦,请前往更新~ <br/>' + "更新内容: <br/>" + upcontent + "</pre>",
                                 yes: function (index, layer0) {
                                     let c = window.open(sciptUrl + "?timeStamp=" + new Date().getTime())
-                                    c.close()
+                                    // c.close()
                                     layer.close(index)
                                     preDate1 = now
                                     GM_setValue("preDate1", preDate1)
@@ -2356,7 +2320,7 @@
                 console.log("已经同步过初始题目状态数据...");
                 return;
             }
-            let syncLayer = layer.confirm('检测本地没有题目数据状态，即将开始初始化进行所有题目状态，是否开始同步? <br/> tips:(该检测和开启讨论区展示题目状态功能有关)', {icon: 3}, function(){
+            let syncLayer = layer.confirm('<div class="myfont">检测本地没有题目数据状态，即将开始初始化进行所有题目状态，是否开始同步? <br/> tips:(该检测和开启讨论区展示题目状态功能有关)</div>', {icon: 3}, function(){
                 layer.close(syncLayer);
                 layer.open({
                     type: 1,
