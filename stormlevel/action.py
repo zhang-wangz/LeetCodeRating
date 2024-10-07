@@ -4,7 +4,7 @@ import time
 import json
 from datetime import datetime
 
-downloadUrl = "https://raw.gitmirror.com/stormsunshine/LeetCode-Levels/main/LeetCode%20Levels.xlsx?timeStamp=" + str(int(time.time()))
+downloadUrl = "https://raw.githubusercontent.com/stormsunshine/LeetCode-Levels/main/LeetCode%20Levels.xlsx?timeStamp=" + str(int(time.time()))
 data = requests.get(downloadUrl)
 with open('./stormlevel/data.xlsx', 'wb') as f:
     f.write(data.content)
