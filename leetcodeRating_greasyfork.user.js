@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.4.3
+// @version      2.4.4
 // @license      MIT
-// @description  LeetCodeRating 力扣周赛分数显现，支持所有页面评分显示
+// @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
 // @leetcodehomepage   https://leetcode.cn/u/runonline/
 // @homepageURL  https://github.com/zhang-wangz/LeetCodeRating
@@ -180,12 +180,13 @@
 // @note         2024-08-16 2.4.1 上线新功能<每天最多只更新一次>，勾选后如果有更新，最多只会弹框一次，更新之后剩余如果再有更新会在第二天才弹窗
 // @note         2024-09-29 2.4.2 修复因官方ui调整和请求参数调整而失效的题库页vip题目筛选功能和题目页算术评分和竞赛信息显示功能
 // @note         2024-10-06 2.4.3 修复题目状态初始化同步弹窗在力扣暗色主题下显示异常的问题
+// @note         2024-11-13 2.4.4 插件公告，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.4.3"
+    let version = "2.4.4"
     let pbstatusVersion = "version13"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
