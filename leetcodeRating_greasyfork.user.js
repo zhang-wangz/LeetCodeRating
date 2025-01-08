@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.4.5
+// @version      2.4.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -32,8 +32,8 @@
 (async function () {
     'use strict';
 
-    let version = "2.4.5"
-    let pbstatusVersion = "version13"
+    let version = "2.4.6"
+    let pbstatusVersion = "version16"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
     // css 渲染
@@ -47,11 +47,6 @@
     const pbUrl = "https://leetcode.{2,7}/problems/.*"
     // 限定pbstatus使用, 不匹配题解链接
     const pbSolutionUrl = "https://leetcode.{2,7}/problems/.*/solution.*"
-    // 现在的solution规则，以前是/solution/字母xxx
-    const pbSolutionDetailUrl = "https://leetcode.{2,7}/problems/.*/solutions/[0-9]*/.*"
-    // 题目提交检查url
-    // https://leetcode.cn/submissions/detail/550056752/check/
-    // const checkUrl = "https://leetcode.cn/submissions/detail/[0-9]*/check/.*"
 
     const searchUrl = "https://leetcode.cn/search/.*"
     const studyUrl = "https://leetcode.cn/studyplan/.*"
@@ -260,6 +255,7 @@
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
             ['switchpbstatus', 'pbstatus function', '讨论区和题目页显示题目完成状态', true, true],
+            ['switchpbstatusscore', 'pbstatusscore function', '题目完成状态增加难度分和会员题状态', true, true],
             ['switchpbstatusLocation', 'switchpbstatusLocation function', '题目显示完成状态(位置改为左方)', false, true],
             ['switchpbstatusBtn', 'pbstatusBtn function', '讨论区和题目页添加同步题目状态按钮', true, true],
             ['switchperson', 'person function', '纸片人', false, true],
@@ -458,28 +454,52 @@
         return null;
     }
 
-    // 获取题目状态
-    function getpbStatus(pburl) {
+    // 获取题目相关内容
+    function getpbRelation(pburl) {
         let pbstatus = JSON.parse(GM_getValue("pbstatus", "{}").toString());
         let titleSlug = getSlug(pburl);
-        if (!titleSlug) return null;
-        return pbstatus[titleSlug] == null ? "NOT_STARTED": pbstatus[titleSlug]["status"];
+        if (!titleSlug) return [null, null, null];
+        let status = pbstatus[titleSlug] == null ? "NOT_STARTED": pbstatus[titleSlug]["status"];
+        // 获取分数
+        let score;
+        let idExist = pbstatus[titleSlug] != null && t2rate[pbstatus[titleSlug]['id']] != null;
+        if (idExist) {
+            score = t2rate[pbstatus[titleSlug]['id']]["Rating"]
+        }
+        let paid = pbstatus[titleSlug] == null ? null : pbstatus[titleSlug]["paidOnly"];
+        return [status, score, paid]
     };
 
     // 1 ac 2 tried 3 not_started
-    function getPbstatusIcon(code) {
+    function getPbstatusIcon(code, score, paid) {
+        let value;
         switch(code) {
             case 1:
-                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="myiconsvg h-[18px] w-[18px]  text-green-s dark:text-dark-green-s"><path fill-rule="evenodd" d="M20 12.005v-.828a1 1 0 112 0v.829a10 10 0 11-5.93-9.14 1 1 0 01-.814 1.826A8 8 0 1020 12.005zM8.593 10.852a1 1 0 011.414 0L12 12.844l8.293-8.3a1 1 0 011.415 1.413l-9 9.009a1 1 0 01-1.415 0l-2.7-2.7a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                value = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" class="myiconsvg h-[18px] w-[18px]  text-green-s dark:text-dark-green-s"><path fill-rule="evenodd" d="M20 12.005v-.828a1 1 0 112 0v.829a10 10 0 11-5.93-9.14 1 1 0 01-.814 1.826A8 8 0 1020 12.005zM8.593 10.852a1 1 0 011.414 0L12 12.844l8.293-8.3a1 1 0 011.415 1.413l-9 9.009a1 1 0 01-1.415 0l-2.7-2.7a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                break;
             case 2:
-                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.6 0 12.5 14" width="1.2em" height="1.2em" fill="currentColor" class="myiconsvg text-message-warning dark:text-message-warning"><path d="M6.998 7v-.6a.6.6 0 00-.6.6h.6zm.05 0h.6a.6.6 0 00-.6-.6V7zm0 .045v.6a.6.6 0 00.6-.6h-.6zm-.05 0h-.6a.6.6 0 00.6.6v-.6zm5-.045a5 5 0 01-5 5v1.2a6.2 6.2 0 006.2-6.2h-1.2zm-5 5a5 5 0 01-5-5h-1.2a6.2 6.2 0 006.2 6.2V12zm-5-5a5 5 0 015-5V.8A6.2 6.2 0 00.798 7h1.2zm5-5a5 5 0 015 5h1.2a6.2 6.2 0 00-6.2-6.2V2zm2.2 5a2.2 2.2 0 01-2.2 2.2v1.2a3.4 3.4 0 003.4-3.4h-1.2zm-2.2 2.2a2.2 2.2 0 01-2.2-2.2h-1.2a3.4 3.4 0 003.4 3.4V9.2zM4.798 7a2.2 2.2 0 012.2-2.2V3.6a3.4 3.4 0 00-3.4 3.4h1.2zm2.2-2.2a2.2 2.2 0 012.2 2.2h1.2a3.4 3.4 0 00-3.4-3.4v1.2zm0 2.8h.05V6.4h-.05v1.2zm-.55-.6v.045h1.2V7h-1.2zm.6-.555h-.05v1.2h.05v-1.2zm.55.6V7h-1.2v.045h1.2z"></path></svg>`;
+                value = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.6 0 12.5 14" width="1.2em" height="1.2em" fill="currentColor" class="myiconsvg text-message-warning dark:text-message-warning"><path d="M6.998 7v-.6a.6.6 0 00-.6.6h.6zm.05 0h.6a.6.6 0 00-.6-.6V7zm0 .045v.6a.6.6 0 00.6-.6h-.6zm-.05 0h-.6a.6.6 0 00.6.6v-.6zm5-.045a5 5 0 01-5 5v1.2a6.2 6.2 0 006.2-6.2h-1.2zm-5 5a5 5 0 01-5-5h-1.2a6.2 6.2 0 006.2 6.2V12zm-5-5a5 5 0 015-5V.8A6.2 6.2 0 00.798 7h1.2zm5-5a5 5 0 015 5h1.2a6.2 6.2 0 00-6.2-6.2V2zm2.2 5a2.2 2.2 0 01-2.2 2.2v1.2a3.4 3.4 0 003.4-3.4h-1.2zm-2.2 2.2a2.2 2.2 0 01-2.2-2.2h-1.2a3.4 3.4 0 003.4 3.4V9.2zM4.798 7a2.2 2.2 0 012.2-2.2V3.6a3.4 3.4 0 00-3.4 3.4h1.2zm2.2-2.2a2.2 2.2 0 012.2 2.2h1.2a3.4 3.4 0 00-3.4-3.4v1.2zm0 2.8h.05V6.4h-.05v1.2zm-.55-.6v.045h1.2V7h-1.2zm.6-.555h-.05v1.2h.05v-1.2zm.55.6V7h-1.2v.045h1.2z"></path></svg>`;
+                break;
             // code3 的时候需要调整style，所以设置了class，调整在css中
             case 3:
-                return `<svg class="myiconsvg" width="21" height="20">
+                value = `<svg class="myiconsvg" width="21" height="20">
                             <circle class="mycircle" stroke="black" stroke-width="2" fill="white"></circle>
                         </svg>`;
-            default: return "";
+                break;
+            default: 
+                value = "";
+                break;
         }
+        //  [难度分 1980] (会员题) 
+        if(GM_getValue("switchpbstatusscore")){
+            if (score) {
+                value += ` [难度分 ${score}] `;
+            }
+            if (paid != null && paid != false) {
+                value += ` (会员题) `;
+            }
+        }
+        return value;
     }
 
     function handleLink(link) {
@@ -500,7 +520,7 @@
             console.log(getSlug(link.href) + "已经替换..., 略过");
             return;
         }
-        let status = getpbStatus(link.href);
+        let [status, score, paid] = getpbRelation(link.href);
         if (!status) {
             link.setAttribute("linkId", "leetcodeRating");
             return;
@@ -509,7 +529,7 @@
         // 1 ac 2 tried 3 not_started
         let code = status == 'NOT_STARTED'? 3 : status == 'AC'? 1 : 2;
         // console.log(code);
-        let iconStr = getPbstatusIcon(code);
+        let iconStr = getPbstatusIcon(code, score, paid);
         let iconEle = document.createElement("span");
         iconEle.innerHTML = iconStr;
         // console.log(iconEle);
@@ -1662,7 +1682,8 @@
                                     "status": pb.status,
                                     "title": pb.title,
                                     "titleCn": pb.titleCn,
-                                    "difficulty": pb.difficulty
+                                    "difficulty": pb.difficulty,
+                                    "paidOnly": pb.paidOnly
                                 }
                             }
                         });
