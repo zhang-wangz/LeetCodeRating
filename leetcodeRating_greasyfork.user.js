@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.4.6
+// @version      2.4.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -32,7 +32,7 @@
 (async function () {
     'use strict';
 
-    let version = "2.4.6"
+    let version = "2.4.7"
     let pbstatusVersion = "version16"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -1523,7 +1523,7 @@
             // 适配黑色主题
             div.classList.add('leetcodeRating-search')
             div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="lcr layui-input" id="id-dropdown">`
-            let center = document.querySelector('.flex.items-center')
+            let center = document.querySelector('.flex.justify-between')
             center = center?.childNodes[0]?.childNodes[0]?.childNodes[0]
             if (center == null) return
             if (center.childNodes.length > 0) center.insertBefore(div, center.childNodes[1])
