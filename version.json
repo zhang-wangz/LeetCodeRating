@@ -1,4 +1,4 @@
 {
-  "version": "2.4.7",
-  "content": "修复题目页面因为ui变动失效的题目搜索框功能"
+  "version": "2.4.8",
+  "content": "由于油叉地址被墙导致依赖加载失败的功能异常；更换地址: https://greasyfork.org/ => https://cn-greasyfork.org/"
 }
