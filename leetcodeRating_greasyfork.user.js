@@ -25,7 +25,7 @@
 // @connect      raw.githubusercontent.com
 // @require      https://unpkg.com/jquery@3.5.1/dist/jquery.min.js
 // @require      https://unpkg.com/layui@2.9.6/dist/layui.js
-// @require      https://cn-greasyfork.org/scripts/463455-nelementgetter/code/NElementGetter.js?version=1172110
+// @require      https://update.greasyfork.org/scripts/463455/1172110/NElementGetter.js
 // @grant        unsafeWindow
 // ==/UserScript==
 
