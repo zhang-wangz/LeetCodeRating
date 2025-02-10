@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.4.8
+// @version      2.4.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -32,7 +32,7 @@
 (async function () {
     'use strict';
 
-    let version = "2.4.8"
+    let version = "2.4.9"
     let pbstatusVersion = "version16"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -255,8 +255,8 @@
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
             ['switchpbstatus', 'pbstatus function', '讨论区和题目页显示题目完成状态', true, true],
-            ['switchpbstatusscore', 'pbstatusscore function', '题目完成状态增加难度分和会员题状态', true, true],
-            ['switchpbstatusLocation', 'switchpbstatusLocation function', '题目显示完成状态(位置改为左方)', false, true],
+            ['switchpbstatusscoredefault', 'pbstatusscore function', '题目完成状态增加难度分和会员题状态', false, true],
+            ['switchpbstatusLocationRight', 'switchpbstatusLocation function', '题目显示完成状态(位置改为右方)', false, true],
             ['switchpbstatusBtn', 'pbstatusBtn function', '讨论区和题目页添加同步题目状态按钮', true, true],
             ['switchperson', 'person function', '纸片人', false, true],
         ], menu_ID = [], menu_ID_Content = [];
@@ -491,7 +491,7 @@
                 break;
         }
         //  [难度分 1980] (会员题) 
-        if(GM_getValue("switchpbstatusscore")){
+        if(GM_getValue("switchpbstatusscoredefault")){
             if (score) {
                 value += ` [难度分 ${score}] `;
             }
@@ -537,7 +537,8 @@
         link.setAttribute("linkId", "leetcodeRating");
         const parent = link.parentNode;
         // 改变方位
-        if (GM_getValue("switchpbstatusLocation")) {
+        // 功能不开启的时候移动到左边-历史遗留问题
+        if (!GM_getValue("switchpbstatusLocationRight")) {
             parent.insertBefore(iconEle, link);
         } else {
             if (link.nextSibling) {
@@ -582,7 +583,7 @@
     // 改变大小
     let whetherSolution = location.href.match(pbUrl);
     if (whetherSolution) {
-        if(GM_getValue("switchpbstatusLocation")) {
+        if(!GM_getValue("switchpbstatusLocationRight")) {
             GM_addStyle(`
                 circle.mycircle {
                     cx: 9;
@@ -600,7 +601,7 @@
             `)
         }
     } else {
-        if(GM_getValue("switchpbstatusLocation")) {
+        if(!GM_getValue("switchpbstatusLocationRight")) {
             GM_addStyle(`
                 circle.mycircle {
                     cx: 8;
