@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.4.9
+// @version      2.4.10
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -25,14 +25,14 @@
 // @connect      raw.githubusercontent.com
 // @require      https://unpkg.com/jquery@3.5.1/dist/jquery.min.js
 // @require      https://unpkg.com/layui@2.9.6/dist/layui.js
-// @require      https://update.greasyfork.org/scripts/463455/1172110/NElementGetter.js
+// @require      https://update.cn-greasyfork.org/scripts/463455/1172110/NElementGetter.js
 // @grant        unsafeWindow
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.4.9"
+    let version = "2.4.10"
     let pbstatusVersion = "version16"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
