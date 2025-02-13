@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.4.10
+// @version      2.5.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -25,14 +25,14 @@
 // @connect      raw.githubusercontent.com
 // @require      https://unpkg.com/jquery@3.5.1/dist/jquery.min.js
 // @require      https://unpkg.com/layui@2.9.6/dist/layui.js
-// @require      https://update.cn-greasyfork.org/scripts/463455/1172110/NElementGetter.js
+// @require      https://scriptcat.org/lib/2779/1.2.1/NElementGetter.js
 // @grant        unsafeWindow
 // ==/UserScript==
 
 (async function () {
     'use strict';
 
-    let version = "2.4.10"
+    let version = "2.5.0"
     let pbstatusVersion = "version16"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -278,7 +278,7 @@
                 menu_ID[i] = GM_registerMenuCommand(content, function(){ menu_switch(`${menu_ALL[i][0]}`,`${menu_ALL[i][1]}`,`${menu_ALL[i][2]}`,`${menu_ALL[i][3]}`)});
                 menu_ID_Content[i] = content
             }
-            menu_ID[menu_ID.length] = GM_registerMenuCommand(`🏁 当前版本 ${version}`, function () {window.GM_openInTab('https://cn-greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86', {active: true,insert: true,setParent: true});});
+            menu_ID[menu_ID.length] = GM_registerMenuCommand(`🏁 当前版本 ${version}`, function () {});
             menu_ID_Content[menu_ID_Content.length] = `🏁 当前版本 ${version}`
             menu_ID[menu_ID.length+1] = GM_registerMenuCommand(`🏁 企鹅群号 654726006`, function () {});
             menu_ID_Content[menu_ID_Content.length+1] = `🏁 654726006`
