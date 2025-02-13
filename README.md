@@ -46,7 +46,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 #### :page_facing_up: 安装脚本 (求star ヾ(≧▽≦*)o)
 
 * 从 脚本猫 安装 (提供没有科学上网伙伴下载)
-  通过 GreasyFork 安装脚本: **[点我](https://scriptcat.org/zh-CN/script-show-page/2778)**
+  通过 脚本猫 安装脚本: **[点我](https://scriptcat.org/zh-CN/script-show-page/2778)**
 
 * 从 GreasyFork 安装 （被中国gfw封锁，只能科学上网进行下载安装）
   通过 GreasyFork 安装脚本: **[点我](https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86)**
