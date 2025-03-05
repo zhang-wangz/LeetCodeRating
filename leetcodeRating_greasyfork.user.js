@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.5.1
+// @version      2.5.2
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -31,7 +31,7 @@
 (async function () {
     'use strict';
 
-    let version = "2.5.1"
+    let version = "2.5.2"
     let pbstatusVersion = "version16"
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -50,7 +50,7 @@
     const searchUrl = "https://leetcode.cn/search/.*"
     const studyUrl = "https://leetcode.cn/studyplan/.*"
     const problemUrl = "https://leetcode.cn/problemset"
-    const discussUrl = "https://leetcode.cn/circle/discuss/.*"
+    const discussUrl = "https://leetcode.cn/discuss/.*"
 
     // req相关url
     const lcnojgo = "https://leetcode.cn/graphql/noj-go/"
@@ -644,11 +644,11 @@
                             <circle class="mycircle" stroke="black" stroke-width="2" fill="white"></circle>
                         </svg> `;
                 break;
-            default: 
+            default:
                 value = "";
                 break;
         }
-        //  [难度分 1980] (会员题) 
+        //  [难度分 1980] (会员题)
         if(GM_getValue("switchpbstatusscoredefault")){
             if (score) {
                 value += ` [难度分 ${score}] `;
@@ -708,6 +708,7 @@
     }
 
     async function createstatusBtn() {
+        // console.log("start...")
         if(document.querySelector("#statusBtn")) return;
         let span = document.createElement("span");
         span.setAttribute("data-small-spacing", "true");
@@ -728,12 +729,16 @@
             // 使用layui的渲染
             layuiload();
         }
-        new ElementGetter().each(".css-5d7bnq-QuestionInfoContainer.e2v1tt11", document, (userinfo) => {
-            span.setAttribute("class", userinfo.lastChild.getAttribute("class"));
-            span.setAttribute("class", span.getAttribute("class")+" hover:text-blue-s");
-            span.setAttribute("style", "cursor:pointer");
-            userinfo.appendChild(span);
+        new ElementGetter().each(".flex-wrap.items-center", document, (userinfo) => {
+            if (userinfo?.lastChild?.textContent?.includes("发布于")) {
+                // console.log(userinfo)
+                span.setAttribute("class", userinfo.lastChild.getAttribute("class"));
+                span.setAttribute("class", span.getAttribute("class")+" hover:text-blue-s");
+                span.setAttribute("style", "cursor:pointer");
+                userinfo.appendChild(span);
+            }
         });
+        // console.log("end...")
     }
 
 
@@ -741,6 +746,7 @@
     // 改变大小
     let whetherSolution = location.href.match(pbUrl);
     if (whetherSolution) {
+        // 左边
         if(!GM_getValue("switchpbstatusLocationRight")) {
             GM_addStyle(`
                 circle.mycircle {
@@ -750,6 +756,7 @@
                 }
             `)
         } else {
+            // 右边
             GM_addStyle(`
                 circle.mycircle {
                     cx: 13;
@@ -759,19 +766,21 @@
             `)
         }
     } else {
+        // 左边
         if(!GM_getValue("switchpbstatusLocationRight")) {
             GM_addStyle(`
                 circle.mycircle {
                     cx: 8;
-                    cy: 12;
+                    cy: 9;
                     r: 7;
                 }
             `)
         } else {
+            // 右边
             GM_addStyle(`
                 circle.mycircle {
                     cx: 13;
-                    cy: 12;
+                    cy: 10;
                     r: 7;
                 }
             `)
@@ -805,7 +814,8 @@
             if(window.location.href.match(discussUrl) || window.location.href.match(pbUrl)) {
                 let css_flag = "";
                 if(window.location.href.match(discussUrl)) {
-                    css_flag = ".css-qciawt-Wrapper";
+                    // css_flag = ".css-qciawt-Wrapper";
+                    css_flag = ".relative.flex";
                 } else {
                     css_flag = "#qd-content";
                 }
