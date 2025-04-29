@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      2.5.2
+// @version      3.0.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -31,8 +31,9 @@
 (async function () {
     'use strict';
 
-    let version = "2.5.2"
+    let version = "3.0.0"
     let pbstatusVersion = "version16"
+    // xmr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
     // css 渲染
@@ -40,8 +41,6 @@
 
     // 页面相关url
     const allUrl = "https://leetcode.cn/problemset/.*"
-    const tagUrl = "https://leetcode.cn/tag/.*"
-    const companyUrl = "https://leetcode.cn/company/.*"
     const pblistUrl = "https://leetcode.cn/problem-list/.*"
     const pbUrl = "https://leetcode.{2,7}/problems/.*"
     // 限定pbstatus使用, 不匹配题解链接
@@ -60,10 +59,13 @@
 
     // 灵茶相关url
     const teaSheetUrl = "https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz"
-    const lc0x3fsolveUrl = "https://huxulm.github.io/lc-rating/search"
+    // 因为ui更新，暂时去除，没有位置存放当前位置了
+    // const lc0x3fsolveUrl = "https://huxulm.github.io/lc-rating/search"
 
     // 用于延时函数的通用id
     let id = ""
+    // 制片人url, 通过接口从version.json拿取
+    let papermanpic = ""
 
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
@@ -88,7 +90,7 @@
     let isDynamic = localVal != null ? localVal.includes("true") : false
 
     // ElementGetter依赖相关
-    var ElementGetter = function() {
+    let ElementGetter = function() {
         const _jQuery = Symbol('jQuery');
         const _window = Symbol('window');
         const _matches = Symbol('matches');
@@ -246,6 +248,34 @@
         return ElementGetter;
     }();
 
+    // 监听相关, 监听之后提出变化并且重启插件
+    let debounceTimer = null;
+    let isSelfChanging = false;
+    const observedElements = new WeakMap();
+
+    function observeIfNeeded(target) {
+        if (!target || !(target instanceof Node)) return;
+        if (observedElements.has(target)) return;
+
+        const observer = new MutationObserver((mutationsList) => {
+            if (isSelfChanging) return;
+            if (debounceTimer) return;
+            console.log('内容变化，执行 clearAndStart');
+            clearAndStart(location.href, 500, false);
+            debounceTimer = setTimeout(() => {
+                debounceTimer = null;
+            }, 5000); // 连续变化时只触发一次
+        });
+
+        observer.observe(target, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+
+        observedElements.set(target, observer);
+    }
+
     function getPbNameId(pbName) {
         pbName2Id = JSON.parse(GM_getValue("pbName2Id", "{}").toString())
         pbNamee2Id = JSON.parse(GM_getValue("pbNamee2Id", "{}").toString())
@@ -398,18 +428,16 @@
             ['switchupdate', 'switchupdate', '是否每天最多只更新一次', true, true],
             ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
             ['switchpbRepo', 'pbRepo function', '题库页周赛难度评分(不包括灵茶)', true, false],
-            ['switchdelvip', 'delvip function', '题库页去除vip加锁题目', false, true],
             ['switchpbscore', 'pb function', '题目页周赛难度评分', true, true],
             ['switchcopyright', 'pb function', '题解复制去除版权信息', true, true],
-            ['switchcode', 'switchcode function', '题目页代码输入阻止联想', false, true],
             ['switchpbside', 'switchpbside function', '题目页侧边栏分数显示', true, true],
             ['switchpbsearch', 'switchpbsearch function', '题目页题目搜索框', true, true],
             ['switchsearch', 'search function', '题目搜索页周赛难度评分', true, false],
-            ['switchtag', 'tag function', 'tag题单页周赛难度评分(动态规划等分类题库)', true, false],
-            ['switchpblist', 'pbList function', 'pbList题单页评分', true, false],
+            ['switchpblist', 'pbList function', '题单页周赛难度评分(包含自定义和官方题单)', true, false],
+            ['switchpblistRateDisplay', 'pbList function', '题单页一直显示通过率', true, false],
             ['switchstudy', 'studyplan function', '学习计划周赛难度评分', true, false],
             ['switchcontestpage', 'contestpage function', '竞赛页面双栏布局', true, false],
-            ['switchlevel', 'studyplan level function', '算术评级(显示左侧栏和学习计划中)', true, false],
+            ['switchlevel', 'studyplan level function', '算术评级(显示题库/题单/题目/学习计划页)', true, false],
             ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
             ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
             ['switchpbstatus', 'pbstatus function', '讨论区和题目页显示题目完成状态', true, true],
@@ -474,6 +502,7 @@
         });
         function addCopy(item) {
             let nowShow = item.querySelector('div:not(.hidden) > div.group.relative > pre > code')
+            console.log(nowShow)
             let copyNode = nowShow.parentElement.nextElementSibling.cloneNode(true)
             nowShow.parentElement.nextElementSibling.setAttribute("hidden", true)
             copyNode.classList.add("copyNode")
@@ -1051,318 +1080,328 @@
         })()
     }
 
-    function callback(body) {
-        let data;
-        body.key = "leetcodeRatingReq";
-        ajaxReq("POST", lcgraphql, null, body, (res) => {
-            // console.log(res);
-            res.data.problemsetQuestionList.questions = res.data.problemsetQuestionList.questions.filter(e => !e.paidOnly)
-            data = res
-        })
-        return data
-    }
 
-    // 写一个拦截题库页面的工具
-    function intercept() {
-        XMLHttpRequest.prototype.open = function newOpen(method, url, async, user, password, disbaleIntercept) {
-            if (!disbaleIntercept && method.toLocaleLowerCase().includes('post') && url.includes(`/graphql/`)) {
-                const originalSend = this.send
-                this.send = async str => {
-                    try {
-                        if (typeof str === 'string') {
-                            const body = JSON.parse(str)
-                            if (body?.query?.includes('query problemsetQuestionList') && !body.key) {
-                                for (const key of ['response', 'responseText']) {
-                                    Object.defineProperty(this, key, {
-                                        get: function() {
-                                            const data = callback(body)
-                                            return JSON.stringify(data)
-                                        },
-                                        configurable: true,
-                                    })
-                                }
-                            }
-                            str = JSON.stringify(body)
-                        }
-                    } catch (error) {
-                        console.log(error)
-                    }
-                    return originalSend.call(this, str)
-                }
+    function createProblemCard({ title, pburl, difficulty, rate, parentNodeList }) {
+        const $a = $('<a>', {
+            class: 'group flex flex-col rounded-[8px] duration-300',
+            id: Date.now(), // 随便给个唯一id
+            target: '_blank',
+            href: pburl, // 跳转链接
+        });
+
+        const $div1 = $('<div>', {
+            class: 'flex h-[44px] w-full items-center space-x-3 px-4',
+        });
+
+        const $wrapper = $('<div>', {
+            style: 'transform: translateX(-3px);'
+        });
+        
+        // 嵌套的小结构
+        const $inner1 = $('<div>', {
+            class: 'flex items-center justify-center w-[20px] h-[20px]'
+        }).append(
+            $('<svg>', {
+                xmlns: 'http://www.w3.org/2000/svg',
+                viewBox: '0 0 576 512',
+                fill: 'currentColor',
+                class: 'w-4 h-4 text-yellow-400', // 大小4×4，黄色
+                html: `
+                    <path d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 
+                    153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 
+                    328.4l26.2 155.6c1.5 9-2.2 18.1-9.6 23.5s-17.3 6-25.3 
+                    1.7l-137-73.2-137 73.2c-8.1 4.3-17.9 3.7-25.3-1.7s-11.2-14.5-9.7-23.5
+                    l26.2-155.6-111-108.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9
+                    19.3-16.3l153.2-22.6 68.6-141.3C270.4 5.2 278.7 0 287.9 0z"/>
+                `
+            })
+        );
+        
+        // 第二块内容
+        const $inner2 = $('<div>', { class: 'relative flex h-full w-full cursor-pointer items-center' }).append(
+            $('<div>', { class: 'flex w-0 flex-1 items-center space-x-2' }).append(
+                $('<div>', { class: 'text-body text-sd-foreground max-w-[90%] font-medium' }).append(
+                $('<div>', { class: 'ellipsis line-clamp-1' }).text(title)
+                )
+            ),
+            $('<div>', { class: 'text-sd-muted-foreground flex w-[70px] items-center justify-center text-sm opacity-0 group-hover:opacity-100 lc-xl:opacity-100', 'data-state': 'closed' }).text(rate),
+            $('<p>', { class: 'mx-0 text-[14px] lc-xl:mx-4' }).text(difficulty)
+        );
+
+        // 第三个部分 小竖条
+        const $inner3 = $('<div>', { 'data-state': 'closed' }).append(
+            $('<div>', { class: 'flex gap-0.5 px-1' }).append(
+                Array.from({ length: 8 }).map(() => $('<div>', { class: 'h-2 w-0.5 rounded bg-sd-foreground opacity-20' }))
+            )
+        );
+
+        // 收藏
+        const $inner4 = $('<div>', {
+            class: 'hover:bg-sd-accent flex h-7 w-7 items-center justify-center rounded opacity-0',
+            type: 'button',
+            'aria-haspopup': 'dialog',
+            'aria-expanded': 'false',
+            'aria-controls': 'xxx',
+            'data-state': 'closed'
+        }).append(
+            $('<div>', {
+                class: 'relative text-[14px] leading-[normal] p-[1px] before:block before:h-3.5 before:w-3.5 text-sd-muted-foreground',
+                html: '' 
+            })
+        );
+
+
+        $div1.append($inner1, $inner2, $inner3, $inner4);
+        $wrapper.append($div1)
+        $a.append($wrapper);
+        // 插入到第一个父元素的最前面
+        if (parentNodeList && parentNodeList.childNodes.length > 0) {
+            const firstChild = parentNodeList.childNodes[0];
+            if (firstChild) {
+                parentNodeList.insertBefore($a[0], firstChild);
+            } else {
+                parentNodeList.appendChild($a[0]);
             }
-            originalOpen.apply(this, [method, url, async, user, password])
         }
     }
 
-    function restore() {
-        XMLHttpRequest.prototype.open = originalOpen
-    }
-
-    if(GM_getValue("switchdelvip")) intercept(); else restore()
-
-
-    let tFirst, tLast  // all
-    let lcCnt = 0
+    let lcCnt = 0;
+    let pbSetCnt = 0;
     function getData() {
         let switchpbRepo = GM_getValue("switchpbRepo")
         let switchTea = GM_getValue("switchTea")
         let switchrealoj = GM_getValue("switchrealoj")
-        let arrList = document.querySelectorAll("div[role='rowgroup']")
-        let arr = arrList[0]
-        for (let ele of arrList) {
-            if (ele.childNodes.length != 0) {
-                arr = ele
-                break
-            }
-        }
+        let switchlevel = GM_getValue("switchlevel")
+        let arr = document.querySelector('[class*="pb-[80px]"]')
+        let everydatpbidx = 0
         // pb页面加载时直接返回
         if (arr == null) {
             return
         }
-        let lastchild = arr.lastChild
-        let first = switchTea ? 1 : 0
-        if ((!switchpbRepo || (tFirst && tFirst == arr?.childNodes[first]?.textContent && tLast && tLast == lastchild?.textContent))
-            && (!switchTea || arr.childNodes[0].childNodes[2].textContent == "灵神题解集")
-            && (!switchrealoj) || lastchild.textContent.includes("隐藏")) {
-            // 到达次数之后删除定时防止卡顿
-            if (lcCnt == shortCnt) {
-                clearId("all")
+        observeIfNeeded(arr)
+        isSelfChanging = true
+        try {
+            if (pbSetCnt && pbSetCnt == arr.childNodes.length) {
+                console.log("第" + lcCnt + "次刷新插件...")
+                // 到达次数之后删除定时防止卡顿
+                if (lcCnt == shortCnt) {
+                    console.log("到达当前功能指定刷新次数, 检测暂时无更新, 暂停刷新...")
+                    clearId("all")
+                }
+                lcCnt += 1
+                return
             }
-            lcCnt += 1
-            return
-        }
-
-        t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
-
-        // 灵茶题目渲染
-        if (switchTea) {
-            // console.log(arr.childNodes[0].childNodes[2].textContent)
-            if (arr.childNodes[0].childNodes[2].textContent != "灵神题解集") {
-                let div = document.createElement('div')
-                div.setAttribute("role", "row")
-                div.setAttribute("style", "display:flex;flex:1 0 auto;min-width:0px")
-                div.setAttribute("class", "odd:bg-layer-1 even:bg-overlay-1 dark:odd:bg-dark-layer-bg dark:even:bg-dark-fill-4")
-                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><a href="" target='_blank'>${getCurrentDate(3)}</a</div>`
-                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:160 0 auto;min-width:0px;width:160px" class="mx-2 py-[11px]"><div class="max-w-[302px] flex items-center"><div class="overflow-hidden"><div class="flex items-center"><div class="truncate overflow-hidden"><a href=${teaSheetUrl}  target="_blank" class="h-5 hover:text-blue-s dark:hover:text-dark-blue-s">灵茶题集</a></div></div></div></div></div>`
-                div.innerHTML += `<div role="cell" style="box-sizing:border-box;flex:96 0 auto;min-width:0px;width:96px" class="mx-2 py-[11px]"><span class="flex items-center space-x-2 text-label-1 dark:text-dark-label-1"><a href="${lc0x3fsolveUrl}" class="truncate" target="_blank" hover:text-blue-s aria-label="solution">灵神题解集</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:82 0 auto;min-width:0px;width:82px" class="mx-2 py-[11px]"><span><a href="javascript:;" class="truncate" aria-label="solution">——</a></span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:60 0 auto;min-width:0px;width:60px" class="mx-2 py-[11px]"><span class="text-purple dark:text-dark-purple">——</span></div><div \
-                    role="cell" style="box-sizing:border-box;flex:88 0 auto;min-width:0px;width:88px" class="mx-2 py-[11px]"><span><a href="javascript:;" >——</a></span></div>`
-                arr.insertBefore(div, arr.childNodes[0])
-                console.log("has refreshed ling pb...")
+            t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+            // 灵茶题目渲染
+            if (switchTea) {
+                let first = arr.firstChild
+                if (!first.textContent.includes("灵茶题集")) {
+                    createProblemCard({
+                        title: '灵茶题集' + "-" + getCurrentDate(3),
+                        pburl: teaSheetUrl,
+                        difficulty: '暂无',
+                        rate: '暂无',
+                        parentNodeList: arr
+                    })
+                }
+                // 经过灵茶之后，无论如何数量都会变成1
+                everydatpbidx = 1
             }
+            if (switchpbRepo) {
+                let childs = arr.childNodes
+                let idx = switchTea ? 1 : 0
+                let childLength = childs.length
+                for (;idx < childLength;idx++) {
+                    let v = childs[idx]
+                    // 如果元素第一个就不存在或undifined就直接返回
+                    if (!v) return
+                    let t = v.textContent
 
+                    let data = t.split(".")
+                    let id = data[0].trim()
+                    let $item = $(v)
+                    let difficulty = $item.find('.text-sd-medium, .text-sd-easy, .text-sd-hard').first();
+                    let passRate = difficulty.siblings('div.text-sd-muted-foreground').first();
+                    // 如果没有难度和通过率属性，则跳过步骤
+                    if (difficulty.length <= 0 || passRate.length <= 0) continue
+                    if (switchrealoj) {
+                        // 难度修改为隐藏
+                        if (difficulty.length > 0) {
+                            difficulty.text("隐藏")
+                            difficulty.removeClass("text-sd-easy text-sd-medium text-sd-hard")
+                        }
+                        
+                        // 通过率修改为隐藏
+                        if (passRate.length > 0) {
+                            passRate.text("隐藏")
+                        }
+                        continue
+                    }
+                    // 因为lc请求是有缓存的，所以多次刷新的时候同一个位置会是不同的题目，这时候需要还原
+                    if (t2rate[id] != null){
+                        let ndScore = t2rate[id]["Rating"]
+                        difficulty.text(ndScore)
+                        // 修改尺寸使得数字分数和文字比如(困难)保持在同一行
+                        passRate.removeClass("w-[70px]")
+                        passRate.addClass("w-[55px]")
+                    } else {
+                        let nd2ch = { "mx-0 text-[14px] text-sd-easy lc-xl:mx-4": "简单", "mx-0 text-[14px] text-sd-medium lc-xl:mx-4": "中等", "mx-0 text-[14px] text-sd-hard lc-xl:mx-4": "困难" }
+                        difficulty.text(nd2ch[difficulty.attr('class')])
+                        // 恢复原有大小尺寸
+                        passRate.removeClass("w-[55px]")
+                        passRate.addClass("w-[70px]")
+                    }
+
+                    // 增加算术评级插入操作
+                    if (switchlevel) {
+                        let level = levelData[id]
+                        let levelText = level ? "算术评级: " + level["Level"] : "";
+                        let $existingLevel = passRate.siblings('.arithmetic-level');
+                        // 如果已经操作过
+                        if ($existingLevel.length > 0) {
+                            // 如果含有算术评级则更新文本，如果没有则删除原来插入的数据
+                            if (level) {
+                                $existingLevel.text(levelText);
+                            } else {
+                                $existingLevel.remove()
+                            }
+                        } else if (level) {
+                            // 如果没有操作过
+                            // 如果含有算术评级则插入，如果没有算术评级，则不做任何操作
+                            // 构造新的算术等级元素（保持结构一致）
+                            const $level = $('<div></div>')
+                                .addClass(passRate.attr('class')) // 复用样式
+                                .addClass('arithmetic-level') // 自定义类作为标记
+                                .text(levelText);
+                            // 去除灰色颜色和尺寸限制
+                            $level.removeClass("w-[70px] w-[55px] text-sd-muted-foreground").addClass("min-w-[100px]")
+                            // 如果插入的为每日一题位置，需要修改尺寸，左移8px
+                            if (idx == everydatpbidx) {
+                                $level.css('transform', 'translateX(-8px)');
+                            }
+                            // 插入到通过率前面
+                            passRate.before($level);
+                        }
+                    }
+                }
+                console.log("has refreshed problemlist...")
+            }
+            pbSetCnt = arr.childNodes.length
+        } finally {
+            isSelfChanging = false
         }
-        // console.log(tFirst)
-        // console.log(tLast)
-        if (switchpbRepo) {
-            let allpbHead = document.querySelector("div[role='row']")
-            let rateRefresh = false
-            let headndidx, acrateidx
-            let i = 0
-            allpbHead.childNodes.forEach(e => {
-                if (e.textContent.includes("难度")) {
-                    headndidx = i
+    }
+
+
+    // pblist插件刷新次数
+    let pbListCnt = 0;
+    // pblist当前刷新之后列表所含题目数量
+    let pbListpbCnt = 0;
+    function getPblistData() {
+        if (!GM_getValue("switchpblist")) return
+        let switchrealoj = GM_getValue("switchrealoj")
+        let switchlevel = GM_getValue("switchlevel")
+        let switchpblistRateDisplay = GM_getValue("switchpblistRateDisplay")
+        let pre = document.querySelector(".w-full .pb-20")
+        let arr = pre?.childNodes[0]?.lastChild?.childNodes[0] 
+        if (!arr) return
+        // 设置监听官方渲染，并标记当前自己修改不被监听
+        observeIfNeeded(arr)
+        isSelfChanging = true;
+        try {
+            // console.log(arr)
+            // console.log(pbListpbCnt)
+            // console.log(arr.childNodes.length)
+            if (pbListpbCnt && pbListpbCnt == arr.childNodes.length) {
+                console.log("第" + pbListCnt + "次刷新插件...")
+                // 到达次数之后删除定时防止卡顿
+                if (pbListCnt == shortCnt) {
+                    console.log("到达当前功能指定刷新次数, 检测暂时无更新, 暂停刷新...")
+                    console.log("清理标记")
+                    clearId("pblist")
                 }
-                if (e.textContent.includes("通过率")) {
-                    acrateidx = i
-                }
-                if (e.textContent.includes("题目评分")){
-                    rateRefresh = true
-                }
-                i += 1
-            })
-            // console.log(pbtitleidx)
+                pbListCnt += 1
+                return
+            }
+            t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
             let childs = arr.childNodes
-            let idx = switchTea ? 1 : 0
             let childLength = childs.length
-            for (;idx < childLength;idx++) {
+            for (let idx = 0; idx < childLength; idx++) {
                 let v = childs[idx]
-                if (!v.childNodes[1]) return
-                let t = v.childNodes[1].textContent
-                // console.log(t)
+                if (!v) return
+                let t = v.textContent
                 let data = t.split(".")
                 let id = data[0].trim()
-                let nd = v.childNodes[headndidx].childNodes[0].innerHTML
+                // console.log(id)
+                // 如果不是a标签，说明是自定义题单，需要多进一层
+                let $item = $(v)
+                let difficulty = $item.find('.text-sd-medium, .text-sd-easy, .text-sd-hard').first();
+                let passRate = difficulty.siblings('div.text-sd-muted-foreground').first();
+                if (switchpblistRateDisplay) passRate.removeClass("opacity-0").addClass("opacity-100")
+                // 如果没有难度属性，则跳过步骤
+                if (difficulty.length <= 0 || passRate.length <= 0) continue
                 if (switchrealoj) {
-                    v.childNodes[acrateidx].textContent = "隐藏"
-                    v.childNodes[headndidx].textContent = "隐藏"
+                    // 难度修改为隐藏
+                    if (difficulty.length > 0) {
+                        difficulty.text("隐藏")
+                        difficulty.removeClass("text-sd-easy text-sd-medium text-sd-hard")
+                    }
+                    
+                    // 通过率修改为隐藏
+                    if (passRate.length > 0) {
+                        passRate.text("隐藏")
+                    }
                     continue
                 }
-                if (t2rate[id] != null && !rateRefresh){
-                    nd = t2rate[id]["Rating"]
-                    v.childNodes[headndidx].childNodes[0].innerHTML = nd
+
+                // 插入竞赛分数
+                if (t2rate[id] != null){
+                    let ndScore = t2rate[id]["Rating"]
+                    difficulty.text(ndScore)
+                    // 修改尺寸使得数字分数和文字比如(困难)保持在同一行
+                    passRate.removeClass("w-[70px]")
+                    passRate.addClass("w-[55px]")
                 } else {
-                    let nd2ch = { "text-olive dark:text-dark-olive": "简单", "text-yellow dark:text-dark-yellow": "中等", "text-pink dark:text-dark-pink": "困难" }
-                    let cls = v.childNodes[headndidx].childNodes[0].getAttribute("class")
-                    v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[cls]
+                    let nd2ch = { "mx-0 text-[14px] text-sd-easy lc-xl:mx-4": "简单", "mx-0 text-[14px] text-sd-medium lc-xl:mx-4": "中等", "mx-0 text-[14px] text-sd-hard lc-xl:mx-4": "困难" }
+                    difficulty.text(nd2ch[difficulty.attr('class')])
+                    // 恢复原有大小尺寸
+                    passRate.removeClass("w-[55px]")
+                    passRate.addClass("w-[70px]")
+                }
+
+                // 增加算术评级插入操作
+                if (switchlevel) {
+                    let level = levelData[id]
+                    let levelText = level ? "算术评级: " + level["Level"] : "";
+                    let $existingLevel = passRate.siblings('.arithmetic-level');
+                    // 如果已经操作过
+                    if ($existingLevel.length > 0) {
+                        // 如果含有算术评级则更新文本，如果没有则删除原来插入的数据
+                        if (level) {
+                            $existingLevel.text(levelText);
+                        } else {
+                            $existingLevel.remove()
+                        }
+                    } else if (level) {
+                        // 如果没有操作过
+                        // 如果含有算术评级则插入，如果没有算术评级，则不做任何操作
+                        // 构造新的算术等级元素（保持结构一致）
+                        const $level = $('<div></div>')
+                            .addClass(passRate.attr('class')) // 复用样式
+                            .addClass('arithmetic-level') // 自定义类作为标记
+                            .text(levelText);
+                        // 去除灰色颜色和尺寸限制
+                        $level.removeClass("opacity-0 w-[70px] w-[55px] text-sd-muted-foreground").addClass("min-w-[100px] opacity-100")
+                        // 插入到通过率前面
+                        passRate.before($level);
+                    }
                 }
             }
-            tFirst = arr?.childNodes[first]?.textContent
-            tLast = lastchild?.textContent
-            console.log("has refreshed problemlist...")
+            console.log("has refreshed...")
+            pbListpbCnt = arr.childNodes.length
+        } finally {
+            isSelfChanging = false;
         }
-    }
-
-    let tagt, tagf;
-    let tagCnt = 0;
-    function getTagData() {
-        if (!GM_getValue("switchtag")) return;
-        // 筛选更新
-        let arr = document.querySelector(".ant-table-tbody")
-        let head = document.querySelector(".ant-table-cell")
-        if(head == null) return
-        head = head.parentNode
-        if (tagt && arr.lastChild && tagt == arr.lastChild.textContent
-            && tagf && arr.firstChild && tagf == arr.firstChild.textContent) {
-            // 到达次数之后删除定时防止卡顿
-            if (tagCnt == shortCnt) {
-                clearId("tag")
-            }
-            tagCnt += 1
-            return
-        }
-        let rateRefresh = false
-        // 确认难度序列
-        let headndidx
-        for (let i = 0; i < head.childNodes.length; i++) {
-            let headEle = head.childNodes[i]
-            // console.log(headEle.textContent)
-            if (headEle.textContent.includes("难度")) {
-                headndidx = i
-            }
-            if (headEle.textContent.includes("题目评分")){
-                rateRefresh = true
-            }
-        }
-        let childs = arr.childNodes
-        for (const element of childs) {
-            let v = element
-            if (!v.childNodes[1]) return
-            let t = v.childNodes[1].textContent
-            let data = t.split(".")
-            let id = data[0].trim()
-            let nd = v.childNodes[headndidx].childNodes[0].innerHTML
-            if (t2rate[id] != null && !rateRefresh) {
-                nd = t2rate[id]["Rating"]
-                v.childNodes[headndidx].childNodes[0].innerHTML = nd
-            } else {
-                let nd2ch = { "rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难" }
-                let clr = v.childNodes[headndidx].childNodes[0].getAttribute("color")
-                v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[clr]
-            }
-        }
-        if(arr.lastChild) tagt = arr.lastChild.textContent
-        if(arr.firstChild) tagf = arr.firstChild.textContent
-        console.log("has refreshed...")
-    }
-    if (location.href.match(tagUrl)) {
-        new ElementGetter().each('.ant-table-tbody', document, (item) => {
-            let observer = new MutationObserver(function(mutationsList, observer) {
-                // 检查每个变化
-                mutationsList.forEach(function(mutation) {
-                    initCnt()
-                    let preId = GM_getValue("tag")
-                    if (preId != null) {
-                        clearInterval(preId)
-                    }
-                    id = setInterval(getTagData, 500);
-                    GM_setValue("tag", id)
-                });
-            });
-            // 配置 MutationObserver 监听的内容和选项
-            let config = { attributes: false, childList: true, subtree: false };
-            observer.observe(item, config);
-        });
-    }
-
-    let companyt, companyf;
-    let companyCnt = 0;
-    function getCompanyData() {
-        if (!GM_getValue("switchcompany")) return;
-        let arr = document.querySelector(".ant-table-tbody")
-        let head = document.querySelector(".ant-table-cell")
-        if(head == null) return
-        head = head.parentNode
-        if (companyt && arr.lastChild && companyt == arr.lastChild.textContent
-            && companyf && arr.firstChild && companyf == arr.firstChild.textContent) {
-            // 到达次数之后删除定时防止卡顿
-            if (companyCnt == shortCnt) {
-                clearId("company")
-            }
-            companyCnt += 1
-            return
-        }
-        // 确认难度序列
-        let rateRefresh = false
-        let headndidx
-        for (let i = 0; i < head.childNodes.length; i++) {
-            let headEle = head.childNodes[i]
-            if (headEle.textContent.includes("难度")) {
-                headndidx = i
-            }
-            if (headEle.textContent.includes("题目评分")){
-                rateRefresh = true
-            }
-        }
-        let childs = arr.childNodes
-        for (const element of childs) {
-            let v = element
-            if (!v.childNodes[1]) return
-            let t = v.childNodes[1].textContent
-            let data = t.split(".")
-            let id = data[0].trim()
-            let nd = v.childNodes[headndidx].childNodes[0].innerHTML
-            if (t2rate[id] != null && !rateRefresh) {
-                nd = t2rate[id]["Rating"]
-                v.childNodes[headndidx].childNodes[0].innerHTML = nd
-            } else {
-                let nd2ch = { "rgba(var(--dsw-difficulty-easy-rgb), 1)": "简单", "rgba(var(--dsw-difficulty-medium-rgb), 1)": "中等", "rgba(var(--dsw-difficulty-hard-rgb), 1)": "困难" }
-                let clr = v.childNodes[headndidx].childNodes[0].getAttribute("color")
-                v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[clr]
-            }
-        }
-        if(arr.lastChild) companyt = arr.lastChild.textContent
-        if(arr.firstChild) companyf = arr.firstChild.textContent
-        console.log("has refreshed...")
-    }
-
-    let pblistt, pblistf;
-    let pbListCnt = 0;
-    function getPblistData() {
-        if (!GM_getValue("switchpblist")) return;
-        let arr = document.querySelector("div[data-rbd-droppable-id='droppable']")
-        if (arr == null) return
-        if (pblistt != null && arr.lastChild && pblistt == arr.lastChild.textContent
-            && arr.firstChild && pblistf == arr.firstChild.textContent) {
-            // 到达次数之后删除定时防止卡顿
-            if (pbListCnt == normalCnt) {
-                clearId("pblist")
-            }
-            pbListCnt += 1
-            return
-        }
-        let childs = arr.childNodes
-        for (const element of childs) {
-            let v = element
-            let tp = v.childNodes[0]?.childNodes[0]?.childNodes[1]
-            if (!tp) return
-            let title = tp.childNodes[0]?.textContent
-            if (!title) return
-            let data = title.split(".")
-            let id = data[0].trim()
-            let nd = tp.childNodes[1]
-            if (t2rate[id] != null) {
-                nd.innerText = t2rate[id]["Rating"]
-            } else {
-                let nd2ch = { "text-[14px] text-sd-easy": "简单", "text-[14px] text-sd-medium": "中等", "text-[14px] text-sd-hard": "困难" }
-                let cls = nd.getAttribute("class")
-                nd.innerText = nd2ch[cls]
-            }
-        }
-        if(arr.lastChild) pblistt = arr.lastChild.textContent
-        if(arr.firstChild) pblistf = arr.firstChild.textContent
-        console.log("has refreshed...")
     }
 
     function getSearch() {
@@ -1776,24 +1815,6 @@
         }
     }
 
-    // code提示功能
-    function codefunc() {
-        if (!GM_getValue("switchcode")) return
-        if (document.querySelector("#codefunc") == null) {
-                waitForKeyElements(".overflowingContentWidgets", () => {
-                    $('.overflowingContentWidgets').remove()
-                });
-                let div = document.querySelector('div.h-full.w-full')
-                div.onkeydown = function (event) {
-                    if (event.keyCode >= 65 && event.keyCode <= 90 || event.keyCode == 13) {
-                        eventhappend()
-                    }
-                }
-                let flag = document.createElement("div")
-                flag.setAttribute("id", "codefunc")
-                document.body.append(flag)
-            }
-    }
     // 因为字符显示问题，暂时去除
     // <span class="layui-progress-text myfont">0%</span>
     let pbstatusContent = `
@@ -1917,8 +1938,6 @@
             }
             let data = t.textContent.split(".")
             let id = data[0].trim()
-            // code提示功能
-            codefunc()
             let colorA = ['.text-difficulty-hard', '.text-difficulty-easy','.text-difficulty-medium']
             let colorSpan;
             for (const color of colorA) {
@@ -2144,13 +2163,19 @@
     function initCnt() {
         // 卡顿问题页面修复
         // 搜索页面为自下拉，所以需要无限刷新，无法更改，这一点不会造成卡顿，所以剔除计划
-        lcCnt = 0 // ✅
-        tagCnt = 0
+        // 题库页 ✅
+        lcCnt = 0 
+        pbSetCnt = 0;
+
+        // 题目页
         pbCnt = 0 // ✅
         pbCnt2 = 0 // ✅
-        pbsideCnt = 0 // ✅
-        companyCnt = 0  // ❌，因为已经搁置(需要vip)，所以暂时关闭该功能
+
+        // 题单页  ✅
+        pbsideCnt = 0
+        pbListpbCnt = 0
         pbListCnt = 0 // ✅
+
         studyCnt = 0 // ✅
     }
 
@@ -2159,9 +2184,9 @@
             initCnt()
             let start = ""
             let targetIdx = -1
-            let pageLst = ['all', 'tag', 'pb', 'company', 'pblist', 'search', 'study']
-            let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl, studyUrl]
-            let funcLst = [getData, getTagData, getpb, getCompanyData, getPblistData, getSearch, getStudyData]
+            let pageLst = ['all', 'pb', 'pblist', 'search', 'study']
+            let urlLst = [allUrl, pbUrl, pblistUrl, searchUrl, studyUrl]
+            let funcLst = [getData, getpb, getPblistData, getSearch, getStudyData]
             for (let index = 0; index < urlLst.length; index++) {
                 const element = urlLst[index];
                 if (url.match(element)) {
@@ -2188,8 +2213,6 @@
                         let pbsideId = setInterval(getpbsideData, timeout)
                         GM_setValue("pbside", pbsideId)
                     }
-                } else if(start == "tag") {
-                    id = setInterval(getTagData, timeout);
                 } else {
                     id = setInterval(funcLst[targetIdx], timeout)
                 }
@@ -2317,6 +2340,8 @@
                     let json = JSON.parse(dataStr)
                     let v = json["version"]
                     let upcontent = json["content"]
+                    // 更新纸片人地址
+                    papermanpic = json["papermanpic"]
                     if (v != version) {
                         if (checkVersionLayer) {
                             console.log("弹窗更新栏一次..")
@@ -2386,8 +2411,7 @@
 // spig js 纸片人相关
 if (GM_getValue("switchperson")) {
     // url数据
-    let imgUrl = "https://i.ibb.co/89XdTMf/Spig.png"
-//    let imgUrl = "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/main/assets/samplespig.png"
+    let imgUrl = papermanpic
 
     const isindex = true
     const visitor = "主人"
@@ -2551,8 +2575,8 @@ if (GM_getValue("switchperson")) {
     });
 
     function msgPageWelcome(url, isAddEvent) {
-        let urlLst = [allUrl, tagUrl, pbUrl, companyUrl, pblistUrl, searchUrl]
-        let msgShow = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到分类题库页面，针对专题练习有利于进步哦～", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到公司题库，针对专门的公司题目练习有利于面试呢", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
+        let urlLst = [allUrl, pbUrl, pblistUrl, searchUrl]
+        let msgShow = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
         for (let index = 0; index < urlLst.length; index++) {
             const element = urlLst[index];
             if (url.match(element)) {
