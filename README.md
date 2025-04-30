@@ -67,7 +67,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 	- 该功能可以通过新题库页如下筛选获取
 	
-	![image-20250429182041760](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20250429182041760.png)
+	![image-20250429182041760](./images/image-20250429182041760.png)
 	
 	​	plus是vip题目，非plus是免费题目
 
