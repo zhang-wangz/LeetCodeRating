@@ -2342,7 +2342,7 @@
                     let upcontent = json["content"]
                     // 更新纸片人地址
                     papermanpic = json["papermanpic"]
-                    // 通过跟新 CSS 变量来更新纸片人
+                    // 通过更新 CSS 变量来更新纸片人
                     document.documentElement.style.setProperty('--mumu-img', `url(${papermanpic})`);
                     console.log(papermanpic)
                     if (v != version) {
