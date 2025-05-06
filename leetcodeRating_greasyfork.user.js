@@ -2342,6 +2342,9 @@
                     let upcontent = json["content"]
                     // 更新纸片人地址
                     papermanpic = json["papermanpic"]
+                    // 通过更新 CSS 变量来更新纸片人
+                    document.documentElement.style.setProperty('--mumu-img', `url(${papermanpic})`);
+                    console.log(papermanpic)
                     if (v != version) {
                         if (checkVersionLayer) {
                             console.log("弹窗更新栏一次..")
@@ -2410,8 +2413,6 @@
 
 // spig js 纸片人相关
 if (GM_getValue("switchperson")) {
-    // url数据
-    let imgUrl = papermanpic
 
     const isindex = true
     const visitor = "主人"
@@ -2424,6 +2425,9 @@ if (GM_getValue("switchperson")) {
     const queryProcess = '\n    query userQuestionProgress($userSlug: String!) {\n  userProfileUserQuestionProgress(userSlug: $userSlug) {\n    numAcceptedQuestions {\n      difficulty\n      count\n    }\n    numFailedQuestions {\n      difficulty\n      count\n    }\n    numUntouchedQuestions {\n      difficulty\n      count\n    }\n  }\n}\n    '
     const queryUser = '\n    query globalData {\n  userStatus {\n    isSignedIn\n    isPremium\n    username\n    realName\n    avatar\n    userSlug\n    isAdmin\n    checkedInToday\n    useTranslation\n    premiumExpiredAt\n    isTranslator\n    isSuperuser\n    isPhoneVerified\n    isVerified\n  }\n  jobsMyCompany {\n    nameSlug\n  }\n  commonNojPermissionTypes\n}\n    '
     GM_addStyle(`
+        :root {
+            --mumu-img: url(${papermanpic});
+        }
         .spig {
             display:block;
             width:154px;
@@ -2459,7 +2463,7 @@ if (GM_getValue("switchperson")) {
             width:154px;
             height:190px;
             cursor: move;
-            background:url(${imgUrl}) no-repeat;
+            background:var(--mumu-img) no-repeat;
         }
 
         #level {
