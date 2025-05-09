@@ -1490,6 +1490,27 @@
         }
     }
 
+    /**
+     * 修正侧边栏高亮题目的样式
+     * @param {HTMLElement} listNode 侧边栏列表节点
+     * @param {string} cssSelector 子节点选择器
+     */
+    function fixSiderbarProblemHighlight(listNode, cssSelector) {
+        // console.log("修正侧边栏高亮题目样式");
+        const pbList = listNode.querySelectorAll(cssSelector);
+        
+        pbList.forEach(div => {
+            const levelSpan = div.querySelector(':scope > span');
+            const pbDiv = div.querySelector(':scope > div > div');
+            if(!levelSpan) return;
+            
+            if(pbDiv.className !== levelSpan.className) {
+                // 如果className不一致，说明是高亮状态不一致
+                levelSpan.className = pbDiv.className;
+            }
+        });
+    }
+
     // 确认之后不再刷新
     let studyf;
     let studyCnt = 0;
@@ -1529,14 +1550,14 @@
                     // console.log(nd)
                     continue
                 }
-                
+
                 let levelId = getLevelId(pbName)
                 let id = getPbNameId(pbName)
                 // console.log(pbName, level)
 
                 let darkn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
                 let lightn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
-       
+
                 // render rating
                 let hit = renderRating(nd, t2rate?.[id]?.Rating, lightn2c, darkn2c);
 
@@ -1565,10 +1586,16 @@
         if (first && pbsidef && pbsidef == first
             && last && pbsidee && pbsidee == last
            ) {
-            // 临时加的pbside
             if (pbsideCnt == normalCnt) clearId("pbside");
+
+            // TODO: 没想到什么好的办法来确切的监听源站前端对题目列表的更新，只能大概等一个延时
+            if (pbsideCnt === 1) {
+                // 在此处检查高亮状态是否改变，并修正
+                fixSiderbarProblemHighlight(totArr, ":scope > div > div[id] > div > :nth-child(2)");
+            }
+
             pbsideCnt += 1;
-            return
+            return;
         }
         let childs = totArr.childNodes
         for (const arr of childs) {
@@ -1636,8 +1663,16 @@
                 && pbsidee == pbarr.lastChild?.textContent
                ) {
                 if (pbsideCnt == normalCnt) clearId("pbside");
+
+                // TODO: 没想到什么好的办法来确切的监听源站前端对题目列表的更新，只能大概等一个延时
+                // 根据列表的大小不同，更新耗时可能不同，故直接对快慢两种情况运行两次修正
+                if (pbsideCnt === 4 || pbsideCnt === 1) {
+                    // 在此处检查高亮状态是否改变，并修正
+                    fixSiderbarProblemHighlight(pbarr, ":scope > .group > :first-child > :nth-child(2)");
+                }
+
                 pbsideCnt += 1;
-                return
+                return;
             }
             if (pbarr != null) {
                 for (const onepb of pbarr.childNodes) {
