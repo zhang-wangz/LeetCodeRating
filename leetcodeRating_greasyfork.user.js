@@ -33,7 +33,7 @@
 
     let version = "3.0.1"
     let pbstatusVersion = "version16"
-    // xmr劫持时使用，保留原始
+    // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
     // css 渲染
@@ -1550,7 +1550,7 @@
         }
         let childs = totArr.childNodes
         for (const arr of childs) {
-            // 特殊判定， 如果大于30则是每日一日列表
+            // 特殊判定， 如果大于30则是每日一题列表
             let pbidx = 1;
             if (arr.childNodes.length >= 30) pbidx = 0;
             for (; pbidx < arr.childNodes.length; pbidx++) {
