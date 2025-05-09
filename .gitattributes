@@ -1,0 +1,10 @@
+*.md linguist-language=JavaScript
+*.yml linguist-language=JavaScript
+*.html linguist-language=JavaScript
+*.js linguist-language=JavaScript
+*.xml linguist-language=JavaScript
+*.scss linguist-language=JavaScript
+*.cmd linguist-language=JavaScript
+*.sql linguist-language=JavaScript
+*.uml linguist-language=JavaScript
+*.cmd linguist-language=JavaScript
