@@ -292,9 +292,3 @@ LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org
 ### License
 [License](https://github.com/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
 
-### Supported by
-
-JeBrains https://jb.gg/OpenSourceSupport
-
-非常感谢！
-
