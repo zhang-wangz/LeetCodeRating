@@ -21,6 +21,7 @@
 // @grant        GM_getResourceText
 // @connect      zerotrac.github.io
 // @connect      raw.gitmirror.com
+// @connect      hub.gitmirror.com
 // @connect      raw.githubusercontents.com
 // @connect      raw.githubusercontent.com
 // @require      https://unpkg.com/jquery@3.5.1/dist/jquery.min.js
