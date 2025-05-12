@@ -31,7 +31,7 @@
 (async function () {
     'use strict';
 
-    let version = "3.0.1"
+    let version = "3.0.2"
     let pbstatusVersion = "version16"
     // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
