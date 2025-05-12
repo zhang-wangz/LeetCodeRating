@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.0.1
+// @version      3.0.2
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -33,7 +33,7 @@
 
     let version = "3.0.1"
     let pbstatusVersion = "version16"
-    // xmr劫持时使用，保留原始
+    // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
     // css 渲染
@@ -196,13 +196,13 @@
                 this[_window] = window.unsafeWindow || document.defaultView || window;
                 const elProto = this[_window].Element.prototype;
                 this[_matches] = elProto.matches
-                    || elProto.matchesSelector
-                    || elProto.mozMatchesSelector
-                    || elProto.oMatchesSelector
-                    || elProto.webkitMatchesSelector;
+                || elProto.matchesSelector
+                || elProto.mozMatchesSelector
+                || elProto.oMatchesSelector
+                || elProto.webkitMatchesSelector;
                 this[_MutationObs] = this[_window].MutationObserver
-                    || this[_window].WebkitMutationObserver
-                    || this[_window].MozMutationObserver;
+                || this[_window].WebkitMutationObserver
+                || this[_window].MozMutationObserver;
                 this[_listeners] = new WeakMap();
             }
             get(selector, ...args) {
@@ -332,8 +332,8 @@
         else {
             if (!timeControl) {
                 timeControl = setInterval (function() {
-                        waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector);
-                    },300);
+                    waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector);
+                },300);
                 controlObj[controlKey] = timeControl;
             }
         }
@@ -569,7 +569,7 @@
     function allPbPostData(skip, limit) {
         let reqs = {
             "query":
-                `query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
+            `query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
                 problemsetQuestionList(
                     categorySlug: $categorySlug
                     limit: $limit
@@ -667,7 +667,7 @@
             case 2:
                 value = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.6 0 12.5 14" width="1.2em" height="1.2em" fill="currentColor" class="myiconsvg text-message-warning dark:text-message-warning"><path d="M6.998 7v-.6a.6.6 0 00-.6.6h.6zm.05 0h.6a.6.6 0 00-.6-.6V7zm0 .045v.6a.6.6 0 00.6-.6h-.6zm-.05 0h-.6a.6.6 0 00.6.6v-.6zm5-.045a5 5 0 01-5 5v1.2a6.2 6.2 0 006.2-6.2h-1.2zm-5 5a5 5 0 01-5-5h-1.2a6.2 6.2 0 006.2 6.2V12zm-5-5a5 5 0 015-5V.8A6.2 6.2 0 00.798 7h1.2zm5-5a5 5 0 015 5h1.2a6.2 6.2 0 00-6.2-6.2V2zm2.2 5a2.2 2.2 0 01-2.2 2.2v1.2a3.4 3.4 0 003.4-3.4h-1.2zm-2.2 2.2a2.2 2.2 0 01-2.2-2.2h-1.2a3.4 3.4 0 003.4 3.4V9.2zM4.798 7a2.2 2.2 0 012.2-2.2V3.6a3.4 3.4 0 00-3.4 3.4h1.2zm2.2-2.2a2.2 2.2 0 012.2 2.2h1.2a3.4 3.4 0 00-3.4-3.4v1.2zm0 2.8h.05V6.4h-.05v1.2zm-.55-.6v.045h1.2V7h-1.2zm.6-.555h-.05v1.2h.05v-1.2zm.55.6V7h-1.2v.045h1.2z"></path></svg> `;
                 break;
-            // code3 的时候需要调整style，所以设置了class，调整在css中
+                // code3 的时候需要调整style，所以设置了class，调整在css中
             case 3:
                 value = `<svg class="myiconsvg" width="21" height="20">
                             <circle class="mycircle" stroke="black" stroke-width="2" fill="white"></circle>
@@ -1045,38 +1045,38 @@
 
         const storageKey = '--previous-editor-size';
         (function () {
-        const $css = document.createElement('style')
-        $css.innerHTML = CSS
-        document.head.append($css)
-        const $problem = document.querySelector('.content-wrapper #base_content > .container')
-        const $editor = document.querySelector('.content-wrapper #base_content > .editor-container')
-        const $resize = document.createElement('div')
-        if (localStorage.getItem(storageKey)) {
-            $problem.style.width = localStorage.getItem(storageKey)
-        }
-        $editor.parentElement.insertBefore($resize, $editor)
-        $resize.classList.add('custom-resize')
-        let currentSize, startX, resizing = false
-        $resize.addEventListener('mousedown', (e) => {
-            currentSize = $problem.getBoundingClientRect().width
-            startX = e.clientX
-            resizing = true
-            $resize.style.background = '#1a90ff'
-        })
-        window.addEventListener('mousemove', (e) => {
-            if (!resizing) return
-            const deltaX = e.clientX - startX
-            const newSize = Math.max(450, Math.min(1200, currentSize + deltaX))
-            $problem.style.width = `${newSize}px`
+            const $css = document.createElement('style')
+            $css.innerHTML = CSS
+            document.head.append($css)
+            const $problem = document.querySelector('.content-wrapper #base_content > .container')
+            const $editor = document.querySelector('.content-wrapper #base_content > .editor-container')
+            const $resize = document.createElement('div')
+            if (localStorage.getItem(storageKey)) {
+                $problem.style.width = localStorage.getItem(storageKey)
+            }
+            $editor.parentElement.insertBefore($resize, $editor)
+            $resize.classList.add('custom-resize')
+            let currentSize, startX, resizing = false
+            $resize.addEventListener('mousedown', (e) => {
+                currentSize = $problem.getBoundingClientRect().width
+                startX = e.clientX
+                resizing = true
+                $resize.style.background = '#1a90ff'
+            })
+            window.addEventListener('mousemove', (e) => {
+                if (!resizing) return
+                const deltaX = e.clientX - startX
+                const newSize = Math.max(450, Math.min(1200, currentSize + deltaX))
+                $problem.style.width = `${newSize}px`
             e.preventDefault()
-        })
-        window.addEventListener('mouseup', (e) => {
-            if (!resizing) return
-            e.preventDefault()
-            resizing = false
-            $resize.style.background = ''
-            localStorage.setItem(storageKey, $problem.style.width)
-        })
+            })
+            window.addEventListener('mouseup', (e) => {
+                if (!resizing) return
+                e.preventDefault()
+                resizing = false
+                $resize.style.background = ''
+                localStorage.setItem(storageKey, $problem.style.width)
+            })
         })()
     }
 
@@ -1096,7 +1096,7 @@
         const $wrapper = $('<div>', {
             style: 'transform: translateX(-3px);'
         });
-        
+
         // 嵌套的小结构
         const $inner1 = $('<div>', {
             class: 'flex items-center justify-center w-[20px] h-[20px]'
@@ -1107,21 +1107,21 @@
                 fill: 'currentColor',
                 class: 'w-4 h-4 text-yellow-400', // 大小4×4，黄色
                 html: `
-                    <path d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 
-                    153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 
-                    328.4l26.2 155.6c1.5 9-2.2 18.1-9.6 23.5s-17.3 6-25.3 
+                    <path d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3
+                    153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6
+                    328.4l26.2 155.6c1.5 9-2.2 18.1-9.6 23.5s-17.3 6-25.3
                     1.7l-137-73.2-137 73.2c-8.1 4.3-17.9 3.7-25.3-1.7s-11.2-14.5-9.7-23.5
                     l26.2-155.6-111-108.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9
                     19.3-16.3l153.2-22.6 68.6-141.3C270.4 5.2 278.7 0 287.9 0z"/>
                 `
             })
         );
-        
+
         // 第二块内容
         const $inner2 = $('<div>', { class: 'relative flex h-full w-full cursor-pointer items-center' }).append(
             $('<div>', { class: 'flex w-0 flex-1 items-center space-x-2' }).append(
                 $('<div>', { class: 'text-body text-sd-foreground max-w-[90%] font-medium' }).append(
-                $('<div>', { class: 'ellipsis line-clamp-1' }).text(title)
+                    $('<div>', { class: 'ellipsis line-clamp-1' }).text(title)
                 )
             ),
             $('<div>', { class: 'text-sd-muted-foreground flex w-[70px] items-center justify-center text-sm opacity-0 group-hover:opacity-100 lc-xl:opacity-100', 'data-state': 'closed' }).text(rate),
@@ -1146,7 +1146,7 @@
         }).append(
             $('<div>', {
                 class: 'relative text-[14px] leading-[normal] p-[1px] before:block before:h-3.5 before:w-3.5 text-sd-muted-foreground',
-                html: '' 
+                html: ''
             })
         );
 
@@ -1230,7 +1230,7 @@
                             difficulty.text("隐藏")
                             difficulty.removeClass("text-sd-easy text-sd-medium text-sd-hard")
                         }
-                        
+
                         // 通过率修改为隐藏
                         if (passRate.length > 0) {
                             passRate.text("隐藏")
@@ -1270,9 +1270,9 @@
                             // 如果含有算术评级则插入，如果没有算术评级，则不做任何操作
                             // 构造新的算术等级元素（保持结构一致）
                             const $level = $('<div></div>')
-                                .addClass(passRate.attr('class')) // 复用样式
-                                .addClass('arithmetic-level') // 自定义类作为标记
-                                .text(levelText);
+                            .addClass(passRate.attr('class')) // 复用样式
+                            .addClass('arithmetic-level') // 自定义类作为标记
+                            .text(levelText);
                             // 去除灰色颜色和尺寸限制
                             $level.removeClass("w-[70px] w-[55px] text-sd-muted-foreground").addClass("min-w-[100px]")
                             // 如果插入的为每日一题位置，需要修改尺寸，左移8px
@@ -1303,7 +1303,7 @@
         let switchlevel = GM_getValue("switchlevel")
         let switchpblistRateDisplay = GM_getValue("switchpblistRateDisplay")
         let pre = document.querySelector(".w-full .pb-20")
-        let arr = pre?.childNodes[0]?.lastChild?.childNodes[0] 
+        let arr = pre?.childNodes[0]?.lastChild?.childNodes[0]
         if (!arr) return
         // 设置监听官方渲染，并标记当前自己修改不被监听
         observeIfNeeded(arr)
@@ -1346,7 +1346,7 @@
                         difficulty.text("隐藏")
                         difficulty.removeClass("text-sd-easy text-sd-medium text-sd-hard")
                     }
-                    
+
                     // 通过率修改为隐藏
                     if (passRate.length > 0) {
                         passRate.text("隐藏")
@@ -1387,9 +1387,9 @@
                         // 如果含有算术评级则插入，如果没有算术评级，则不做任何操作
                         // 构造新的算术等级元素（保持结构一致）
                         const $level = $('<div></div>')
-                            .addClass(passRate.attr('class')) // 复用样式
-                            .addClass('arithmetic-level') // 自定义类作为标记
-                            .text(levelText);
+                        .addClass(passRate.attr('class')) // 复用样式
+                        .addClass('arithmetic-level') // 自定义类作为标记
+                        .text(levelText);
                         // 去除灰色颜色和尺寸限制
                         $level.removeClass("opacity-0 w-[70px] w-[55px] text-sd-muted-foreground").addClass("min-w-[100px] opacity-100")
                         // 插入到通过率前面
@@ -1443,6 +1443,74 @@
             }
         }
     }
+
+    /**
+     * 渲染 rating
+     * @param {HTMLElement} nd 要操作的节点
+     * @param {string | undefined} ndRate rating
+     * @param {Record<string, string>} lightn2c 亮模式难度列表
+     * @param {Record<string, string>} darkn2c 暗模式难度列表
+     * @returns {boolean} 是否命中
+     */
+    function renderRating(nd, ndRate, lightn2c, darkn2c) {
+        if (ndRate) {
+            nd.textContent = ndRate;
+            return true;
+        }
+
+        let clr = nd.classList;
+        if (clr.length === 0) return false;
+
+        for(const [className, text] of Object.entries({...lightn2c,...darkn2c}) ){
+            if (clr.contains(className)) {
+                nd.innerText = text;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 渲染 level
+     * @param {HTMLElement} nd 要操作的节点
+     * @param {string | undefined} level 评级
+     * @param {DOMTokenList} cls class 列表
+     * @param {boolean} hit 是否命中
+     * @param {number} padding 单位: px, 默认80
+     */
+    function renderLevel(nd, level, cls, hit, padding = 80) {
+        if (level && GM_getValue("switchlevel")) {
+            let text = document.createElement('span');
+            text.classList.add(...cls);
+            text.innerHTML = "算术评级: " + level;
+            text.style = nd.getAttribute("style");
+            text.style.paddingRight = `${hit ? padding - 5 : padding}px`; // 命中之后宽度不一样
+            nd.parentNode.insertBefore(text, nd);
+        }
+    }
+
+    /**
+     * 修正侧边栏高亮题目的样式
+     * @param {HTMLElement} listNode 侧边栏列表节点
+     * @param {string} cssSelector 子节点选择器
+     */
+    function fixSiderbarProblemHighlight(listNode, cssSelector) {
+        // console.log("修正侧边栏高亮题目样式");
+        const pbList = listNode.querySelectorAll(cssSelector);
+        
+        pbList.forEach(div => {
+            const levelSpan = div.querySelector(':scope > span');
+            const pbDiv = div.querySelector(':scope > div > div');
+            if(!levelSpan) return;
+            
+            if(pbDiv.className !== levelSpan.className) {
+                // 如果className不一致，说明是高亮状态不一致
+                levelSpan.className = pbDiv.className;
+            }
+        });
+    }
+
     // 确认之后不再刷新
     let studyf;
     let studyCnt = 0;
@@ -1476,50 +1544,25 @@
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
                 let pbhtml = pb?.childNodes[0]?.childNodes[1]?.childNodes[0]?.childNodes[0]
                 pbName = pbName.trim()
+
+                // 保证 nd 存在
+                if (nd == null || nd.classList.length === 0) {
+                    // console.log(nd)
+                    continue
+                }
+
                 let levelId = getLevelId(pbName)
                 let id = getPbNameId(pbName)
-                let level = levelData[levelId]
                 // console.log(pbName, level)
-                let hit = false
+
                 let darkn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
                 let lightn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
-                // rating
-                if (id && t2rate[id]) {
-                    // console.log(id)
-                    let ndRate = t2rate[id]["Rating"]
-                    nd.textContent = ndRate
-                    hit = true
-                } else {
-                    if (!nd) break
-                    let clr = nd.getAttribute("class")
-                    if (clr == null) continue
-                    let flag = true
-                    for (let c in lightn2c) {
-                        if (!flag) break
-                        if (clr.includes(c)) {
-                            nd.innerText = lightn2c[c]
-                            flag= false
-                        }
-                    }
-                    for (let c in darkn2c) {
-                        if (!flag) break
-                        if (clr.includes(c)) {
-                            nd.innerText = darkn2c[c]
-                            flag= false
-                        }
-                    }
-                }
-                // level渲染
-                if (level && GM_getValue("switchlevel")) {
-                    // console.log(pbName, level)
-                    let text = document.createElement('span')
-                    text.setAttribute("class", pbhtml.getAttribute("class"));
-                    text.style = nd.getAttribute("style")
-                    text.innerHTML = "算术评级: " + level["Level"].toString()
-                    if (hit) text.style.paddingRight = "125px" // 命中之后宽度不一样
-                    else text.style.paddingRight = "130px"
-                    nd.parentNode.insertBefore(text, nd)
-                }
+
+                // render rating
+                let hit = renderRating(nd, t2rate?.[id]?.Rating, lightn2c, darkn2c);
+
+                // render level
+                renderLevel(nd, levelData[levelId]?.Level?.toString(), pbhtml.classList, hit, 130);
             }
         }
         if(totArr.firstChild?.childNodes[1]) studyf = totArr.firstChild?.childNodes[1]?.textContent
@@ -1533,7 +1576,7 @@
         // 如果传入的是已经找到的node元素, 就不再搜索
         if (css_selector instanceof Element) {
             totArr = css_selector
-        }  else {
+        } else {
             totArr = document.querySelector(css_selector)
         }
         if (totArr == null) return;
@@ -1542,15 +1585,21 @@
         let last = totArr.lastChild?.childNodes[0]?.textContent
         if (first && pbsidef && pbsidef == first
             && last && pbsidee && pbsidee == last
-        ) {
-            // 临时加的pbside
-            if (pbsideCnt == normalCnt) clearId("pbside")
-            pbsideCnt += 1
-            return
+           ) {
+            if (pbsideCnt == normalCnt) clearId("pbside");
+
+            // TODO: 没想到什么好的办法来确切的监听源站前端对题目列表的更新，只能大概等一个延时
+            if (pbsideCnt === 1) {
+                // 在此处检查高亮状态是否改变，并修正
+                fixSiderbarProblemHighlight(totArr, ":scope > div > div[id] > div > :nth-child(2)");
+            }
+
+            pbsideCnt += 1;
+            return;
         }
         let childs = totArr.childNodes
         for (const arr of childs) {
-            // 特殊判定， 如果大于30则是每日一日列表
+            // 特殊判定， 如果大于30则是每日一题列表
             let pbidx = 1;
             if (arr.childNodes.length >= 30) pbidx = 0;
             for (; pbidx < arr.childNodes.length; pbidx++) {
@@ -1558,64 +1607,31 @@
                 let pbName = pb.childNodes[0].childNodes[1].childNodes[0].textContent
                 let nd = pb.childNodes[0].childNodes[1].childNodes[1]
                 let pbhtml = pb?.childNodes[0]?.childNodes[1]?.childNodes[0]?.childNodes[0]
+
+                // 保证 nd 存在
+                if (nd == null || nd.classList.length === 0) {
+                    // console.log(nd)
+                    continue
+                }
+
+                // console.log(pbName)
                 let data = pbName.split(".")
                 let id = data[0]
-                let level = levelData[id]
-                // console.log(pbName)
-                // console.log(level)
-                let hit = false
+
                 let darkn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
                 let lightn2c = {"text-lc-green-60": "简单", "text-lc-yellow-60": "中等", "text-lc-red-60": "困难" }
-                // rating
-                if (id && t2rate[id]) {
-                    let ndRate = t2rate[id]["Rating"]
-                    nd.textContent = ndRate
-                    hit = true
-                } else {
-                    if (!nd) break
-                    let clr = nd.getAttribute("class")
-                    if (clr == null) continue
-                    let flag = true
-                    for (let c in lightn2c) {
-                        if (!flag) break
-                        if (clr.includes(c)) {
-                            nd.innerText = lightn2c[c]
-                            flag= false
-                        }
-                    }
-                    for (let c in darkn2c) {
-                        if (!flag) break
-                        if (clr.includes(c)) {
-                            nd.innerText = darkn2c[c]
-                            flag= false
-                        }
-                    }
-                }
-                // level渲染
-                if (level && GM_getValue("switchlevel")) {
-                    let text = document.createElement('span')
-                    text.setAttribute("class", pbhtml.getAttribute("class"));
-                    text.style = nd.getAttribute("style")
-                    text.innerHTML = "算术评级: " + level["Level"].toString()
-                    if (hit) text.style.paddingRight = "75px" // 命中之后宽度不一样
-                    else text.style.paddingRight = "80px"
-                    nd.parentNode.insertBefore(text, nd)
-                }
+
+                // render rating
+                let hit = renderRating(nd, t2rate?.[id]?.Rating, lightn2c, darkn2c);
+
+                // render level
+                renderLevel(nd, levelData[id]?.Level?.toString(), pbhtml.classList, hit);
             }
         }
         if(totArr.firstChild?.childNodes[0]) pbsidef = totArr.firstChild.childNodes[0].textContent
         if(totArr.lastChild?.childNodes[0]) pbsidee = totArr.lastChild.childNodes[0].textContent
+        // console.log(pbsidef, pbsidee)
         console.log("已经刷新侧边栏envType分数...")
-    }
-
-
-    // var lang, statusQus
-    let eventhappend = function() {
-        let key = document.querySelector('.inputarea')
-        key.setAttribute('aria-autocomplete','both')
-        key.setAttribute('aria-haspopup',false)
-        key.removeAttribute('data-focus-visible-added')
-        key.removeAttribute('aria-activedescendant')
     }
 
     let pbsideCnt = 0
@@ -1645,10 +1661,18 @@
             if (pbarr.lastChild == null) return
             if (pbsidef == pbarr.firstChild?.textContent
                 && pbsidee == pbarr.lastChild?.textContent
-            ) {
-                if (pbsideCnt == normalCnt) clearId("pbside")
-                pbsideCnt += 1
-                return
+               ) {
+                if (pbsideCnt == normalCnt) clearId("pbside");
+
+                // TODO: 没想到什么好的办法来确切的监听源站前端对题目列表的更新，只能大概等一个延时
+                // 根据列表的大小不同，更新耗时可能不同，故直接对快慢两种情况运行两次修正
+                if (pbsideCnt === 4 || pbsideCnt === 1) {
+                    // 在此处检查高亮状态是否改变，并修正
+                    fixSiderbarProblemHighlight(pbarr, ":scope > .group > :first-child > :nth-child(2)");
+                }
+
+                pbsideCnt += 1;
+                return;
             }
             if (pbarr != null) {
                 for (const onepb of pbarr.childNodes) {
@@ -1665,54 +1689,27 @@
                     }
                     let nd = tp.childNodes[1]
                     let pbhtml = tp.childNodes[0]?.childNodes[0]
-                    if (nd == null) {
+
+                    // 保证 nd 存在
+                    if (nd == null || nd.classList.length === 0) {
                         // console.log(nd)
                         continue
                     }
                     // 如果为算术，说明当前已被替换过
                     if (nd.textContent.includes("算术")) continue
-                    let data = pbName.split(".")
+
                     // console.log(pbName)
-                    let hit = false
+                    let data = pbName.split(".")
                     let id = data[0]
-                    let level = levelData[id]
-                    let darkn2c =  {"text-sd-easy": "简单", "text-sd-medium": "中等", "text-sd-hard": "困难" }
-                    let lightn2c =  {"text-sd-easy": "简单", "text-sd-medium": "中等", "text-sd-hard": "困难" }
-                    // rating
-                    if (id && t2rate[id]) {
-                        let ndRate = t2rate[id]["Rating"]
-                        nd.textContent = ndRate
-                        hit = true
-                    } else {
-                        if (!nd) break
-                        let clr = nd.getAttribute("class")
-                        if (clr == null) continue
-                        let flag = true
-                        for (let c in lightn2c) {
-                            if (!flag) break
-                            if (clr.includes(c)) {
-                                nd.innerText = lightn2c[c]
-                                flag = false
-                            }
-                        }
-                        for (let c in darkn2c) {
-                            if (!flag) break
-                            if (clr.includes(c)) {
-                                nd.innerText = darkn2c[c]
-                                flag = false
-                            }
-                        }
-                    }
-                    // level渲染
-                    if (level && GM_getValue("switchlevel")) {
-                        let text = document.createElement('span')
-                        text.setAttribute("class", pbhtml.getAttribute("class"));
-                        text.style = nd.getAttribute("style")
-                        text.innerHTML = "算术评级: " + level["Level"].toString()
-                        if (hit) text.style.paddingRight = "75px" // 命中之后宽度不一样
-                        else text.style.paddingRight = "80px"
-                        nd.parentNode.insertBefore(text, nd)
-                    }
+
+                    let darkn2c = {"text-sd-easy": "简单", "text-sd-medium": "中等", "text-sd-hard": "困难" }
+                    let lightn2c = {"text-sd-easy": "简单", "text-sd-medium": "中等", "text-sd-hard": "困难" }
+
+                    // render rating
+                    let hit = renderRating(nd, t2rate?.[id]?.Rating, lightn2c, darkn2c);
+
+                    // render level
+                    renderLevel(nd, levelData[id]?.Level?.toString(), pbhtml.classList, hit);
                 }
                 pbsidef = pbarr.firstChild.textContent
                 pbsidee = pbarr.lastChild.textContent
@@ -2081,9 +2078,9 @@
                 divTips.appendChild(abody4)
                 tipsPa.insertBefore(divTips, tips)
             } else if ( tipsChildone.childNodes != null
-                        && tipsChildone.childNodes.length >= 2
-                        && (tipsChildone.childNodes[2].textContent.includes("Q")
-                        || tipsChildone.childNodes[2].textContent.includes("未知"))) {
+                       && tipsChildone.childNodes.length >= 2
+                       && (tipsChildone.childNodes[2].textContent.includes("Q")
+                           || tipsChildone.childNodes[2].textContent.includes("未知"))) {
                 let pa = tipsChildone
                 let le = pa.childNodes.length
 
@@ -2164,7 +2161,7 @@
         // 卡顿问题页面修复
         // 搜索页面为自下拉，所以需要无限刷新，无法更改，这一点不会造成卡顿，所以剔除计划
         // 题库页 ✅
-        lcCnt = 0 
+        lcCnt = 0
         pbSetCnt = 0;
 
         // 题目页
@@ -2181,51 +2178,51 @@
 
 
     function clearAndStart(url, timeout, isAddEvent) {
-            initCnt()
-            let start = ""
-            let targetIdx = -1
-            let pageLst = ['all', 'pb', 'pblist', 'search', 'study']
-            let urlLst = [allUrl, pbUrl, pblistUrl, searchUrl, studyUrl]
-            let funcLst = [getData, getpb, getPblistData, getSearch, getStudyData]
-            for (let index = 0; index < urlLst.length; index++) {
-                const element = urlLst[index];
-                if (url.match(element)) {
-                    targetIdx = index
-                } else if (!url.match(element)) {
-                    // 清理其他的
-                    let tmp = GM_getValue(pageLst[index], -1)
-                    clearInterval(tmp)
-                }
+        initCnt()
+        let start = ""
+        let targetIdx = -1
+        let pageLst = ['all', 'pb', 'pblist', 'search', 'study']
+        let urlLst = [allUrl, pbUrl, pblistUrl, searchUrl, studyUrl]
+        let funcLst = [getData, getpb, getPblistData, getSearch, getStudyData]
+        for (let index = 0; index < urlLst.length; index++) {
+            const element = urlLst[index];
+            if (url.match(element)) {
+                targetIdx = index
+            } else if (!url.match(element)) {
+                // 清理其他的
+                let tmp = GM_getValue(pageLst[index], -1)
+                clearInterval(tmp)
             }
-            if (targetIdx != -1) start = pageLst[targetIdx]
-            if (start != "") {
-                // 清理重复运行
-                let preId = GM_getValue(start)
-                if (preId != null) {
-                    clearInterval(preId)
-                }
-                let css_selector = "div.relative.flex.w-full.flex-col > .flex.w-full.flex-col.gap-4"
-                if(start == "study") {
-                    id = setInterval(getStudyData, timeout, css_selector)
-                } else if(start == "pb") {
-                    id = setInterval(getpb, timeout)
-                    if(GM_getValue("switchpbside")) {
-                        let pbsideId = setInterval(getpbsideData, timeout)
-                        GM_setValue("pbside", pbsideId)
-                    }
-                } else {
-                    id = setInterval(funcLst[targetIdx], timeout)
-                }
-                GM_setValue(start, id)
+        }
+        if (targetIdx != -1) start = pageLst[targetIdx]
+        if (start != "") {
+            // 清理重复运行
+            let preId = GM_getValue(start)
+            if (preId != null) {
+                clearInterval(preId)
             }
-            if (isAddEvent) {
-                // 只需要定位urlchange变更
-                window.addEventListener("urlchange", () => {
-                    console.log("urlchange/event/happened")
-                    let newUrl = location.href
-                    clearAndStart(newUrl, 1000, false)
-                })
+            let css_selector = "div.relative.flex.w-full.flex-col > .flex.w-full.flex-col.gap-4"
+            if(start == "study") {
+                id = setInterval(getStudyData, timeout, css_selector)
+            } else if(start == "pb") {
+                id = setInterval(getpb, timeout)
+                if(GM_getValue("switchpbside")) {
+                    let pbsideId = setInterval(getpbsideData, timeout)
+                    GM_setValue("pbside", pbsideId)
+                }
+            } else {
+                id = setInterval(funcLst[targetIdx], timeout)
             }
+            GM_setValue(start, id)
+        }
+        if (isAddEvent) {
+            // 只需要定位urlchange变更
+            window.addEventListener("urlchange", () => {
+                console.log("urlchange/event/happened")
+                let newUrl = location.href
+                clearAndStart(newUrl, 1000, false)
+            })
+        }
     }
 
     // 获取界面所需数据, 需要在菜单页面刷新前进行更新
@@ -2411,20 +2408,20 @@
         }
     `)
 
-// spig js 纸片人相关
-if (GM_getValue("switchperson")) {
+    // spig js 纸片人相关
+    if (GM_getValue("switchperson")) {
 
-    const isindex = true
-    const visitor = "主人"
-    let msgs = []
+        const isindex = true
+        const visitor = "主人"
+        let msgs = []
 
-    // 求等级用的数据
-    let userTag = null
-    let level = 0
-    let score = 0
-    const queryProcess = '\n    query userQuestionProgress($userSlug: String!) {\n  userProfileUserQuestionProgress(userSlug: $userSlug) {\n    numAcceptedQuestions {\n      difficulty\n      count\n    }\n    numFailedQuestions {\n      difficulty\n      count\n    }\n    numUntouchedQuestions {\n      difficulty\n      count\n    }\n  }\n}\n    '
-    const queryUser = '\n    query globalData {\n  userStatus {\n    isSignedIn\n    isPremium\n    username\n    realName\n    avatar\n    userSlug\n    isAdmin\n    checkedInToday\n    useTranslation\n    premiumExpiredAt\n    isTranslator\n    isSuperuser\n    isPhoneVerified\n    isVerified\n  }\n  jobsMyCompany {\n    nameSlug\n  }\n  commonNojPermissionTypes\n}\n    '
-    GM_addStyle(`
+        // 求等级用的数据
+        let userTag = null
+        let level = 0
+        let score = 0
+        const queryProcess = '\n    query userQuestionProgress($userSlug: String!) {\n  userProfileUserQuestionProgress(userSlug: $userSlug) {\n    numAcceptedQuestions {\n      difficulty\n      count\n    }\n    numFailedQuestions {\n      difficulty\n      count\n    }\n    numUntouchedQuestions {\n      difficulty\n      count\n    }\n  }\n}\n    '
+        const queryUser = '\n    query globalData {\n  userStatus {\n    isSignedIn\n    isPremium\n    username\n    realName\n    avatar\n    userSlug\n    isAdmin\n    checkedInToday\n    useTranslation\n    premiumExpiredAt\n    isTranslator\n    isSuperuser\n    isPhoneVerified\n    isVerified\n  }\n  jobsMyCompany {\n    nameSlug\n  }\n  commonNojPermissionTypes\n}\n    '
+        GM_addStyle(`
         :root {
             --mumu-img: url(${papermanpic});
         }
@@ -2473,7 +2470,7 @@ if (GM_getValue("switchperson")) {
         }
     `)
 
-    const spig = `<div id="spig" class="spig" hidden>
+        const spig = `<div id="spig" class="spig" hidden>
                             <div id="message">正在加载中……</div>
                             <div style="height=80px"/>
                             <div id="mumu" class="mumu"></div>
@@ -2482,246 +2479,246 @@ if (GM_getValue("switchperson")) {
     const hitokoto = `<span class="hitokoto" id="hitokoto" style="display:none">Loading...</span>`
     $("body").append(spig, hitokoto)
 
-    // 消息函数
-    let showMessage = (a, b) => {
-        if (b == null) b = 10000;
-        $("#mumu").css({"opacity":"0.5 !important"})
-        $("#message").hide().stop();
-        $("#message").html(a);
-        $("#message").fadeIn();
-        $("#message").fadeTo("1", 1);
-        $("#message").fadeOut(b);
-        $("#mumu").css({"opacity":"1 !important"})
-    };
+        // 消息函数
+        let showMessage = (a, b) => {
+            if (b == null) b = 10000;
+            $("#mumu").css({"opacity":"0.5 !important"})
+            $("#message").hide().stop();
+            $("#message").html(a);
+            $("#message").fadeIn();
+            $("#message").fadeTo("1", 1);
+            $("#message").fadeOut(b);
+            $("#mumu").css({"opacity":"1 !important"})
+        };
 
-    // 右键菜单
-    jQuery(document).ready(function ($) {
-        $("#spig").mousedown(function (e) {
-            if(e.which == 3){
-                showMessage(`秘密通道:<br/> <a href="${problemUrl}" title="题库">题库</a>`,10000);
-            }
-        });
-        $("#spig").bind("contextmenu", function(e) {
-            return false;
-        });
-    });
-
-    function getscore(userTag) {
-        let list = { "query": queryProcess, "variables": { "userSlug" : userTag } };
-        $.ajax({ type :"POST", url : lcgraphql, data: JSON.stringify(list), success: function(res) {
-            let levelData = res.data.userProfileUserQuestionProgress.numAcceptedQuestions
-            levelData.forEach(e => {
-                if (e.difficulty == "EASY")  score += e.count * 10
-                else if (e.difficulty == "MEDIUM")  score += e.count * 20
-                else if (e.difficulty == "HARD")  score += e.count * 100
+        // 右键菜单
+        jQuery(document).ready(function ($) {
+            $("#spig").mousedown(function (e) {
+                if(e.which == 3){
+                    showMessage(`秘密通道:<br/> <a href="${problemUrl}" title="题库">题库</a>`,10000);
+                }
             });
-            level = score / 1000
-            $("#level").text("level: " + Math.trunc(level).toString())
-            console.log("目前纸片人的等级是: " + Math.trunc(level).toString())
+            $("#spig").bind("contextmenu", function(e) {
+                return false;
+            });
+        });
+
+        function getscore(userTag) {
+            let list = { "query": queryProcess, "variables": { "userSlug" : userTag } };
+            $.ajax({ type :"POST", url : lcgraphql, data: JSON.stringify(list), success: function(res) {
+                let levelData = res.data.userProfileUserQuestionProgress.numAcceptedQuestions
+                levelData.forEach(e => {
+                    if (e.difficulty == "EASY")  score += e.count * 10
+                    else if (e.difficulty == "MEDIUM")  score += e.count * 20
+                    else if (e.difficulty == "HARD")  score += e.count * 100
+                });
+                level = score / 1000
+                $("#level").text("level: " + Math.trunc(level).toString())
+                console.log("目前纸片人的等级是: " + Math.trunc(level).toString())
+            }, async: false, xhrFields : { withCredentials: true }, contentType: "application/json;charset=UTF-8"})
+        }
+
+        $.ajax({ type :"POST", url : lcgraphql, data: JSON.stringify({"query" : queryUser, "variables": {}}), success: function(res) {
+            userTag = res.data.userStatus.userSlug
+            // console.log(userTag)
         }, async: false, xhrFields : { withCredentials: true }, contentType: "application/json;charset=UTF-8"})
-    }
 
-    $.ajax({ type :"POST", url : lcgraphql, data: JSON.stringify({"query" : queryUser, "variables": {}}), success: function(res) {
-        userTag = res.data.userStatus.userSlug
-        // console.log(userTag)
-    }, async: false, xhrFields : { withCredentials: true }, contentType: "application/json;charset=UTF-8"})
-
-    if (userTag != null) {
-        getscore(userTag)
-    } else {
-        // console.log(userTag)
-        $("#level").text("请登录后再尝试获取level")
-    }
-    // 监听分数提交
-    let addListener2 = () => {
-        let checkUrl = "https://leetcode.cn/submissions/detail/[0-9]*/check/.*"
-        XMLHttpRequest.prototype.send = function (str) {
-            const _onreadystatechange = this.onreadystatechange;
-            this.onreadystatechange = (...args) => {
-                if (this.readyState == this.DONE && this.responseURL.match(checkUrl)) {
-                    let resp = JSON.parse(this.response)
-                    // console.log(resp)
-                    if (resp && resp.status_msg && resp.status_msg.includes("Accepted")) {
-                        showMessage("恭喜主人成功提交， 当前分数为: " + score + ", 当前等级为: " + Math.trunc(level).toString())
-                        console.log("恭喜主人成功提交， 当前分数为: " + score + ", 当前等级为: " + Math.trunc(level).toString())
-                    } else if (resp && resp.status_msg && !resp.status_msg.includes("Accepted"))  {
-                        showMessage("很遗憾，主人提交失败，不过也不要气馁呀，加油! <br/> 当前分数为: " + score + ", 当前等级为: " + Math.trunc(level).toString())
-                        console.log("很遗憾，主人提交失败，不过也不要气馁呀，加油! 当前分数为: " + score + ", 当前等级为: " + Math.trunc(level).toString())
+        if (userTag != null) {
+            getscore(userTag)
+        } else {
+            // console.log(userTag)
+            $("#level").text("请登录后再尝试获取level")
+        }
+        // 监听分数提交
+        let addListener2 = () => {
+            let checkUrl = "https://leetcode.cn/submissions/detail/[0-9]*/check/.*"
+            XMLHttpRequest.prototype.send = function (str) {
+                const _onreadystatechange = this.onreadystatechange;
+                this.onreadystatechange = (...args) => {
+                    if (this.readyState == this.DONE && this.responseURL.match(checkUrl)) {
+                        let resp = JSON.parse(this.response)
+                        // console.log(resp)
+                        if (resp && resp.status_msg && resp.status_msg.includes("Accepted")) {
+                            showMessage("恭喜主人成功提交， 当前分数为: " + score + ", 当前等级为: " + Math.trunc(level).toString())
+                            console.log("恭喜主人成功提交， 当前分数为: " + score + ", 当前等级为: " + Math.trunc(level).toString())
+                        } else if (resp && resp.status_msg && !resp.status_msg.includes("Accepted"))  {
+                            showMessage("很遗憾，主人提交失败，不过也不要气馁呀，加油! <br/> 当前分数为: " + score + ", 当前等级为: " + Math.trunc(level).toString())
+                            console.log("很遗憾，主人提交失败，不过也不要气馁呀，加油! 当前分数为: " + score + ", 当前等级为: " + Math.trunc(level).toString())
+                        }
+                    }
+                    if (_onreadystatechange) {
+                        _onreadystatechange.apply(this, args);
                     }
                 }
-                if (_onreadystatechange) {
-                    _onreadystatechange.apply(this, args);
-                }
-            }
-            return dummySend.call(this, str);
-        }
-    }
-    addListener2();
-
-    // 鼠标在消息上时
-    jQuery(document).ready(function ($) {
-        $("#message").hover(function () {
-            $("#message").fadeTo("100", 1);
-        });
-    });
-
-    // 鼠标在上方时
-    jQuery(document).ready(function ($) {
-        $(".mumu").mouseover(function () {
-            $(".mumu").fadeTo("300", 0.3);
-            msgs = ["我隐身了，你看不到我", "我会隐身哦！嘿嘿！", "别动手动脚的，把手拿开！", "把手拿开我才出来！"];
-            let i = Math.floor(Math.random() * msgs.length);
-            showMessage(msgs[i]);
-        });
-        $(".mumu").mouseout(function () {
-            $(".mumu").fadeTo("300", 1)
-        });
-    });
-
-    function msgPageWelcome(url, isAddEvent) {
-        let urlLst = [allUrl, pbUrl, pblistUrl, searchUrl]
-        let msgShow = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
-        for (let index = 0; index < urlLst.length; index++) {
-            const element = urlLst[index];
-            if (url.match(element)) {
-                // console.log(msgShow[index])
-                showMessage(msgShow[index])
+                return dummySend.call(this, str);
             }
         }
-        if (isAddEvent) {
-            window.addEventListener("urlchange", () => {
-                let newUrl = location.href
-                msgPageWelcome(newUrl, false)
-            })
-        }
-    }
+        addListener2();
 
-    // 开始
-    jQuery(document).ready(function ($) {
-        if (isindex) { // 如果是主页
-            let now = (new Date()).getHours();
-            if (now > 0 && now <= 6) {
-                showMessage(visitor + ' 你是夜猫子呀？还不睡觉，明天起的来么你？', 6000);
-            } else if (now > 6 && now <= 11) {
-                showMessage(visitor + ' 早上好，早起的鸟儿有虫吃噢！早起的虫儿被鸟吃，你是鸟儿还是虫儿？嘻嘻！', 6000);
-            } else if (now > 11 && now <= 14) {
-                showMessage(visitor + ' 中午了，吃饭了么？不要饿着了，饿死了谁来挺我呀！', 6000);
-            } else if (now > 14 && now <= 18) {
-                showMessage(visitor + ' 中午的时光真难熬！还好有你在！', 6000);
-            } else {
-                showMessage(visitor + ' 快来逗我玩吧！', 6000);
-            }
-            msgPageWelcome(location.href, true)
-        }
-        else {
-            showMessage('力扣欢迎你～', 6000);
-        }
-        let top = $("#spig").offset().top + 150
-        let left = document.body.offsetWidth - 160
-        if (location.href.match(pbUrl)) {
-            top = $("#spig").offset().top + 200
-        }
-        $("#spig").attr("hidden", false)
-        $("#spig").css({top : top, left : left})
-
-    });
-
-    // 随滚动条移动
-    jQuery(document).ready(function ($) {
-        let f = $(".spig").offset().top;
-        $(window).scroll(function () {
-            $(".spig").animate({
-                top: $(window).scrollTop() + f + 150
-            },
-            {
-                queue: false,
-                duration: 1000
+        // 鼠标在消息上时
+        jQuery(document).ready(function ($) {
+            $("#message").hover(function () {
+                $("#message").fadeTo("100", 1);
             });
         });
-    });
 
-    // 鼠标点击时
-    jQuery(document).ready(function ($) {
-        let stat_click = 0;
-        let i = 0;
-        $(".mumu").click(function () {
-            if (!ismove) {
-                stat_click++;
-                if (stat_click > 4) {
-                    msgs = ["你有完没完呀？", "你已经摸我" + stat_click + "次了", "非礼呀！救命！OH，My ladygaga"];
-                    i = Math.floor(Math.random() * msgs.length);
-                    showMessage(msgs[i]);
+        // 鼠标在上方时
+        jQuery(document).ready(function ($) {
+            $(".mumu").mouseover(function () {
+                $(".mumu").fadeTo("300", 0.3);
+                msgs = ["我隐身了，你看不到我", "我会隐身哦！嘿嘿！", "别动手动脚的，把手拿开！", "把手拿开我才出来！"];
+                let i = Math.floor(Math.random() * msgs.length);
+                showMessage(msgs[i]);
+            });
+            $(".mumu").mouseout(function () {
+                $(".mumu").fadeTo("300", 1)
+            });
+        });
+
+        function msgPageWelcome(url, isAddEvent) {
+            let urlLst = [allUrl, pbUrl, pblistUrl, searchUrl]
+            let msgShow = ["欢迎来到题库页, 美好的一天从做每日一题开始~", "欢迎来到做题页面，让我看看是谁光看不做？🐰", "欢迎来到题单页面~", "欢迎来到搜索页，在这里你能搜到一切你想做的题！"]
+            for (let index = 0; index < urlLst.length; index++) {
+                const element = urlLst[index];
+                if (url.match(element)) {
+                    // console.log(msgShow[index])
+                    showMessage(msgShow[index])
+                }
+            }
+            if (isAddEvent) {
+                window.addEventListener("urlchange", () => {
+                    let newUrl = location.href
+                    msgPageWelcome(newUrl, false)
+                })
+            }
+        }
+
+        // 开始
+        jQuery(document).ready(function ($) {
+            if (isindex) { // 如果是主页
+                let now = (new Date()).getHours();
+                if (now > 0 && now <= 6) {
+                    showMessage(visitor + ' 你是夜猫子呀？还不睡觉，明天起的来么你？', 6000);
+                } else if (now > 6 && now <= 11) {
+                    showMessage(visitor + ' 早上好，早起的鸟儿有虫吃噢！早起的虫儿被鸟吃，你是鸟儿还是虫儿？嘻嘻！', 6000);
+                } else if (now > 11 && now <= 14) {
+                    showMessage(visitor + ' 中午了，吃饭了么？不要饿着了，饿死了谁来挺我呀！', 6000);
+                } else if (now > 14 && now <= 18) {
+                    showMessage(visitor + ' 中午的时光真难熬！还好有你在！', 6000);
                 } else {
-                    msgs = ["筋斗云！~我飞！", "我跑呀跑呀跑！~~", "别摸我，有什么好摸的！", "惹不起你，我还躲不起你么？", "不要摸我了，我会告诉你老婆来打你的！", "干嘛动我呀！小心我咬你！"];
-                    i = Math.floor(Math.random() * msgs.length);
-                    showMessage(msgs[i]);
+                    showMessage(visitor + ' 快来逗我玩吧！', 6000);
                 }
-            let s = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6,0.7,0.75,-0.1, -0.2, -0.3, -0.4, -0.5, -0.6,-0.7,-0.75];
-            let i1 = Math.floor(Math.random() * s.length);
-            let i2 = Math.floor(Math.random() * s.length);
+                msgPageWelcome(location.href, true)
+            }
+            else {
+                showMessage('力扣欢迎你～', 6000);
+            }
+            let top = $("#spig").offset().top + 150
+            let left = document.body.offsetWidth - 160
+            if (location.href.match(pbUrl)) {
+                top = $("#spig").offset().top + 200
+            }
+            $("#spig").attr("hidden", false)
+            $("#spig").css({top : top, left : left})
+
+        });
+
+        // 随滚动条移动
+        jQuery(document).ready(function ($) {
+            let f = $(".spig").offset().top;
+            $(window).scroll(function () {
                 $(".spig").animate({
-                left: document.body.offsetWidth/2*(1+s[i1]),
-                top:  document.body.offsetHeight/2*(1+s[i2])
+                    top: $(window).scrollTop() + f + 150
                 },
-                {
-                    duration: 500,
-                    complete: showMessage(msgs[i])
+                                   {
+                    queue: false,
+                    duration: 1000
                 });
-            } else {
-                ismove = false;
-            }
+            });
         });
-    });
 
-    // 拖动
-    let _move = false;
-    let ismove = false; // 移动标记
-    let _x, _y; // 鼠标离控件左上角的相对位置
-
-    jQuery(document).ready(function ($) {
-        $("#spig").mousedown(function (e) {
-            _move = true;
-            _x = e.pageX - parseInt($("#spig").css("left"));
-            _y = e.pageY - parseInt($("#spig").css("top"));
-        });
-        $(document).mousemove(function (e) {
-            if (_move) {
-                let x = e.pageX - _x;
-                let y = e.pageY - _y;
-                let wx = $(window).width() - $('#spig').width();
-                let dy = $(document).height() - $('#spig').height();
-                if(x >= 0 && x <= wx && y > 0 && y <= dy) {
-                    $("#spig").css({
-                        top: y,
-                        left: x
-                    }); //控件新位置
-                ismove = true;
+        // 鼠标点击时
+        jQuery(document).ready(function ($) {
+            let stat_click = 0;
+            let i = 0;
+            $(".mumu").click(function () {
+                if (!ismove) {
+                    stat_click++;
+                    if (stat_click > 4) {
+                        msgs = ["你有完没完呀？", "你已经摸我" + stat_click + "次了", "非礼呀！救命！OH，My ladygaga"];
+                        i = Math.floor(Math.random() * msgs.length);
+                        showMessage(msgs[i]);
+                    } else {
+                        msgs = ["筋斗云！~我飞！", "我跑呀跑呀跑！~~", "别摸我，有什么好摸的！", "惹不起你，我还躲不起你么？", "不要摸我了，我会告诉你老婆来打你的！", "干嘛动我呀！小心我咬你！"];
+                        i = Math.floor(Math.random() * msgs.length);
+                        showMessage(msgs[i]);
+                    }
+                    let s = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6,0.7,0.75,-0.1, -0.2, -0.3, -0.4, -0.5, -0.6,-0.7,-0.75];
+                    let i1 = Math.floor(Math.random() * s.length);
+                    let i2 = Math.floor(Math.random() * s.length);
+                    $(".spig").animate({
+                        left: document.body.offsetWidth/2*(1+s[i1]),
+                        top:  document.body.offsetHeight/2*(1+s[i2])
+                    },
+                                       {
+                        duration: 500,
+                        complete: showMessage(msgs[i])
+                    });
+                } else {
+                    ismove = false;
                 }
-            }
-        }).mouseup(function () {
-            _move = false;
+            });
         });
-    });
 
-    // 纸片人一言api
-    // $("#spig").attr("hidden", false)
-    let hitokotohtml = function() {
-        let msgShow = [$("#hitokoto").text()];
-        showMessage(msgShow[0]);
-        setTimeout(hitokotohtml, 15000)
-    }
-    setTimeout(hitokotohtml, 6000)
+        // 拖动
+        let _move = false;
+        let ismove = false; // 移动标记
+        let _x, _y; // 鼠标离控件左上角的相对位置
 
-    function getkoto(){
-        $.get("https://v1.hitokoto.cn/?c=j&encode=json").then(res => {echokoto(res);}).catch(xhr=>xhr)
-        setTimeout(getkoto, 6000)
+        jQuery(document).ready(function ($) {
+            $("#spig").mousedown(function (e) {
+                _move = true;
+                _x = e.pageX - parseInt($("#spig").css("left"));
+                _y = e.pageY - parseInt($("#spig").css("top"));
+            });
+            $(document).mousemove(function (e) {
+                if (_move) {
+                    let x = e.pageX - _x;
+                    let y = e.pageY - _y;
+                    let wx = $(window).width() - $('#spig').width();
+                    let dy = $(document).height() - $('#spig').height();
+                    if(x >= 0 && x <= wx && y > 0 && y <= dy) {
+                        $("#spig").css({
+                            top: y,
+                            left: x
+                        }); //控件新位置
+                        ismove = true;
+                    }
+                }
+            }).mouseup(function () {
+                _move = false;
+            });
+        });
+
+        // 纸片人一言api
+        // $("#spig").attr("hidden", false)
+        let hitokotohtml = function() {
+            let msgShow = [$("#hitokoto").text()];
+            showMessage(msgShow[0]);
+            setTimeout(hitokotohtml, 15000)
+        }
+        setTimeout(hitokotohtml, 6000)
+
+        function getkoto(){
+            $.get("https://v1.hitokoto.cn/?c=j&encode=json").then(res => {echokoto(res);}).catch(xhr=>xhr)
+            setTimeout(getkoto, 6000)
+        }
+        function echokoto(result){
+            let hc = eval(result);
+            document.getElementById("hitokoto").textContent = hc.hitokoto;
+            // console.log(hc.content)
+        }
+        setTimeout(getkoto, 5000);
     }
-    function echokoto(result){
-        let hc = eval(result);
-        document.getElementById("hitokoto").textContent = hc.hitokoto;
-        // console.log(hc.content)
-    }
-    setTimeout(getkoto, 5000);
-}
 
 })();
