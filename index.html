@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Started LeetCodeRating</title>
+    <meta name="description" content="LeetCodeRating，一款显示题目对应周赛难度分的浏览器插件。    支持中文和英文双站点，安装英文版本切换请切换github tag为english">
+    <link rel="stylesheet" type="text/css" href="css/main.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/tocbot.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/media.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/sidebar.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/copy.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/demo-preview.css?v=1.26.6">
+    <link rel="icon" href="data:image/png;base64,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" type="image/x-icon">
+    <script src="js/copy.js?v=1.26.6"></script>
+    <script src="js/dark-mode.js?v=1.26.6"></script>
+    <script src="js/markdown-style.js?v=1.26.6"></script>
+  </head>
+  <body id="idoctotop"><a href="#idoctotop" class="gototop">top</a>
+    <header class="header">
+      <article class="inner warpper"><a class="logo" href="index.html"><img alt="LeetCodeRating logo" src="data:image/png;base64,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">
+<span class="title">LeetCodeRating</span></a>
+        <div class="content">
+          <ul class="menu">
+            <li><a href="index.html" target="" class="active">Home</a></li>
+            <li><a href="Usage.html" target="" class="">Usage</a></li>
+            <li><a href="https://github.com/zhang-wangz/LeetCodeRating/issues" target="__blank" class="">Recommended</a></li>
+            <li><a href="https://www.showdoc.com.cn/2069209189620830" target="__blank" class="">Sponsor</a></li>
+          </ul><a href="https://github.com/zhang-wangz/LeetCodeRating" target="_blank" rel="noopener noreferrer" title="Github" name="Github" class="github"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+            </svg></a>
+          <dark-mode permanent=""></dark-mode>
+        </div>
+      </article>
+    </header>
+    <div class="warpper-content warpper">
+      <markdown-style>
+        <p align="center">
+          <img src="https://cdn.jsdelivr.net/gh/zhang-wangz/LeetCodeRating/images/logo.png"><br><a title="Hits" target="_blank" href="https://github.com/zhang-wangz/LeetCodeRating"><img src="https://hits.b3log.org/zhang-wangz/LeetCodeRating.svg"></a>
+          <img src="https://img.shields.io/github/stars/zhang-wangz/LeetCodeRating?style=flat-square">
+          <img src="https://img.shields.io/github/contributors/zhang-wangz/LeetCodeRating?style=flat-square">
+          <img src="https://img.shields.io/github/commit-activity/y/zhang-wangz/LeetCodeRating?style=flat-square">
+          <img src="https://img.shields.io/github/last-commit/zhang-wangz/LeetCodeRating?style=flat-square"><br>
+          <img src="https://img.shields.io/github/issues/zhang-wangz/LeetCodeRating?style=flat-square">
+          <img src="https://img.shields.io/github/issues-pr/zhang-wangz/LeetCodeRating?style=flat-square">
+          <img src="https://img.shields.io/github/watchers/zhang-wangz/LeetCodeRating?style=flat-square">
+          <img src="https://img.shields.io/github/issues-closed/zhang-wangz/LeetCodeRating?style=flat-square"><br>LeetCodeRating，一款显示题目对应周赛难度分的浏览器插件。<br>支持中文和英文双站点，安装英文版本切换请切换github tag为english
+        </p>
+        <ul>
+          <li><a href="https://github.com/zhang-wangz/LeetCodeRating/tree/english">点我直接切换</a></li>
+          <li>企鹅群号: 654726006</li>
+          <li>答案是: LeetCodeRating</li>
+        </ul>
+        <h3 id="iphone-兼容性安装"><a aria-hidden="true" tabindex="-1" href="#iphone-兼容性安装" class="anchor"><span class="icon icon-link"></span></a>:iphone: 兼容性&#x26;安装</h3>
+        <p>
+          请注意： 英文版只有题库页面，tag页面和题目页面展示周赛分，并且不支持其余中文站功能
+          安装英文版本请切换github tag为english，英文版自2023年开始暂时停止维护，招募合适的维护员~
+        </p>
+        <p>
+          Note: The English version only shows the difficulty rating of the question on the gallary page (problemset), the tag page and the question page, and does not support other functions in CN site. The English version will be temporarily suspended from 2023, and suitable maintainers are being recruited~
+          <a href="https://github.com/zhang-wangz/LeetCodeRating/tree/english">Click here to switch|点我直接切换</a>
+        </p>
+        <p>LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。</p>
+        <p>在使用脚本之前，你需要为浏览器安装脚本管理器插件。</p>
+        <p>经过测试，我们确定兼容以下浏览器和插件用于安装此脚本。</p>
+        <h4 id="globe_with_meridians-浏览器支持任选其一即可"><a aria-hidden="true" tabindex="-1" href="#globe_with_meridians-浏览器支持任选其一即可" class="anchor"><span class="icon icon-link"></span></a>:globe_with_meridians: 浏览器支持（任选其一即可）</h4>
+        <ul>
+          <li>Chrome 或 基于 Chromium 内核的浏览器 (Edge、360浏览器、CentBrowser等) <sup>*推荐</sup></li>
+          <li>Firefox <sup>*功能兼容，但并非最佳性能</sup></li>
+        </ul>
+        <h4 id="see_no_evil-浏览器需要安装的脚本管理器插件"><a aria-hidden="true" tabindex="-1" href="#see_no_evil-浏览器需要安装的脚本管理器插件" class="anchor"><span class="icon icon-link"></span></a>:see_no_evil: 浏览器需要安装的脚本管理器插件</h4>
+        <ul>
+          <li>Tampermonkey (新油猴) <sup>*<a href="https://www.tampermonkey.net/">插件安装链接</a></sup></li>
+        </ul>
+        <h4 id="page_facing_up-安装脚本-求star-ヾo"><a aria-hidden="true" tabindex="-1" href="#page_facing_up-安装脚本-求star-ヾo" class="anchor"><span class="icon icon-link"></span></a>:page_facing_up: 安装脚本 (求star ヾ(≧▽≦*)o)</h4>
+        <ul>
+          <li>
+            <p>
+              从 脚本猫 安装 (提供没有科学上网伙伴下载)
+              通过 脚本猫 安装脚本: <strong><a href="https://scriptcat.org/zh-CN/script-show-page/2778">点我</a></strong>
+            </p>
+          </li>
+          <li>
+            <p>
+              从 GreasyFork 安装 （被中国gfw封锁，只能科学上网进行下载安装）
+              通过 GreasyFork 安装脚本: <strong><a href="https://greasyfork.org/zh-CN/scripts/450890-leetcoderating-%E6%98%BE%E7%A4%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B%E9%9A%BE%E5%BA%A6%E5%88%86">点我</a></strong>
+            </p>
+          </li>
+        </ul>
+        <h4 id="test_tube-支持的操作系统"><a aria-hidden="true" tabindex="-1" href="#test_tube-支持的操作系统" class="anchor"><span class="icon icon-link"></span></a>:test_tube: 支持的操作系统</h4>
+        <ul>
+          <li>Windows、MacOS、Linux 等支持 Chrome 或 Firefox 浏览器的所有操作系统 <sup>*移动平台如 iOS、Android 除外</sup></li>
+        </ul>
+        <h4 id="-插件说明和使用说明"><a aria-hidden="true" tabindex="-1" href="#-插件说明和使用说明" class="anchor"><span class="icon icon-link"></span></a>🐒 插件说明和使用说明</h4>
+        <ul>
+          <li><a href="Usage.html">跳转Docs</a></li>
+        </ul>
+        <h3 id="rocket-贡献"><a aria-hidden="true" tabindex="-1" href="#rocket-贡献" class="anchor"><span class="icon icon-link"></span></a>:rocket: 贡献</h3>
+        <p>
+          Contributors List
+          <a href="https://github.com/zhang-wangz/LeetCodeRating/graphs/contributors"><img src="https://opencollective.com/LeetCodeRating/contributors.svg?width=890"></a>
+          非常欢迎你的加入！<a href="https://github.com/zhang-wangz/LeetCodeRating/issues/new?assignees=athony.w&#x26;labels=help+wanted&#x26;template=ISSUE_TEMPLATE.md&#x26;title=">提一个 Issue</a> 或者提交一个 Pull Request。<br>pr要求如下：<br>
+        </p>
+        <ol>
+          <li>修改版本号信息:</li>
+        </ol>
+        <ul>
+          <li>如果第三位&#x3C;10，将第三位+1，如果第三位=10，将第二位+1，第三位=0;</li>
+          <li>例：1.1.10 => 1.2.0; 1.1.3 => 1.1.4;</li>
+          <li>如果改动更新过大，将被归为大版本更新，直接进入下个大版本，例 1.2.4 -> 1.3.0；<br></li>
+        </ul>
+        <ol start="2">
+          <li>修改updatelog.txt文件，将更新描述在最上方加上一行，修改版本号（要求同上），并修改更新描述;<br></li>
+          <li>修改js脚本最上方@version为提交的新版本和js文件中变量名为version的value，保持一致，同时更新version.json文件说明更新的版本和更新内容变化;</li>
+        </ol>
+        <p>LeetCodeRating遵循 <a href="https://www.contributor-covenant.org/version/1/3/0/code-of-conduct/">Contributor Covenant</a> 行为规范。</p>
+        <h3 id="heart-捐助特别鸣谢"><a aria-hidden="true" tabindex="-1" href="#heart-捐助特别鸣谢" class="anchor"><span class="icon icon-link"></span></a>:heart: <a href="https://www.showdoc.com.cn/2069209189620830">捐助</a>特别鸣谢</h3>
+        <h4 id="捐助者是否有与捐助大哥们是否匿名有关嘿嘿"><a aria-hidden="true" tabindex="-1" href="#捐助者是否有与捐助大哥们是否匿名有关嘿嘿" class="anchor"><span class="icon icon-link"></span></a>捐助者是否有*与捐助大哥们是否匿名有关！嘿嘿！</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>捐助者</th>
+              <th>金额</th>
+              <th>渠道</th>
+              <th>时间</th>
+              <th>作者寄语</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>**君</td>
+              <td>8.8元</td>
+              <td>支付宝</td>
+              <td>2022-09-08</td>
+              <td>谢谢大佬支持～</td>
+            </tr>
+            <tr>
+              <td>A*w</td>
+              <td>2.0元</td>
+              <td>微信</td>
+              <td>2023-04-05</td>
+              <td>谢谢捧场～</td>
+            </tr>
+            <tr>
+              <td>Toddz1</td>
+              <td>20.0元</td>
+              <td>微信</td>
+              <td>2024-06-06</td>
+              <td>谢谢大佬赞助！</td>
+            </tr>
+            <tr>
+              <td>古希腊掌管老鼠药的🐭！</td>
+              <td>10.0元</td>
+              <td>QQ</td>
+              <td>2024-10-17</td>
+              <td>谢谢老板红包！</td>
+            </tr>
+          </tbody>
+        </table>
+        <h3 id="最后"><a aria-hidden="true" tabindex="-1" href="#最后" class="anchor"><span class="icon icon-link"></span></a>🍬最后</h3>
+        <p><strong>如果有帮助到你，请给repo点个star，让更多的人看到 ~ ("▔□▔)/</strong></p>
+        <h4 id="star-history"><a aria-hidden="true" tabindex="-1" href="#star-history" class="anchor"><span class="icon icon-link"></span></a>Star History</h4>
+        <p><a href="https://www.star-history.com/#zhang-wangz/LeetCodeRating&#x26;Date"><img src="https://api.star-history.com/svg?repos=zhang-wangz/LeetCodeRating&#x26;type=Date" alt="Star History Chart"></a></p>
+        <h3 id="license"><a aria-hidden="true" tabindex="-1" href="#license" class="anchor"><span class="icon icon-link"></span></a>License</h3>
+        <p><a href="https://github.com/zhang-wangz/LeetCodeRating/blob/main/LICENSE">License</a></p>
+        <section class="article-footer"><a href="https://github.com/zhang-wangz/LeetCodeRating/blob/main/README.md" class="edit-button" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+<span>Edit this page on GitHub</span>
+</a><span class="atime">2025/05/13</span></section>
+      </markdown-style>
+      <nav class="tocs">
+        <aside class="inner toc">
+          <ol class="tocs-list">
+            <li><a href="#iphone-兼容性安装" class="tocs-link">:iphone: 兼容性&#x26;安装</a>
+              <ol class="tocs-list is-collapsed">
+                <li><a href="#globe_with_meridians-浏览器支持任选其一即可" class="tocs-link">:globe_with_meridians: 浏览器支持（任选其一即可）</a></li>
+                <li><a href="#see_no_evil-浏览器需要安装的脚本管理器插件" class="tocs-link">:see_no_evil: 浏览器需要安装的脚本管理器插件</a></li>
+                <li><a href="#page_facing_up-安装脚本-求star-ヾo" class="tocs-link">:page_facing_up: 安装脚本 (求star ヾ(≧▽≦*)o)</a></li>
+                <li><a href="#test_tube-支持的操作系统" class="tocs-link">:test_tube: 支持的操作系统</a></li>
+                <li><a href="#-插件说明和使用说明" class="tocs-link">🐒 插件说明和使用说明</a></li>
+              </ol>
+            </li>
+            <li><a href="#rocket-贡献" class="tocs-link">:rocket: 贡献</a></li>
+            <li><a href="#heart-捐助特别鸣谢" class="tocs-link">:heart: 捐助特别鸣谢</a>
+              <ol class="tocs-list is-collapsed">
+                <li><a href="#捐助者是否有与捐助大哥们是否匿名有关嘿嘿" class="tocs-link">捐助者是否有*与捐助大哥们是否匿名有关！嘿嘿！</a></li>
+              </ol>
+            </li>
+            <li><a href="#最后" class="tocs-link">🍬最后</a>
+              <ol class="tocs-list is-collapsed">
+                <li><a href="#star-history" class="tocs-link">Star History</a></li>
+              </ol>
+            </li>
+            <li><a href="#license" class="tocs-link">License</a></li>
+          </ol>
+        </aside>
+      </nav>
+    </div>
+    <script src="js/demo-preview.js?v=1.26.6"></script>
+    <div class="footer warpper">Released under the MIT License. Copyright © 2025 zhang-wangz<br></div>
+    <script src="js/tocbot.js?v=1.26.6"></script>
+  </body>
+</html>

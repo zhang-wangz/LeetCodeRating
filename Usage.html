@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Started LeetCodeRating</title>
+    <meta name="description" content="更新内容包括整理遗留bug，去除已经无法使用的功能，拓展新功能详细包含如下">
+    <link rel="stylesheet" type="text/css" href="css/main.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/tocbot.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/media.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/sidebar.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/copy.css?v=1.26.6">
+    <link rel="stylesheet" type="text/css" href="css/demo-preview.css?v=1.26.6">
+    <link rel="icon" href="data:image/png;base64,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" type="image/x-icon">
+    <script src="js/copy.js?v=1.26.6"></script>
+    <script src="js/dark-mode.js?v=1.26.6"></script>
+    <script src="js/markdown-style.js?v=1.26.6"></script>
+  </head>
+  <body id="idoctotop"><a href="#idoctotop" class="gototop">top</a>
+    <header class="header">
+      <article class="inner warpper"><a class="logo" href="index.html"><img alt="LeetCodeRating logo" src="data:image/png;base64,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">
+<span class="title">LeetCodeRating</span></a>
+        <div class="content">
+          <ul class="menu">
+            <li><a href="index.html" target="" class="">Home</a></li>
+            <li><a href="Usage.html" target="" class="active">Usage</a></li>
+            <li><a href="https://github.com/zhang-wangz/LeetCodeRating/issues" target="__blank" class="">Recommended</a></li>
+            <li><a href="https://www.showdoc.com.cn/2069209189620830" target="__blank" class="">Sponsor</a></li>
+          </ul><a href="https://github.com/zhang-wangz/LeetCodeRating" target="_blank" rel="noopener noreferrer" title="Github" name="Github" class="github"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+            </svg></a>
+          <dark-mode permanent=""></dark-mode>
+        </div>
+      </article>
+    </header>
+    <div class="warpper-content warpper">
+      <markdown-style>
+        <h1 id="get-started"><a aria-hidden="true" tabindex="-1" href="#get-started" class="anchor"><span class="icon icon-link"></span></a>Get Started</h1>
+        <h4 id="-插件说明"><a aria-hidden="true" tabindex="-1" href="#-插件说明" class="anchor"><span class="icon icon-link"></span></a>🐒 插件说明</h4>
+        <h5 id="300-大版本更新说明"><a aria-hidden="true" tabindex="-1" href="#300-大版本更新说明" class="anchor"><span class="icon icon-link"></span></a>3.0.0 大版本更新说明</h5>
+        <p>
+          更新内容包括整理遗留bug，去除已经无法使用的功能，拓展新功能
+          详细包含如下
+        </p>
+        <ul>
+          <li>
+            <p>去除题库页去除vip加锁题目功能，该功能在题库页最新已支持</p>
+            <ul>
+              <li>该功能可以通过新题库页如下筛选获取</li>
+            </ul>
+            <p>
+              <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20250429182041760.png" alt="image-20250429182041760">
+            </p>
+            <p>​ plus是vip题目，非plus是免费题目</p>
+          </li>
+          <li>
+            <p>去除题目页代码输入阻止联想功能，该功能已经无法实现</p>
+          </li>
+          <li>
+            <p>去除公司和tag分类所有功能，公司页面是无法进入，实现不了，tag页面已经和题单页合并</p>
+          </li>
+          <li>
+            <p>适配题库页新ui</p>
+          </li>
+          <li>
+            <p>遗留问题，适配题单页ui</p>
+          </li>
+          <li>
+            <p>算术评级拓展至题库页和题单页，还是原有开关进行控制</p>
+          </li>
+          <li>
+            <p>拓展题单页功能，使通过率和题库页一样一直显示，而不是悬浮才显示</p>
+          </li>
+          <li>
+            <p>纸片人整体修复</p>
+          </li>
+        </ul>
+        <h5 id="231-新功能速递来自灵佬建议"><a aria-hidden="true" tabindex="-1" href="#231-新功能速递来自灵佬建议" class="anchor"><span class="icon icon-link"></span></a>2.3.1 新功能速递，来自灵佬建议~</h5>
+        <p>用户更新到2.3.1之后，在任意界面打开会提示初始化所有题目状态，点击确认</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728090853004.png" alt="image-20240728090853004">
+        </p>
+        <p>弹出同步弹窗后，点击同步按钮，等待同步结束后，点击右上角x号即同步结束</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728090958907.png" alt="image-20240728090958907">
+        </p>
+        <p>
+          同步结束后，可在任意讨论区查看题目链接后面的标识，白圈代表用户没做过该题，绿色勾表示已ac，红色代表尝试过但是最终没有ac。
+          2.3.9补丁包更新， 尝试过但是最终没有ac的情况下，图标改成了力扣官方使用的黄色双环进行代替，贴合设计。
+        </p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091107894.png" alt="image-20240728091107894">
+        </p>
+        <p>2024.7.29 新增加题解区显示完成情况，如下图：</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240729092718834.png" alt="image-20240729092718834">
+        </p>
+        <p>另外，当有新的题目提交时，插件会自动更新用户做题状态，无需手动操作。缺点是如果用户关闭插件，那么讨论区的题目状态可能和用户的lc状态不会时时保持一致。</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091317858.png" alt="image-20240728091317858">
+        </p>
+        <p>为了避免以上的情况出现，插件另外提供了两个手动同步按钮在界面上，分别在题目页面和讨论区页面</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091447599.png" alt="image-20240728091447599">
+        </p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091459269.png" alt="image-20240728091459269">
+        </p>
+        <p>两个按钮打开的是同一个弹窗，和初始化同步的过程一致</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091527059.png" alt="image-20240728091527059">
+        </p>
+        <p>以上两个功能依赖于油猴插件界面的两个开关，点击即可关闭功能，更新2.3.1之后默认为开启状态</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091638492.png" alt="image-20240728091638492">
+        </p>
+        <p>2.3.3补丁更新， 新增加一个按钮，默认关闭，点击开启之后，讨论区题目状态挪到最前面。</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728182436862.png" alt="image-20240728182436862">
+        </p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240728182445984.png" alt="image-20240728182445984">
+        </p>
+        <p>如果测试功能有问题，欢迎提交issue或者加vx或者加企鹅群进行交流~ 以上。</p>
+        <ul>
+          <li>有<strong>周赛分数据的地方</strong>才会<strong>显示分数</strong>，<strong>没有</strong>则<strong>显示原有的难度</strong></li>
+          <li>界面没有改变的话只是因为<strong>对应的数据没有收录</strong>导致的</li>
+          <li>当前所有的数据都出自项目: <a href="https://zerotrac.github.io/leetcode_problem_rating/">https://zerotrac.github.io/leetcode_problem_rating/</a><br>项目设计初衷来自灵佬的视频: <a href="https://www.bilibili.com/video/BV1rS4y1s721/">https://www.bilibili.com/video/BV1rS4y1s721/</a> | 训练技巧，上分技巧 部分</li>
+        </ul>
+        <h4 id="-脚本功能菜单-求star-ヾo"><a aria-hidden="true" tabindex="-1" href="#-脚本功能菜单-求star-ヾo" class="anchor"><span class="icon icon-link"></span></a>💡 脚本功能菜单 (求star ヾ(≧▽≦*)o)</h4>
+        <h5 id="功能-是否使用cdn选项"><a aria-hidden="true" tabindex="-1" href="#功能-是否使用cdn选项" class="anchor"><span class="icon icon-link"></span></a>功能 是否使用cdn选项</h5>
+        <p>​ 之所以有这个选项，是因为有朋友反映他们连接不上github的地址，所以该功能会将插件中所用到的地址都映射到国内cdn进行数据访问，方便插件使用, (须注意，和github原生数据可能存在延迟数据差别，须等待cdn同步，所以最好不使用cdn)</p>
+        <h5 id="功能-灵茶信息题库页面显示"><a aria-hidden="true" tabindex="-1" href="#功能-灵茶信息题库页面显示" class="anchor"><span class="icon icon-link"></span></a>功能 灵茶信息，题库页面显示</h5>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/img.png" alt="image">
+        </p>
+        <h5 id="功能-题库页周赛难度评分不包括灵茶"><a aria-hidden="true" tabindex="-1" href="#功能-题库页周赛难度评分不包括灵茶" class="anchor"><span class="icon icon-link"></span></a>功能 题库页周赛难度评分(不包括灵茶)</h5>
+        <p>​ 此功能只有存在周赛分数据的题目才会显示，如果看到一排都没有，那就是这些题目都没有题目分，往后移动就有了。（老是有新朋友询问，这里说明一下）</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/img_1.png" alt="image1">
+        </p>
+        <h5 id="功能-题目页周赛难度评分"><a aria-hidden="true" tabindex="-1" href="#功能-题目页周赛难度评分" class="anchor"><span class="icon icon-link"></span></a>功能 题目页周赛难度评分</h5>
+        <p>控制题目页难度分显示。注意，难度分上面一排数据默认显示，无法关闭，点击算术评级按钮，可以查看对应算术评级对应的难度说明。</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413223413032.png" alt="image-20240413223413032">
+        </p>
+        <h5 id="功能-题解复制去除版权信息"><a aria-hidden="true" tabindex="-1" href="#功能-题解复制去除版权信息" class="anchor"><span class="icon icon-link"></span></a>功能 题解复制去除版权信息</h5>
+        <p>2.1.10 新恢复功能，之前迭代中因为技术难度去除了，现在增加回来，题解区，点击复制按钮后，弹框显示成功，粘贴后去除版权尾巴。</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413223708289.png" alt="image-20240413223708289">
+        </p>
+        <h5 id="功能-题目页侧边栏分数显示"><a aria-hidden="true" tabindex="-1" href="#功能-题目页侧边栏分数显示" class="anchor"><span class="icon icon-link"></span></a>功能 题目页侧边栏分数显示</h5>
+        <p>开启后将自动加载侧边栏分数</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413223938033.png" alt="image-20240413223938033">
+        </p>
+        <h5 id="功能-题目页题目搜索框"><a aria-hidden="true" tabindex="-1" href="#功能-题目页题目搜索框" class="anchor"><span class="icon icon-link"></span></a>功能 题目页题目搜索框</h5>
+        <p>2.1.9 新增，添加搜索框，输入题号或者关键字，可搜索题目，点击对应题目框后，自动跳转选中题目</p>
+        <p>已适配深色模式</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413224048569.png" alt="image-20240413224048569">
+        </p>
+        <h5 id="功能-题目搜索页周赛难度评分"><a aria-hidden="true" tabindex="-1" href="#功能-题目搜索页周赛难度评分" class="anchor"><span class="icon icon-link"></span></a>功能 题目搜索页周赛难度评分</h5>
+        <p>搜索页面难度分渲染，对应url为<a href="https://leetcode.cn/search/">https://leetcode.cn/search/</a></p>
+        <h5 id="功能-题单页评分已和tag页合并"><a aria-hidden="true" tabindex="-1" href="#功能-题单页评分已和tag页合并" class="anchor"><span class="icon icon-link"></span></a>功能 题单页评分(已和tag页合并)</h5>
+        <p>对应url为<a href="https://leetcode.cn/problem-list/xxx/">https://leetcode.cn/problem-list/xxx/</a></p>
+        <p>例如<a href="https://leetcode.cn/problem-list/4uhwcjE2/">https://leetcode.cn/problem-list/4uhwcjE2/</a></p>
+        <p>后面的xxx为力扣生成的题单id</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/img_2.png" alt="image2">
+        </p>
+        <h5 id="功能-学习计划周赛难度评分"><a aria-hidden="true" tabindex="-1" href="#功能-学习计划周赛难度评分" class="anchor"><span class="icon icon-link"></span></a>功能 学习计划周赛难度评分</h5>
+        <p>对应url为<a href="https://leetcode.cn/studyplan/xxx/">https://leetcode.cn/studyplan/xxx/</a></p>
+        <p>例如<a href="https://leetcode.cn/studyplan/top-interview-150/">https://leetcode.cn/studyplan/top-interview-150/</a></p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413224920329.png" alt="image-20240413224920329">
+        </p>
+        <h5 id="功能-竞赛页面双栏布局"><a aria-hidden="true" tabindex="-1" href="#功能-竞赛页面双栏布局" class="anchor"><span class="icon icon-link"></span></a>功能 竞赛页面双栏布局</h5>
+        <p>对应url为<a href="https://leetcode.cn/contest/xxx/problems/xxx">https://leetcode.cn/contest/xxx/problems/xxx</a></p>
+        <p>例如: <a href="https://leetcode.cn/contest/weekly-contest-390/problems/most-frequent-ids/">https://leetcode.cn/contest/weekly-contest-390/problems/most-frequent-ids/</a></p>
+        <p>自动变换双栏，最初来源 better contest page / author ExplodingKonjac</p>
+        <p>简单理解，就是上下排列改为左右排列，方便做题</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413225124712.png" alt="image-20240413225124712">
+        </p>
+        <h5 id="功能--算术评级"><a aria-hidden="true" tabindex="-1" href="#功能--算术评级" class="anchor"><span class="icon icon-link"></span></a>功能 算术评级</h5>
+        <p>该按钮控制上述左侧栏功能中的算术评级和学习计划中的算术评级字段显示，推荐开启</p>
+        <h5 id="功能-模拟oj环境去除通过率难度周赛qidx等"><a aria-hidden="true" tabindex="-1" href="#功能-模拟oj环境去除通过率难度周赛qidx等" class="anchor"><span class="icon icon-link"></span></a>功能 模拟oj环境(去除通过率,难度,周赛Qidx等)</h5>
+        <p>开启后，会关闭一些信息显示</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/img_3.png" alt="image3">
+        </p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413225531805.png" alt="image-20240413225531805">
+        </p>
+        <h5 id="功能-自动切换白天黑夜模式早8晚8切换制"><a aria-hidden="true" tabindex="-1" href="#功能-自动切换白天黑夜模式早8晚8切换制" class="anchor"><span class="icon icon-link"></span></a>功能 自动切换白天黑夜模式(早8晚8切换制)</h5>
+        <p>开启后，早上8点-晚上8点之间进入lc，自动切换为浅色模式，晚上8点之后-早上8点之前进入自动切换深色模式</p>
+        <h5 id="功能-纸片人"><a aria-hidden="true" tabindex="-1" href="#功能-纸片人" class="anchor"><span class="icon icon-link"></span></a>功能 纸片人</h5>
+        <p>开启后，会在界面上显示一个纸片人，纸片人下方在登录力扣之后会根据当前做题数显示对应等级(根据题目数量，难度进行计算)，在不同的界面纸片人会给予一些提示(自行探索), 纸片人会自动讲述情话～可替换形象</p>
+        <p>
+          <img src="https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413230836029.png" alt="image-20240413230836029">
+        </p><br>
+        <section class="article-footer"><a href="https://github.com/zhang-wangz/LeetCodeRating/blob/main/docs/Usage.md" class="edit-button" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+<span>Edit this page on GitHub</span>
+</a><span class="atime">2025/05/13</span></section>
+      </markdown-style>
+      <nav class="tocs">
+        <aside class="inner toc">
+          <ol class="tocs-list">
+            <li><a href="#-插件说明" class="tocs-link">🐒 插件说明</a>
+              <ol class="tocs-list is-collapsed">
+                <li><a href="#300-大版本更新说明" class="tocs-link">3.0.0 大版本更新说明</a></li>
+                <li><a href="#231-新功能速递来自灵佬建议" class="tocs-link">2.3.1 新功能速递，来自灵佬建议~</a></li>
+              </ol>
+            </li>
+            <li><a href="#-脚本功能菜单-求star-ヾo" class="tocs-link">💡 脚本功能菜单 (求star ヾ(≧▽≦*)o)</a>
+              <ol class="tocs-list is-collapsed">
+                <li><a href="#功能-是否使用cdn选项" class="tocs-link">功能 是否使用cdn选项</a></li>
+                <li><a href="#功能-灵茶信息题库页面显示" class="tocs-link">功能 灵茶信息，题库页面显示</a></li>
+                <li><a href="#功能-题库页周赛难度评分不包括灵茶" class="tocs-link">功能 题库页周赛难度评分(不包括灵茶)</a></li>
+                <li><a href="#功能-题目页周赛难度评分" class="tocs-link">功能 题目页周赛难度评分</a></li>
+                <li><a href="#功能-题解复制去除版权信息" class="tocs-link">功能 题解复制去除版权信息</a></li>
+                <li><a href="#功能-题目页侧边栏分数显示" class="tocs-link">功能 题目页侧边栏分数显示</a></li>
+                <li><a href="#功能-题目页题目搜索框" class="tocs-link">功能 题目页题目搜索框</a></li>
+                <li><a href="#功能-题目搜索页周赛难度评分" class="tocs-link">功能 题目搜索页周赛难度评分</a></li>
+                <li><a href="#功能-题单页评分已和tag页合并" class="tocs-link">功能 题单页评分(已和tag页合并)</a></li>
+                <li><a href="#功能-学习计划周赛难度评分" class="tocs-link">功能 学习计划周赛难度评分</a></li>
+                <li><a href="#功能-竞赛页面双栏布局" class="tocs-link">功能 竞赛页面双栏布局</a></li>
+                <li><a href="#功能--算术评级" class="tocs-link">功能 算术评级</a></li>
+                <li><a href="#功能-模拟oj环境去除通过率难度周赛qidx等" class="tocs-link">功能 模拟oj环境(去除通过率,难度,周赛Qidx等)</a></li>
+                <li><a href="#功能-自动切换白天黑夜模式早8晚8切换制" class="tocs-link">功能 自动切换白天黑夜模式(早8晚8切换制)</a></li>
+                <li><a href="#功能-纸片人" class="tocs-link">功能 纸片人</a></li>
+              </ol>
+            </li>
+          </ol>
+        </aside>
+      </nav>
+    </div>
+    <script src="js/demo-preview.js?v=1.26.6"></script>
+    <div class="footer warpper">Released under the MIT License. Copyright © 2025 zhang-wangz<br></div>
+    <script src="js/tocbot.js?v=1.26.6"></script>
+  </body>
+</html>
