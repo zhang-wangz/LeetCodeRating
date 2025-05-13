@@ -289,6 +289,7 @@ LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org
 
 ### 🍬最后
 **如果有帮助到你，请给repo点个star，让更多的人看到 ~ ("▔□▔)/**
+<iframe style="width:100%;height:auto;min-width:600px;min-height:400px;" src="https://www.star-history.com/embed?secret=Z2l0aHViX3BhdF8xMUFMV0lUTVkwdU9XUkdyRmZtSlV3X2V3TGpQblEydXAxYVhPTzhVaUFqN0hIcDZHMVQ2Rnp1Sk9ZcVdQa2lVSXk0T0Q2TUdQSW1ZRHc1ekNN#zhang-wangz/LeetCodeRating&Date" frameBorder="0"></iframe>
 
 ### License
 [License](https://github.com/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
