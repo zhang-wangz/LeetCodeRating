@@ -1,3 +1,0 @@
-openpyxl
-pandas
-requests
