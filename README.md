@@ -57,7 +57,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 #### 🐒 插件说明和使用说明
 
-- [跳转Docs](https://zhang-wangz.github.io/LeetCodeRating/Usage.html)
+[跳转Docs](https://zhang-wangz.github.io/LeetCodeRating/Usage.html) 建议使用 Ctrl+点击 在新窗口打开）
 
 ### :rocket: 贡献
 Contributors List
