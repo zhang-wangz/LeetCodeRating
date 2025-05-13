@@ -25,7 +25,7 @@
 请注意： 英文版只有题库页面，tag页面和题目页面展示周赛分，并且不支持其余中文站功能
 安装英文版本请切换github tag为english，英文版自2023年开始暂时停止维护，招募合适的维护员~
 
-Note: The English version only shows the difficulty rating of the question on the gallary page (problemset), the tag page and the question page, and does not support other functions in CN site.
+Note: The English version only shows the difficulty rating of the question on the gallary page (problemset), the tag page and the question page, and does not support other functions in CN site. The English version will be temporarily suspended from 2023, and suitable maintainers are being recruited~
 [Click here to switch|点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
 
 LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。 
@@ -69,7 +69,7 @@ pr要求如下： <br/>
 - 例：1.1.10 => 1.2.0; 1.1.3 => 1.1.4;
 - 如果改动更新过大，将被归为大版本更新，直接进入下个大版本，例 1.2.4 -> 1.3.0； <br/>
 2. 修改updatelog.txt文件，将更新描述在最上方加上一行，修改版本号（要求同上），并修改更新描述;  <br/>
-3. 修改js脚本最上方@version为提交的新版本，同时更新version.json文件说明更新的版本和更新内容变化;
+3. 修改js脚本最上方@version为提交的新版本和js文件中变量名为version的value，保持一致，同时更新version.json文件说明更新的版本和更新内容变化;
 
 LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org/version/1/3/0/code-of-conduct/) 行为规范。
 
