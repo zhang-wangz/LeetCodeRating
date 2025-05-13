@@ -262,9 +262,10 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 <br/>
 
 ### :rocket: 贡献
+Contributors List
+<a href="https://github.com/zhang-wangz/LeetCodeRating/graphs/contributors"><img src="https://opencollective.com/LeetCodeRating/contributors.svg?width=890" /></a>
 非常欢迎你的加入！[提一个 Issue](https://github.com/zhang-wangz/LeetCodeRating/issues/new?assignees=athony.w&labels=help+wanted&template=ISSUE_TEMPLATE.md&title=) 或者提交一个 Pull Request。<br/>
 要求如下： <br/>
-
 1. 修改版本号信息:
 - 如果第三位<10，将第三位+1，如果第三位=10，将第二位+1，第三位=0
 - 例：1.1.10 => 1.2.0; 1.1.3 => 1.1.4;
