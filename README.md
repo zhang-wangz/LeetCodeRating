@@ -73,6 +73,7 @@ pr要求如下： <br/>
 <br/>
 3. 修改js脚本最上方@version为提交的新版本，同时更新version.json文件说明更新的版本和更新内容变化;
 <br/>
+
 LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org/version/1/3/0/code-of-conduct/) 行为规范。
 
 ### :heart: [捐助](https://www.showdoc.com.cn/2069209189620830)特别鸣谢
