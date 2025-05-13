@@ -56,7 +56,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 * Windows、MacOS、Linux 等支持 Chrome 或 Firefox 浏览器的所有操作系统 <sup>*移动平台如 iOS、Android 除外</sup>
 
-#### 🐒 插件说明和使用说明
+#### 🐒 插件重要版本说明和脚本功能说明
 
 [跳转Docs](https://zhang-wangz.github.io/LeetCodeRating/Usage.html) 建议使用 Ctrl+点击 在新窗口打开）
 
