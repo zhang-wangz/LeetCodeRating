@@ -90,13 +90,13 @@
 
 - 功能 灵茶信息，题库页面显示
 
-  ![image](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image.png)
+  ![image](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/img.png)
 
 - 功能 题库页周赛难度评分(不包括灵茶)
 
   ​	此功能只有存在周赛分数据的题目才会显示，如果看到一排都没有，那就是这些题目都没有题目分，往后移动就有了。（老是有新朋友询问，这里说明一下）
 
-  ![image1](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image_1.png)
+  ![image1](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/img_1.png)
 
 - 功能 题目页周赛难度评分
 
@@ -138,7 +138,7 @@
 
   后面的xxx为力扣生成的题单id
 
-  ![image2](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image_2.png)
+  ![image2](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/img_2.png)
 
 - 功能 学习计划周赛难度评分
 
@@ -168,7 +168,7 @@
 
   开启后，会关闭一些信息显示
 
-  ![image3](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image_3.png)
+  ![image3](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/img_3.png)
 
   ![image-20240413225531805](https://raw.gitmirror.com/zhang-wangz/LeetCodeRating/main/images/image-20240413225531805.png)
 
