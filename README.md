@@ -289,24 +289,8 @@ LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org
 
 ### 🍬最后
 **如果有帮助到你，请给repo点个star，让更多的人看到 ~ ("▔□▔)/**
-<picture>
-  <source
-    media="(prefers-color-scheme: dark)"
-    srcset="
-      https://api.star-history.com/svg?repos=zhang-wangz/LeetCodeRating&type=Date&theme=dark
-    "
-  />
-  <source
-    media="(prefers-color-scheme: light)"
-    srcset="
-      https://api.star-history.com/svg?repos=zhang-wangz/LeetCodeRating&type=Date
-    "
-  />
-  <img
-    alt="Star History Chart"
-    src="https://api.star-history.com/svg?repos=zhang-wangz/LeetCodeRating&type=Date"
-  />
-</picture>
+#### Star History
+[![Star History Chart](https://api.star-history.com/svg?repos=zhang-wangz/LeetCodeRating&type=Date)](https://www.star-history.com/#zhang-wangz/LeetCodeRating&Date)
 
 ### License
 [License](https://github.com/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
