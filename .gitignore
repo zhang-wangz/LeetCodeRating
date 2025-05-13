@@ -1,6 +1,0 @@
-./.idea
-./.DS_Store
-./.vscode
-dist
-node_modules
-*-lock.json
