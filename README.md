@@ -65,14 +65,11 @@ Contributors List
 非常欢迎你的加入！[提一个 Issue](https://github.com/zhang-wangz/LeetCodeRating/issues/new?assignees=athony.w&labels=help+wanted&template=ISSUE_TEMPLATE.md&title=) 或者提交一个 Pull Request。<br/>
 pr要求如下： <br/>
 1. 修改版本号信息:
-- 如果第三位<10，将第三位+1，如果第三位=10，将第二位+1，第三位=0
+- 如果第三位<10，将第三位+1，如果第三位=10，将第二位+1，第三位=0; 
 - 例：1.1.10 => 1.2.0; 1.1.3 => 1.1.4;
-- 如果改动更新过大，将被归为大版本更新，直接进入下个大版本，例 1.2.4 -> 1.3.0；
-<br/>
-2. 修改updatelog.txt文件，将更新描述在最上方加上一行，修改版本号（要求同上），并修改更新描述;
-<br/>
+- 如果改动更新过大，将被归为大版本更新，直接进入下个大版本，例 1.2.4 -> 1.3.0； <br/>
+2. 修改updatelog.txt文件，将更新描述在最上方加上一行，修改版本号（要求同上），并修改更新描述;  <br/>
 3. 修改js脚本最上方@version为提交的新版本，同时更新version.json文件说明更新的版本和更新内容变化;
-<br/>
 
 LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org/version/1/3/0/code-of-conduct/) 行为规范。
 
