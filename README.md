@@ -20,6 +20,7 @@
 - [点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
 - 企鹅群号: 654726006
 - 答案是: LeetCodeRating
+- [文档 docs](https://zhang-wangz.github.io/LeetCodeRating/)
 ### :iphone: 兼容性&安装
 
 请注意： 英文版只有题库页面，tag页面和题目页面展示周赛分，并且不支持其余中文站功能
