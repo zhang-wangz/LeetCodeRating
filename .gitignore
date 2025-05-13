@@ -1,6 +1,10 @@
 ./.idea
 ./.DS_Store
 ./.vscode
-dist
-node_modules
-*-lock.json
+./leetcoderatingjs/dist
+./leetcoderatingjs/node_modules
+./leetcoderatingjs/*-lock.json
+./*-lock.json
+./dist
+./node_modules
+./doc

@@ -1,0 +1,25 @@
+{
+  "name": "leetcoderatingjs",
+  "version": "1.0.7",
+  "description": "专门为LeetCodeRating(一款显示题目对应周赛难度分的浏览器插件)服务和使用.",
+  "main": "./scss/index.scss",
+  "scripts": {
+    "build-css": "webpack"
+  },
+  "author": "Felix",
+  "license": "ISC",
+  "devDependencies": {
+    "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^7.1.1",
+    "file-loader": "^6.2.0",
+    "mini-css-extract-plugin": "^2.9.0",
+    "sass": "^1.75.0",
+    "sass-loader": "^14.2.1",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "layui": "^2.9.8"
+  }
+}

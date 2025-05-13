@@ -15,6 +15,7 @@ editButton:
 # Navigation Menu.
 menus:
   Home: index.html
+  Usage: Usage.html
   Recommended:
     url: https://github.com/zhang-wangz/LeetCodeRating/issues
     target: __blank

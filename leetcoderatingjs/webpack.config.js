@@ -6,12 +6,13 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const webpack = require("webpack");
 const pkg = require("./package.json");
 const VERSION = pkg.version;
-const srcBanner = `LeetCodeRating ${VERSION}
+const srcBanner = `leetcoderatingjs ${VERSION}
 index.min.css
-Copyright (C) 2024  zhang-wangzReact and all contributors
+Copyright (C) 2025  zhang-wangz and all contributors
 This source code is licensed under the MIT license found in the
 LICENSE file in the root directory of this source tree.`;
 module.exports = {
+  mode: "production", // 'production' or development
   entry: './index.js',
   output: {
     filename: 'index.js',
