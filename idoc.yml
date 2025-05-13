@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://jaywcjlove.github.io/idoc/schema
+# yaml-language-server: $schema=https://jaywcjlove.gitee.io/idoc/schema
+site: LeetCodeRating
+
+dir: ./docs
+
+theme: default
+
+# Show open source button
+openSource: https://github.com/zhang-wangz/LeetCodeRating
+# Display the edit button, need to configure `openSource`.
+editButton: 
+  label: Edit this page on GitHub
+  url: https://github.com/zhang-wangz/LeetCodeRating/blob/main/
+# Navigation Menu.
+menus:
+  Home: index.html
+  Recommended:
+    url: https://github.com/zhang-wangz/LeetCodeRating/issues
+    target: __blank
+  Sponsor:
+    url: https://www.showdoc.com.cn/2069209189620830
+    target: __blank
+
+footer: |
+  Released under the MIT License. Copyright © 2025 zhang-wangz <br/>
