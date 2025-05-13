@@ -83,8 +83,8 @@
 - 当前所有的数据都出自项目: https://zerotrac.github.io/leetcode_problem_rating/    <br/>
   项目设计初衷来自灵佬的视频: https://www.bilibili.com/video/BV1rS4y1s721/ | 训练技巧，上分技巧 部分
 
-#### 💡 脚本功能菜单 (求star ヾ(≧▽≦*)o)
-
+#### 💡 脚本功能说明 
+ tips :: (求star ヾ(≧▽≦*)o) !
 ##### 功能 是否使用cdn选项
 
   ​	之所以有这个选项，是因为有朋友反映他们连接不上github的地址，所以该功能会将插件中所用到的地址都映射到国内cdn进行数据访问，方便插件使用, (须注意，和github原生数据可能存在延迟数据差别，须等待cdn同步，所以最好不使用cdn)
