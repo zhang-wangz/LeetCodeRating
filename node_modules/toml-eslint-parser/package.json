@@ -1,0 +1,93 @@
+{
+  "name": "toml-eslint-parser",
+  "version": "0.10.0",
+  "description": "A TOML parser that produces output compatible with ESLint",
+  "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "engines": {
+    "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
+  },
+  "scripts": {
+    "setup": "git submodule update --init",
+    "prebuild": "npm run -s clean",
+    "build": "npm run build:meta && npm run build:tsc",
+    "build:meta": "ts-node --transpile-only ./tools/update-meta.ts",
+    "build:tsc": "tsc --project ./tsconfig.build.json",
+    "clean": "rimraf .nyc_output lib coverage",
+    "lint": "eslint . --ext .js,.ts,.json",
+    "eslint-fix": "npm run lint -- --fix",
+    "test": "env-cmd -e tz mocha --require ts-node/register \"tests/src/**/*.ts\" --reporter dot --timeout 60000",
+    "cover": "nyc --reporter=lcov npm run test",
+    "debug": "env-cmd -e tz mocha --require ts-node/register/transpile-only \"tests/src/**/*.ts\" --reporter dot",
+    "preversion": "npm run lint && npm test",
+    "update-fixtures": "env-cmd -e tz ts-node --transpile-only ./tools/update-fixtures.ts",
+    "benchmark": "ts-node --transpile-only benchmark/index.ts",
+    "prerelease": "npm run clean && npm run build",
+    "release": "changeset publish",
+    "version:ci": "env-cmd -e version-ci npm run build:meta && changeset version"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ota-meshi/toml-eslint-parser.git"
+  },
+  "keywords": [
+    "toml",
+    "eslint",
+    "parser",
+    "ast"
+  ],
+  "author": "Yosuke Ota",
+  "funding": "https://github.com/sponsors/ota-meshi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ota-meshi/toml-eslint-parser/issues"
+  },
+  "homepage": "https://github.com/ota-meshi/toml-eslint-parser#readme",
+  "dependencies": {
+    "eslint-visitor-keys": "^3.0.0"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.0",
+    "@changesets/cli": "^2.24.2",
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.3.0",
+    "@iarna/toml": "^3.0.0",
+    "@ota-meshi/eslint-plugin": "^0.17.0",
+    "@types/benchmark": "^2.1.1",
+    "@types/eslint": "^8.0.0",
+    "@types/eslint-visitor-keys": "^3.0.0",
+    "@types/js-yaml": "^4.0.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^20.0.0",
+    "@types/semver": "^7.3.4",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "benchmark": "^2.1.4",
+    "env-cmd": "^10.1.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-jsdoc": "^48.2.12",
+    "eslint-plugin-json-schema-validator": "^5.0.0",
+    "eslint-plugin-jsonc": "^2.0.0",
+    "eslint-plugin-n": "^17.2.0",
+    "eslint-plugin-node-dependencies": "^0.12.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-regexp": "^2.0.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "eslint-plugin-yml": "^1.0.0",
+    "js-yaml": "^4.0.0",
+    "mocha": "^10.0.0",
+    "nyc": "^17.0.0",
+    "prettier": "^3.0.0",
+    "semver": "^7.3.4",
+    "toml-eslint-parser": "^0.9.0",
+    "ts-node": "^10.0.0",
+    "typescript": "~5.0.0",
+    "vue-eslint-parser": "^9.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

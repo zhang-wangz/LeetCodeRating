@@ -1,0 +1,31 @@
+<header class="header">
+  <article class="inner warpper" <%= element.wrapper %>>
+    <a class="logo" href="<%= RELATIVE_PATH %>index.html">
+      <% if (logo.code) { %>
+        <%- logo.code %>
+      <%} else if(logo.href) { %>
+        <img alt="<%=site%> logo" src="<%= RELATIVE_PATH %><%=logo.href%>">
+      <%} else if (logo.base64) { %>
+        <img alt="<%=site%> logo" src="<%=logo.base64%>">
+      <% } %>
+      <span class="title"><%-site%></span>
+    </a>
+    <div class="content">
+      <ul class="menu">
+        <% menus.forEach(function(item) { %>
+        <li>
+          <a href="<%= item.url %>" target="<%- item.target || '' %>" class="<%- item.active ? 'active' : '' %>"> <%= item.name %> </a>
+        </li>
+        <% }); %>
+      </ul>
+      <% if (!!openSource && openSource) { %>
+        <a href="<%=openSource.url || openSource%>" target="_blank" rel="noopener noreferrer" title="Github" name="Github" class="github">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+          </svg>
+        </a>
+      <% } %>
+      <dark-mode permanent></dark-mode>
+    </div>
+  </article>
+</header>

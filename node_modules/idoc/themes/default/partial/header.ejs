@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> <%= site.replace(/<\/?sup>/g, '') %> </title>
+  <% if (description) { %>
+  <meta name="description" content="<%= description %>">
+  <% }%>
+  <% if (keywords) { %>
+  <meta name="keywords" content="<%= keywords %>">
+  <% }%>
+  <% (meta || []).forEach((val) => { %>
+  <%- val %>
+  <% }) %>
+  <link rel="stylesheet" type="text/css" href="<%= RELATIVE_PATH %>css/main.css?v=<%=idocVersion%>">
+  <link rel="stylesheet" type="text/css" href="<%= RELATIVE_PATH %>css/tocbot.css?v=<%=idocVersion%>">
+  <link rel="stylesheet" type="text/css" href="<%= RELATIVE_PATH %>css/media.css?v=<%=idocVersion%>">
+  <link rel="stylesheet" type="text/css" href="<%= RELATIVE_PATH %>css/sidebar.css?v=<%=idocVersion%>">
+  <link rel="stylesheet" type="text/css" href="<%= RELATIVE_PATH %>css/copy.css?v=<%=idocVersion%>">
+  <link rel="stylesheet" type="text/css" href="<%= RELATIVE_PATH %>css/demo-preview.css?v=<%=idocVersion%>">
+  <% if (favicon.href) { %>
+    <link rel="icon" href="<%= RELATIVE_PATH %><%=favicon.href%>" type="image/x-icon">
+  <% } else if (favicon.base64) { %>
+    <link rel="icon" href="<%=favicon.base64%>" type="image/x-icon">
+  <% } %>
+  <script src="<%= RELATIVE_PATH %>js/copy.js?v=<%=idocVersion%>"></script>
+  <script src="<%= RELATIVE_PATH %>js/dark-mode.js?v=<%=idocVersion%>"></script>
+  <script src="<%= RELATIVE_PATH %>js/markdown-style.js?v=<%=idocVersion%>"></script>
+</head>
+<body id="idoctotop">
+  <a href="#idoctotop" class="gototop">top</a>

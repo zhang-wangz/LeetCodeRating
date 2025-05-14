@@ -1,0 +1,13 @@
+{
+  "name": "{{name}}",
+  "version": "0.0.1",
+  "description": "{{name}} document.",
+  "license": "MIT",
+  "scripts": {
+    "start": "idoc -w",
+    "build": "idoc"
+  },
+  "devDependencies": {
+    "idoc": "^{{version}}"
+  }
+}

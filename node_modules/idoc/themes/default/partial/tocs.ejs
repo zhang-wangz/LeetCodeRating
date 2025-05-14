@@ -1,0 +1,49 @@
+<% if (tocsTree && tocsTree.length > 0) { %>
+<nav class="tocs">
+  <aside class="inner toc">
+    <ol class="tocs-list">
+    <% tocsTree.forEach((level2) => { %>
+      <li>
+        <a href="#<%= level2.href %>" class="tocs-link"><%= level2.label %></a>
+        <% if (level2.children && level2.children.length > 0) { %>
+          <ol class="tocs-list is-collapsed">
+            <% level2.children.forEach((level3) => { %>
+              <li>
+                <a href="#<%= level3.href %>" class="tocs-link"><%= level3.label %></a>
+                <% if (level3.children && level3.children.length > 0) { %>
+                  <ol class="tocs-list is-collapsed">
+                    <% level3.children.forEach((level4) => { %>
+                      <li>
+                        <a href="#<%= level4.href %>" class="tocs-link"><%= level4.label %></a>
+                        <% if (level4.children && level4.children.length > 0) { %>
+                          <ol class="tocs-list is-collapsed">
+                            <% level4.children.forEach((level5) => { %>
+                              <li>
+                                <a href="#<%= level5.href %>" class="tocs-link"><%= level5.label %></a>
+                                <% if (level5.children && level5.children.length > 0) { %>
+                                  <ol class="tocs-list is-collapsed">
+                                    <% level5.children.forEach((level6) => { %>
+                                      <li>
+                                        <a href="#<%= level6.href %>" class="tocs-link"><%= level6.label %></a>
+                                      </li>
+                                    <% }) %>
+                                  </ol>
+                                <% }%>
+                              </li>
+                            <% }) %>
+                          </ol>
+                        <% }%>
+                      </li>
+                    <% }) %>
+                  </ol>
+                <% }%>
+              </li>
+            <% }) %>
+          </ol>
+        <% }%>
+      </li>
+    <% }) %>
+    </ol>
+  </aside>
+</nav>
+<% } %>

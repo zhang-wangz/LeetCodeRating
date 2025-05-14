@@ -1,0 +1,56 @@
+{
+  "name": "rehype-minify-whitespace",
+  "version": "6.0.2",
+  "description": "rehype plugin to collapse whitespace",
+  "license": "MIT",
+  "keywords": [
+    "collapse",
+    "html",
+    "mangle",
+    "minify",
+    "plugin",
+    "rehype",
+    "rehype-plugin",
+    "space",
+    "unified",
+    "white",
+    "whitespace"
+  ],
+  "repository": "https://github.com/rehypejs/rehype-minify/tree/main/packages/rehype-minify-whitespace",
+  "bugs": "https://github.com/rehypejs/rehype-minify/issues",
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/unified"
+  },
+  "author": "Titus Wormer <tituswormer@gmail.com> (https://wooorm.com)",
+  "contributors": [
+    "Titus Wormer <tituswormer@gmail.com>"
+  ],
+  "sideEffects": false,
+  "type": "module",
+  "exports": "./index.js",
+  "files": [
+    "index.d.ts",
+    "index.d.ts.map",
+    "index.js",
+    "lib/"
+  ],
+  "dependencies": {
+    "@types/hast": "^3.0.0",
+    "hast-util-minify-whitespace": "^1.0.0"
+  },
+  "scripts": {},
+  "typeCoverage": {
+    "atLeast": 100,
+    "detail": true,
+    "ignoreCatch": true,
+    "strict": true
+  },
+  "xo": {
+    "prettier": true,
+    "rules": {
+      "capitalized-comments": "off",
+      "unicorn/prefer-string-replace-all": "off"
+    }
+  }
+}

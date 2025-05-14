@@ -1,0 +1,52 @@
+{
+  "name": "image2uri",
+  "version": "2.1.2",
+  "description": "Convert image file to data URI.",
+  "homepage": "https://jaywcjlove.github.io/image2uri/",
+  "funding": "https://jaywcjlove.github.io/#/sponsor",
+  "license": "MIT",
+  "author": "Kenny <wowohoo@qq.com>",
+  "type": "module",
+  "exports": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "main": "./lib/index.js",
+  "scripts": {
+    "prepare": "npm run build",
+    "watch": "tsbb watch",
+    "build": "tsbb build",
+    "test": "tsbb test",
+    "coverage": "tsbb test --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaywcjlove/image2uri"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "jest": {
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/?!(.*)"
+    ],
+    "coverageReporters": [
+      "lcov",
+      "json-summary"
+    ]
+  },
+  "keywords": [
+    "image",
+    "uri",
+    "fs",
+    "base64",
+    "image-to-uri",
+    "image2uri"
+  ],
+  "dependencies": {
+    "node-fetch": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "tsbb": "^4.1.14"
+  }
+}

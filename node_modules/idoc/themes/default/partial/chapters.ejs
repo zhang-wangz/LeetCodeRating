@@ -1,0 +1,17 @@
+<% if (chapters && chapters.length > 0) {%>
+<div class="sidebar-border">
+  <aside class="sidebar" role="navigation">
+    <div>
+    <% chapters.forEach((chapter) => { %>
+      <% if (chapter.isFolder) { %>
+        <label><%= chapter.label %></label>
+      <% } else if (chapter.href && /^https?:\/\//.test(chapter.href)) { %>
+        <a href="<%= chapter.href %>" target="_blank" class="<%- chapter.active ? 'active' : ''  %>"><%= chapter.label %></a>
+      <% } else { %>
+        <a href="<%= chapter.href %>" class="<%- chapter.active ? 'active' : ''  %>"><%= chapter.label %></a>
+      <% } %>
+    <% }) %>
+    </div>
+  </aside>
+</div>
+<% } %>

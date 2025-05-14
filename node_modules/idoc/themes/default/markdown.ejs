@@ -1,0 +1,18 @@
+<%- include('partial/header'); %>
+<%- include('partial/navigation'); %>
+
+<div <%= element.wrapper %> class="warpper-content warpper <%= chapters && chapters.length > 0 ? 'sidebar' : ''%> <%= tocsTree && tocsTree.length > 0 ? '' : 'notocs'%>">
+  <%- include('partial/chapters'); %>
+  <markdown-style theme-auto-switch-disabled>
+    <%- html %>
+    <%- giscusScript %>
+    <% if (giscusScript) { %>
+      <script src="<%= RELATIVE_PATH %>js/giscus.js?v=<%=idocVersion%>"></script>
+    <% } %>
+    <%- include('partial/article-footer'); %>
+  </markdown-style>
+  <%- include('partial/tocs'); %>
+</div>
+<script src="<%= RELATIVE_PATH %>js/demo-preview.js?v=<%=idocVersion%>"></script>
+
+<%- include('partial/footer'); %>
