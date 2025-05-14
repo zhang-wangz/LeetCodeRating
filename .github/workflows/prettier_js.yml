@@ -26,7 +26,7 @@ jobs:
         run: npx prettier --write "**/*.js"
 
       - name: Add Diff
-        run: git add .
+        run: git add leetcodeRating_greasyfork.user.js
 
       - name: Commit files
         run: |
