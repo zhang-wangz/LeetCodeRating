@@ -37,8 +37,7 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 #### :globe_with_meridians: 浏览器支持（任选其一即可）
 
-* Chrome 或 基于 Chromium 内核的浏览器 (Edge、360浏览器、CentBrowser等) <sup>*推荐</sup>
-* Firefox <sup>*功能兼容，但并非最佳性能</sup>
+* Chrome 或 Edge 浏览器 (Edge) <sup>*推荐</sup>
 
 #### :see_no_evil: 浏览器需要安装的脚本管理器插件
 
