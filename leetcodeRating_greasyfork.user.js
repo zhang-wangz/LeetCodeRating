@@ -106,7 +106,7 @@
       }
       observerMap.set(item, newObserver);
     }
-  
+
     // ElementGetter依赖相关
     let ElementGetter = (function () {
       const _jQuery = Symbol('jQuery');
@@ -207,7 +207,9 @@
           });
         }
         [_getList](selectorList, parent, timeout) {
-          return Promise.all(selectorList.map(selector => this[_getOne](selector, parent, timeout)));
+          return Promise.all(
+            selectorList.map(selector => this[_getOne](selector, parent, timeout))
+          );
         }
         constructor(jQuery) {
           this[_jQuery] = jQuery && jQuery.fn && jQuery.fn.jquery ? jQuery : null;
@@ -467,7 +469,13 @@
             true,
             false
           ],
-          ['switchrealoj', 'delvip function', '模拟oj环境(去除通过率,难度,周赛Qidx等)', false, true],
+          [
+            'switchrealoj',
+            'delvip function',
+            '模拟oj环境(去除通过率,难度,周赛Qidx等)',
+            false,
+            true
+          ],
           ['switchdark', 'dark function', '自动切换白天黑夜模式(早8晚8切换制)', false, true],
           ['switchpbstatus', 'pbstatus function', '讨论区和题目页显示题目完成状态', true, true],
           [
@@ -527,7 +535,10 @@
         }
         menu_ID[menu_ID.length] = GM_registerMenuCommand(`🏁 当前版本 ${version}`, function () {});
         menu_ID_Content[menu_ID_Content.length] = `🏁 当前版本 ${version}`;
-        menu_ID[menu_ID.length + 1] = GM_registerMenuCommand(`🏁 企鹅群号 654726006`, function () {});
+        menu_ID[menu_ID.length + 1] = GM_registerMenuCommand(
+          `🏁 企鹅群号 654726006`,
+          function () {}
+        );
         menu_ID_Content[menu_ID_Content.length + 1] = `🏁 654726006`;
       }
 
@@ -547,7 +558,7 @@
         registerMenuCommand(); // 重新注册脚本菜单
       }
     }
-    
+
     function copyNoRight() {
       new ElementGetter().each('.WRmCx > div:has(code)', document, item => {
         addCopy(item);
@@ -578,7 +589,6 @@
         nowShow.parentNode.parentNode.appendChild(copyNode);
       }
     }
-    
 
     // lc 基础req
     let baseReq = (type, reqUrl, query, variables, successFuc) => {
@@ -831,13 +841,12 @@
       // console.log("end...")
     }
 
-
-      // 竞赛页面双栏布局
-      // 来源 better contest page / author ExplodingKonjac
-      // 竞赛页面影响不大，会reload，所以不放到initfunction中，url变化重启流程
-      let switchcontestpage = GM_getValue('switchcontestpage');
-      if (location.href.match('https://leetcode.cn/contest/.*/problems/.*') && switchcontestpage) {
-        const CSS = `
+    // 竞赛页面双栏布局
+    // 来源 better contest page / author ExplodingKonjac
+    // 竞赛页面影响不大，会reload，所以不放到initfunction中，url变化重启流程
+    let switchcontestpage = GM_getValue('switchcontestpage');
+    if (location.href.match('https://leetcode.cn/contest/.*/problems/.*') && switchcontestpage) {
+      const CSS = `
                 body {
                     display: flex;
                     flex-direction: column;
@@ -893,44 +902,46 @@
                     background: #1a90ff;
                 }
             `;
-        const storageKey = '--previous-editor-size';
-        (function () {
-          const $css = document.createElement('style');
-          $css.innerHTML = CSS;
-          document.head.append($css);
-          const $problem = document.querySelector('.content-wrapper #base_content > .container');
-          const $editor = document.querySelector('.content-wrapper #base_content > .editor-container');
-          const $resize = document.createElement('div');
-          if (localStorage.getItem(storageKey)) {
-            $problem.style.width = localStorage.getItem(storageKey);
-          }
-          $editor.parentElement.insertBefore($resize, $editor);
-          $resize.classList.add('custom-resize');
-          let currentSize,
-            startX,
-            resizing = false;
-          $resize.addEventListener('mousedown', e => {
-            currentSize = $problem.getBoundingClientRect().width;
-            startX = e.clientX;
-            resizing = true;
-            $resize.style.background = '#1a90ff';
-          });
-          window.addEventListener('mousemove', e => {
-            if (!resizing) return;
-            const deltaX = e.clientX - startX;
-            const newSize = Math.max(450, Math.min(1200, currentSize + deltaX));
-            $problem.style.width = `${newSize}px`;
-            e.preventDefault();
-          });
-          window.addEventListener('mouseup', e => {
-            if (!resizing) return;
-            e.preventDefault();
-            resizing = false;
-            $resize.style.background = '';
-            localStorage.setItem(storageKey, $problem.style.width);
-          });
-        })();
-      }
+      const storageKey = '--previous-editor-size';
+      (function () {
+        const $css = document.createElement('style');
+        $css.innerHTML = CSS;
+        document.head.append($css);
+        const $problem = document.querySelector('.content-wrapper #base_content > .container');
+        const $editor = document.querySelector(
+          '.content-wrapper #base_content > .editor-container'
+        );
+        const $resize = document.createElement('div');
+        if (localStorage.getItem(storageKey)) {
+          $problem.style.width = localStorage.getItem(storageKey);
+        }
+        $editor.parentElement.insertBefore($resize, $editor);
+        $resize.classList.add('custom-resize');
+        let currentSize,
+          startX,
+          resizing = false;
+        $resize.addEventListener('mousedown', e => {
+          currentSize = $problem.getBoundingClientRect().width;
+          startX = e.clientX;
+          resizing = true;
+          $resize.style.background = '#1a90ff';
+        });
+        window.addEventListener('mousemove', e => {
+          if (!resizing) return;
+          const deltaX = e.clientX - startX;
+          const newSize = Math.max(450, Math.min(1200, currentSize + deltaX));
+          $problem.style.width = `${newSize}px`;
+          e.preventDefault();
+        });
+        window.addEventListener('mouseup', e => {
+          if (!resizing) return;
+          e.preventDefault();
+          resizing = false;
+          $resize.style.background = '';
+          localStorage.setItem(storageKey, $problem.style.width);
+        });
+      })();
+    }
 
     // 监听变化
     // 改变大小
@@ -938,7 +949,7 @@
     let whetherSolution = location.href.match(pbUrl);
     if (whetherSolution) {
       // 左边
-      console.log("执行插入题目显示按钮style...")
+      console.log('执行插入题目显示按钮style...');
       if (!GM_getValue('switchpbstatusLocationRight')) {
         GM_addStyle(`
                   circle.mycircle {
@@ -991,7 +1002,9 @@
         // 过滤出符合条件的<a>标签
         let matchingLinks = Array.from(links).filter(link => {
           return (
-            !link.getAttribute('linkId') && link.href.match(pbUrl) && !link.href.match(pbSolutionUrl)
+            !link.getAttribute('linkId') &&
+            link.href.match(pbUrl) &&
+            !link.href.match(pbSolutionUrl)
           );
         });
         // console.log(matchingLinks);
@@ -1029,7 +1042,6 @@
         }
       }
     }
-
 
     function pbsubmitListen() {
       var originalFetch = fetch;
@@ -1094,7 +1106,6 @@
       };
     }
 
-
     // 获取数字
     function getcontestNumber(url) {
       return parseInt(url.substr(15));
@@ -1150,7 +1161,6 @@
       }
       return err;
     };
-
 
     function createProblemCard({ title, pburl, difficulty, rate, parentNodeList }) {
       const $a = $('<a>', {
@@ -2327,15 +2337,15 @@
     // 初始化一些lc切换网页但是没有reload，需要执行的方法
     function initfunction() {
       // 添加题目页面复制按钮
-      console.log("当前页面url: " + location.href)
+      console.log('当前页面url: ' + location.href);
       if (GM_getValue('switchcopyright') && location.href.match(pbUrl)) {
-        console.log("当前处于题目页，已开始添加复制按钮....")
+        console.log('当前处于题目页，已开始添加复制按钮....');
         copyNoRight();
       }
       // 创建题目状态icon，题目页和讨论区刷新
       waitOprpbStatus();
       if (GM_getValue('switchpbstatus') && location.href.match(pbUrl)) {
-        console.log("当前处于题目页，已开启题目提交监听....")
+        console.log('当前处于题目页，已开启题目提交监听....');
         pbsubmitListen();
       }
     }
@@ -2489,7 +2499,9 @@
       // 版本更新机制
       let now = getCurrentDate(1);
       preDate1 = GM_getValue('preDate1', '');
-      let checkVersionLayer = GM_getValue('switchupdate') ? preDate1 == '' || preDate1 != now : true;
+      let checkVersionLayer = GM_getValue('switchupdate')
+        ? preDate1 == '' || preDate1 != now
+        : true;
       GM_xmlhttpRequest({
         method: 'get',
         url: versionUrl + '?timeStamp=' + new Date().getTime(),
@@ -2585,9 +2597,7 @@
           }
       `);
 
-
-
-    // TODO 分割  
+    // TODO 分割
     // spig js 纸片人相关
     if (GM_getValue('switchperson')) {
       const isindex = true;
@@ -2896,7 +2906,8 @@
               showMessage(msgs[i]);
             }
             let s = [
-              0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, -0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7, -0.75
+              0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, -0.1, -0.2, -0.3, -0.4, -0.5, -0.6, -0.7,
+              -0.75
             ];
             let i1 = Math.floor(Math.random() * s.length);
             let i2 = Math.floor(Math.random() * s.length);
