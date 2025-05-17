@@ -85,7 +85,7 @@ LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org
 ### 🍬最后
 **如果有帮助到你，请给repo点个star，让更多的人看到 ~ ("▔□▔)/**
 #### Star History
-![star_history](https://raw.gitmirror.com/zhang-wangz/startHistoryAction/main/star_history.png?timestamp=1747377437)
+![star_history](https://raw.gitmirror.com/zhang-wangz/startHistoryAction/main/star_history.png?timestamp=1747451390)
 
 ### License
 [License](https://github.com/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
