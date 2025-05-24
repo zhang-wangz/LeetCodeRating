@@ -98,6 +98,51 @@
     let localVal = localStorage.getItem('used-dynamic-layout');
     let isDynamic = localVal != null ? localVal.includes('true') : false;
 
+    // 因为字符显示问题，暂时去除
+    // <span class="layui-progress-text myfont">0%</span>
+    const pbstatusContent = `
+          <div style="text-align: center; padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+              <strong class="myfont"> 希望有大佬可以美化这丑丑的界面～ =v= </strong>
+              <p style="padding-top: 10px;"></p>
+              <div class="layui-progress layui-progress-big" lay-showPercent="true" lay-filter="demo-filter-progress">
+                  <div class="layui-progress-bar" lay-percent="0%">
+                  </div>
+              </div>
+              <p style="padding-top: 20px;"></p>
+              <div class="layui-btn-container" style="">
+                  <button id="statusasyc" class="layui-btn layui-btn-radius" lay-on="loading">同步</button>
+              </div>
+          </div>
+          `;
+    const levelContent = `
+          1      无算法要求
+          2      知道常用数据结构和算法并简单使用
+          3      理解常用数据结构和算法
+          4      掌握常用数据结构和算法
+          5      熟练掌握常用数据结构和算法，初步了解高级数据结构
+          6      深入理解并灵活应用数据结构和算法，理解高级数据结构
+          7      结合多方面的数据结构和算法，处理较复杂问题
+          8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
+          9      处理复杂问题，对时间复杂度的要求更严格
+          10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
+          11     竞赛内容，知识点超出面试范围
+          `;
+
+    // layer复用
+    const layer_sync = {
+      type: 1,
+      content: pbstatusContent,
+      title: '同步所有题目状态',
+      area: ['550px', '250px'],
+      shade: 0.6,
+      shadeClose: true
+    };
+
+    const open_layer_sync = () => {
+      layer.open(layer_sync)
+      layui.element.render('progress', 'demo-filter-progress');
+    }
+
     // 判断observer是否已存在，如果存在，则断开重新创建
     function observerReplace(item, newObserver) {
       const oldObserver = observerMap.get(item);
@@ -359,8 +404,8 @@
       waitForKeyElements.controlObj = controlObj;
     }
 
-    let ajaxReq = (type, reqUrl, headers, data, successFuc, withCredentials = true) => {
-      $.ajax({
+    const ajaxReq = (type, reqUrl, headers, data, successFuc, asyn = false) => {
+      return $.ajax({
         // 请求方式
         type: type,
         // 请求的媒体类型
@@ -370,7 +415,7 @@
         // 数据，json字符串
         data: data != null ? JSON.stringify(data) : null,
         // 同步方式
-        async: false,
+        async: asyn,
         xhrFields: {
           withCredentials: true
         },
@@ -817,15 +862,7 @@
       if (GM_getValue('switchpbstatusBtn')) {
         // console.log(levelData[id])
         span.innerHTML = `<i style="font-size:12px;" class="layui-icon layui-icon-refresh"></i> 同步题目状态`;
-        span.onclick = function (e) {
-          layer.open({
-            type: 1,
-            content: `${pbstatusContent}`,
-            title: '同步所有题目状态',
-            area: ['550px', '250px'],
-            shade: 0.6
-          });
-        };
+        span.onclick = open_layer_sync;
         // 使用layui的渲染
         layuiload();
       }
@@ -1946,35 +1983,6 @@
       }
     }
 
-    // 因为字符显示问题，暂时去除
-    // <span class="layui-progress-text myfont">0%</span>
-    let pbstatusContent = `
-          <div style="text-align: center;">
-              <strong class="myfont"> 希望有大佬可以美化这丑丑的界面～ =v= <strong>
-              <p style="padding-top: 10px;"></p>
-              <div class="layui-progress layui-progress-big" lay-showpercent="true" lay-filter="demo-filter-progress">
-                  <div class="layui-progress-bar" lay-percent="0%">
-                  </div>
-              </div>
-              <p style="padding-top: 20px;"></p>
-              <div class="layui-btn-container" style="">
-                  <button id="statusasyc" class="layui-btn layui-btn-radius" lay-on="loading">同步所有问题状态按钮</button>
-              </div>
-          </div>
-          `;
-    let levelContent = `
-          1      无算法要求
-          2      知道常用数据结构和算法并简单使用
-          3      理解常用数据结构和算法
-          4      掌握常用数据结构和算法
-          5      熟练掌握常用数据结构和算法，初步了解高级数据结构
-          6      深入理解并灵活应用数据结构和算法，理解高级数据结构
-          7      结合多方面的数据结构和算法，处理较复杂问题
-          8      掌握不同的数据结构与算法之间的关联性，处理复杂问题，掌握高级数据结构
-          9      处理复杂问题，对时间复杂度的要求更严格
-          10     非常复杂的问题，非常高深的数据结构和算法(例如线段树、树状数组)
-          11     竞赛内容，知识点超出面试范围
-          `;
     async function layuiload() {
       // 使用layui的渲染
       layui.use(function () {
@@ -1984,51 +1992,53 @@
         // 普通事件
         util.on('lay-on', {
           // loading
-          loading: function (othis) {
-            let DISABLED = 'layui-btn-disabled';
+          loading: async function (othis) {
+            const DISABLED = 'layui-btn-disabled';
             if (othis.hasClass(DISABLED)) return;
             othis.addClass(DISABLED);
-            let cnt = Math.trunc((getpbCnt() + 99) / 100);
-            let headers = {
+            const cnt = Math.ceil(getpbCnt() / 100);
+            const headers = {
               'Content-Type': 'application/json'
             };
-            let skip = 0;
-            let timer = setInterval(
-              async function () {
-                ajaxReq('POST', lcgraphql, headers, allPbPostData(skip, 100), res => {
-                  let questions = res.data.problemsetQuestionList.questions;
-                  for (let pb of questions) {
-                    pbstatus[pb.titleSlug] = {
-                      titleSlug: pb.titleSlug,
-                      id: pb.frontendQuestionId,
-                      status: pb.status,
-                      title: pb.title,
-                      titleCn: pb.titleCn,
-                      difficulty: pb.difficulty,
-                      paidOnly: pb.paidOnly
-                    };
-                  }
-                });
-                skip += 100;
-                // skip / 100 是当前已经进行的次数
-                let showval = Math.trunc((skip / 100 / cnt) * 100);
-                if (skip / 100 >= cnt) {
-                  showval = 100;
-                  clearInterval(timer);
-                }
-                element.progress('demo-filter-progress', showval + '%');
-                if (showval == 100) {
-                  pbstatus[pbstatusVersion] = {};
-                  GM_setValue('pbstatus', JSON.stringify(pbstatus));
-                  console.log('同步所有题目状态完成...');
-                  await sleep(1000);
-                  layer.msg('同步所有题目状态完成!');
-                  await sleep(1000);
-                  layer.closeAll();
-                }
-              },
-              300 + Math.random() * 1000
-            );
+            let loaded = 0;
+            const promises = [];
+            for (let i = 0; i < cnt; i++) {
+              promises.push(
+                ajaxReq(
+                  'POST',
+                  lcgraphql,
+                  headers,
+                  allPbPostData(i * 100, 100),
+                  async res => {
+                    const questions = res.data.problemsetQuestionList.questions;
+                    for (const pb of questions) {
+                      pbstatus[pb.titleSlug] = {
+                        titleSlug: pb.titleSlug,
+                        id: pb.frontendQuestionId,
+                        status: pb.status,
+                        title: pb.title,
+                        titleCn: pb.titleCn,
+                        difficulty: pb.difficulty,
+                        paidOnly: pb.paidOnly
+                      };
+                    }
+                    loaded += 1;
+
+                    const showval = Math.trunc((loaded / cnt) * 100);
+                    element.progress('demo-filter-progress', `${showval}%`);
+                  },
+                  true
+                )
+              );
+            }
+
+            Promise.all(promises).then(async () => {
+              pbstatus[pbstatusVersion] = {};
+              GM_setValue('pbstatus', JSON.stringify(pbstatus));
+              layer.msg('同步所有题目状态完成!');
+              await sleep(1000);
+              layer.closeAll();
+            });
           }
         });
       });
@@ -2140,15 +2150,7 @@
           if (GM_getValue('switchpbstatusBtn')) {
             // console.log(levelData[id])
             span4.innerHTML = `<i style="font-size:12px" class="layui-icon layui-icon-refresh"></i>&nbsp;同步题目状态`;
-            span4.onclick = function (e) {
-              layer.open({
-                type: 1,
-                content: `${pbstatusContent}`,
-                title: '同步所有题目状态',
-                area: ['550px', '250px'],
-                shade: 0.6
-              });
-            };
+            span4.onclick = open_layer_sync;
             span4.setAttribute('style', 'cursor:pointer;');
             // 使用layui的渲染
             layuiload();
@@ -2571,13 +2573,7 @@
           { icon: 3 },
           function () {
             layer.close(syncLayer);
-            layer.open({
-              type: 1,
-              content: `${pbstatusContent}`,
-              title: '同步所有题目状态',
-              area: ['550px', '250px'],
-              shade: 0.6
-            });
+            open_layer_sync();
             layuiload();
           },
           function () {
