@@ -139,9 +139,9 @@
     };
 
     const open_layer_sync = () => {
-      layer.open(layer_sync)
+      layer.open(layer_sync);
       layui.element.render('progress', 'demo-filter-progress');
-    }
+    };
 
     // 判断observer是否已存在，如果存在，则断开重新创建
     function observerReplace(item, newObserver) {
