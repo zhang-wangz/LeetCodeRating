@@ -8,3 +8,4 @@ leetcoderatingjs/*-lock.json
 dist
 node_modules
 doc
+bun.lock
