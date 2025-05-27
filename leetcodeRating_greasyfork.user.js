@@ -1041,7 +1041,8 @@
           return (
             !link.getAttribute('linkId') &&
             link.href.match(pbUrl) &&
-            !link.href.match(pbSolutionUrl)
+            !link.href.match(pbSolutionUrl) &&
+            !link.href.match(regPbSubmission)
           );
         });
         // console.log(matchingLinks);
