@@ -1882,16 +1882,15 @@
       if (!GM_getValue('switchpbsearch')) return;
       if (document.querySelector('#id-dropdown') == null) {
         // 做个搜索框
-        let div = document.createElement('div');
+        const div = document.createElement('div');
         div.setAttribute('class', 'layui-inline');
         // 适配黑色主题
         div.classList.add('leetcodeRating-search');
         div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="lcr layui-input" id="id-dropdown">`;
-        let center = document.querySelector('.flex.justify-between');
-        center = center?.childNodes[0]?.childNodes[0]?.childNodes[0];
-        if (center == null) return;
-        if (center.childNodes.length > 0) center.insertBefore(div, center.childNodes[1]);
-        else center.appendChild(div);
+        const logo = document.querySelector('nav > div > ul');
+        if (logo == null) return;
+        logo.insertAdjacentElement('afterend', div);
+        // else navbar.appendChild(div);
         layui.use(function () {
           let dropdown = layui.dropdown;
           let $ = layui.$;
@@ -2753,7 +2752,7 @@
                     score +
                     ', 当前等级为: ' +
                     Math.trunc(level).toString()
-                );
+                )
               } else if (resp && resp.status_msg && !resp.status_msg.includes('Accepted')) {
                 showMessage(
                   '很遗憾，主人提交失败，不过也不要气馁呀，加油! <br/> 当前分数为: ' +
