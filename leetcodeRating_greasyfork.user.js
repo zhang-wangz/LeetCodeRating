@@ -2512,24 +2512,24 @@
         },
         onload: function (res) {
           if (res.status === 200) {
-            console.log('check version success...');
-            let dataStr = res.response;
-            let json = JSON.parse(dataStr);
-            let v = json['version'];
-            let upcontent = json['content'];
+            // console.log('check version success...');
+            const dataStr = res.response;
+            const json = JSON.parse(dataStr);
+            const remoteVersion = json['version'];
+            const upcontent = json['content'];
             // 更新纸片人地址
             papermanpic = json['papermanpic'];
             // 通过更新 CSS 变量来更新纸片人
             document.documentElement.style.setProperty('--mumu-img', `url(${papermanpic})`);
             console.log(papermanpic);
-            if (v != version) {
+            if (remoteVersion > version) {
               if (checkVersionLayer) {
-                console.log('弹窗更新栏一次..');
+                // console.log('弹窗更新栏一次..');
                 layer.open({
                   area: ['500px', '300px'],
                   content:
                     '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' +
-                    v +
+                    remoteVersion +
                     '啦,请前往更新~ <br/>' +
                     '更新内容: <br/>' +
                     upcontent +
@@ -2540,14 +2540,14 @@
                     layer.close(index);
                     preDate1 = now;
                     GM_setValue('preDate1', preDate1);
-                    console.log('update preDate1 success');
+                    // console.log('update preDate1 success');
                   }
                 });
               } else {
-                console.log('有新的版本，但是已经弹窗过且开启了最多只更新一次功能，等待明天弹窗..');
+                // console.log('有新的版本，但是已经弹窗过且开启了最多只更新一次功能，等待明天弹窗..');
               }
             } else {
-              console.log('leetcodeRating难度分插件当前已经是最新版本~');
+              // console.log('leetcodeRating难度分插件当前已经是最新版本~');
             }
           }
         },
