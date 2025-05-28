@@ -2754,7 +2754,7 @@
                     score +
                     ', 当前等级为: ' +
                     Math.trunc(level).toString()
-                )
+                );
               } else if (resp && resp.status_msg && !resp.status_msg.includes('Accepted')) {
                 showMessage(
                   '很遗憾，主人提交失败，不过也不要气馁呀，加油! <br/> 当前分数为: ' +
