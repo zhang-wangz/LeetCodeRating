@@ -1041,7 +1041,7 @@
         let matchingLinks = Array.from(links).filter(link => {
           return (
             !link.getAttribute('linkId') &&
-            link.href.match(pbUrl) && 
+            link.href.match(pbUrl) &&
             !link.href.match(pbSubmissionsUrl) &&
             !link.href.match(pbSolutionUrl)
           );
