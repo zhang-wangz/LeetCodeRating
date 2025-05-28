@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.0.4
+// @version      3.0.5
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,7 +34,7 @@
   function userScript() {
     'use strict';
 
-    let version = '3.0.3';
+    const version = '3.0.5';
     let pbstatusVersion = 'version16';
     // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
@@ -1042,8 +1042,8 @@
           return (
             !link.getAttribute('linkId') &&
             link.href.match(pbUrl) &&
-            !link.href.match(pbSubmissionsUrl) &&
-            !link.href.match(pbSolutionUrl)
+            !link.href.match(pbSolutionUrl) &&
+            !link.href.match(pbSubmissionsUrl)
           );
         });
         // console.log(matchingLinks);
@@ -1884,16 +1884,15 @@
       if (!GM_getValue('switchpbsearch')) return;
       if (document.querySelector('#id-dropdown') == null) {
         // 做个搜索框
-        let div = document.createElement('div');
+        const div = document.createElement('div');
         div.setAttribute('class', 'layui-inline');
         // 适配黑色主题
         div.classList.add('leetcodeRating-search');
         div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="lcr layui-input" id="id-dropdown">`;
-        let center = document.querySelector('.flex.justify-between');
-        center = center?.childNodes[0]?.childNodes[0]?.childNodes[0];
-        if (center == null) return;
-        if (center.childNodes.length > 0) center.insertBefore(div, center.childNodes[1]);
-        else center.appendChild(div);
+        const logo = document.querySelector('nav > div > ul');
+        if (logo == null) return;
+        logo.insertAdjacentElement('afterend', div);
+        // else navbar.appendChild(div);
         layui.use(function () {
           let dropdown = layui.dropdown;
           let $ = layui.$;
@@ -2514,24 +2513,24 @@
         },
         onload: function (res) {
           if (res.status === 200) {
-            console.log('check version success...');
-            let dataStr = res.response;
-            let json = JSON.parse(dataStr);
-            let v = json['version'];
-            let upcontent = json['content'];
+            // console.log('check version success...');
+            const dataStr = res.response;
+            const json = JSON.parse(dataStr);
+            const remoteVersion = json['version'];
+            const upcontent = json['content'];
             // 更新纸片人地址
             papermanpic = json['papermanpic'];
             // 通过更新 CSS 变量来更新纸片人
             document.documentElement.style.setProperty('--mumu-img', `url(${papermanpic})`);
             console.log(papermanpic);
-            if (v != version) {
+            if (remoteVersion > version) {
               if (checkVersionLayer) {
-                console.log('弹窗更新栏一次..');
+                // console.log('弹窗更新栏一次..');
                 layer.open({
                   area: ['500px', '300px'],
                   content:
                     '<pre class="versioncontent" style="color:#000">更新通知: <br/>leetcodeRating有新的版本' +
-                    v +
+                    remoteVersion +
                     '啦,请前往更新~ <br/>' +
                     '更新内容: <br/>' +
                     upcontent +
@@ -2542,14 +2541,14 @@
                     layer.close(index);
                     preDate1 = now;
                     GM_setValue('preDate1', preDate1);
-                    console.log('update preDate1 success');
+                    // console.log('update preDate1 success');
                   }
                 });
               } else {
-                console.log('有新的版本，但是已经弹窗过且开启了最多只更新一次功能，等待明天弹窗..');
+                // console.log('有新的版本，但是已经弹窗过且开启了最多只更新一次功能，等待明天弹窗..');
               }
             } else {
-              console.log('leetcodeRating难度分插件当前已经是最新版本~');
+              // console.log('leetcodeRating难度分插件当前已经是最新版本~');
             }
           }
         },
@@ -2755,7 +2754,7 @@
                     score +
                     ', 当前等级为: ' +
                     Math.trunc(level).toString()
-                );
+                )
               } else if (resp && resp.status_msg && !resp.status_msg.includes('Accepted')) {
                 showMessage(
                   '很遗憾，主人提交失败，不过也不要气馁呀，加油! <br/> 当前分数为: ' +
