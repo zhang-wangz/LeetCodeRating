@@ -174,5 +174,5 @@
 // @note         2025-05-10 3.0.2 PR by @median-dxz: 修复侧边栏题目高亮不一致的bug
 // @note         2025-05-15 3.0.3 修复切换页面监听刷新的问题; PR by @jianchau，修改cdn地址;
 // @note         2025-05-28 3.0.4 PR by @eurfelux 改进题目同步的流程; 改良前端样式；
-// @note         2025-05-28 3.0.5 PR by @eurfelux 修复UI错误
+// @note         2025-05-28 3.0.5 PR by @eurfelux and @jianchau 修复题目提交页面UI错误
 

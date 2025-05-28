@@ -54,6 +54,7 @@
     const pbUrl = 'https://leetcode.{2,7}/problems/.*';
     // 限定pbstatus使用, 不匹配题解链接
     const pbSolutionUrl = 'https://leetcode.{2,7}/problems/.*/solution.*';
+    const pbSubmissionsUrl = 'https://leetcode.{2,7}/problems/.*/submissions.*';
 
     const searchUrl = 'https://leetcode.cn/search/.*';
     const studyUrl = 'https://leetcode.cn/studyplan/.*';
@@ -1042,7 +1043,7 @@
             !link.getAttribute('linkId') &&
             link.href.match(pbUrl) &&
             !link.href.match(pbSolutionUrl) &&
-            !link.href.match(regPbSubmission)
+            !link.href.match(pbSubmissionsUrl)
           );
         });
         // console.log(matchingLinks);
