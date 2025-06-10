@@ -14,7 +14,6 @@ editButton:
   url: https://github.com/zhang-wangz/LeetCodeRating/blob/main/
 # Navigation Menu.
 menus:
-  Home: https://lc.slowme.cn/
   Usage: /Usage.html
   Recommended:
     url: https://github.com/zhang-wangz/LeetCodeRating/issues
