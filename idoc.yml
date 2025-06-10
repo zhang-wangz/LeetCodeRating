@@ -14,6 +14,7 @@ editButton:
   url: https://github.com/zhang-wangz/LeetCodeRating/blob/main/
 # Navigation Menu.
 menus:
+  Home: /Index.html
   Usage: /Usage.html
   Recommended:
     url: https://github.com/zhang-wangz/LeetCodeRating/issues
