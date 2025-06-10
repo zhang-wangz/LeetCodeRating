@@ -20,7 +20,7 @@
 - [点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
 - 企鹅群号: 654726006
 - 答案是: LeetCodeRating
-- [文档 docs](https://zhang-wangz.github.io/LeetCodeRating/)
+- [文档 docs](https://lc.slowme.cn/)
 ### :iphone: 兼容性&安装
 
 请注意： 英文版只有题库页面，tag页面和题目页面展示周赛分，并且不支持其余中文站功能
@@ -57,16 +57,17 @@ LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。
 
 #### 🐒 插件重要版本说明和脚本功能说明
 
-[跳转Docs](https://zhang-wangz.github.io/LeetCodeRating/Usage.html) 建议使用 Ctrl+点击 在新窗口打开）
+[跳转Docs](https://lc.slowme.cn/Usage.html) 建议使用 Ctrl+点击 在新窗口打开）
 
 ### :rocket: 贡献
 Contributors List
 <a href="https://github.com/zhang-wangz/LeetCodeRating/graphs/contributors"><img src="https://opencollective.com/LeetCodeRating/contributors.svg?width=890" /></a>
 非常欢迎你的加入！[提一个 Issue](https://github.com/zhang-wangz/LeetCodeRating/issues/new?assignees=athony.w&labels=help+wanted&template=ISSUE_TEMPLATE.md&title=) 或者提交一个 Pull Request。<br/>
 pr要求如下： <br/>
+tips: 2025/6/10 最大小版本号修改为9
 1. 修改版本号信息:
-- 如果第三位<10，将第三位+1，如果第三位=10，将第二位+1，第三位=0; 
-- 例 1.1.10 -> 1.2.0; 1.1.3 -> 1.1.4;
+- 如果第三位<9，将第三位+1，如果第三位=9，将第二位+1，第三位=0; 
+- 例 1.1.9 -> 1.2.0; 1.1.3 -> 1.1.4;
 - 如果改动更新过大，将被归为大版本更新，直接进入下个大版本，例 1.2.4 -> 1.3.0; <br/>
 2. 修改updatelog.txt文件，将更新描述在最上方加上一行，修改版本号（要求同上），并修改更新描述;  <br/>
 3. 修改js脚本最上方@version为提交的新版本和js文件中变量名为version的value，保持一致，同时更新version.json文件说明更新的版本和更新内容变化;
