@@ -4,7 +4,7 @@
 name: Update Url
 
 on:
-  schedule:
+#  schedule:
 #    - cron:  '0 2 * * *'
 
   workflow_dispatch:
