@@ -3,7 +3,9 @@
 site: LeetCodeRating
 
 dir: ./docs
-
+copyAssets: [
+  "*/CNAME"
+]
 theme: default
 
 # Show open source button
