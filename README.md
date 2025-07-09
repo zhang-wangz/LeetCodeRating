@@ -92,6 +92,4 @@ LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org
 ### License
 [License](https://github.com/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
 
-### Support
-[![Powered by DartNode]( https://dartnode.com/branding/DN-Open-Source-sm.png)]( https://dartnode.com "Powered by DartNode - Free VPS for Open Source")
 
