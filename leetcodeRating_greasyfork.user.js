@@ -930,10 +930,8 @@
           span1.setAttribute('class', userinfo.lastChild.getAttribute('class'));
           span1.setAttribute('class', span1.getAttribute('class') + ' hover:text-blue-s');
           span1.setAttribute('style', 'cursor:pointer');
-          if(!span.getAttribute("hidden"))
-            userinfo.appendChild(span);
-          if(!span1.getAttribute("hidden"))
-            userinfo.appendChild(span1);
+          if (!span.getAttribute('hidden')) userinfo.appendChild(span);
+          if (!span1.getAttribute('hidden')) userinfo.appendChild(span1);
         }
       });
       // console.log("end...")
@@ -2127,20 +2125,22 @@
                 link.href.match(pbUrl) &&
                 !link.href.match(pbSolutionUrl) &&
                 !link.href.match(pbSubmissionsUrl) &&
-                !(link.href.includes('daily-question') ||
+                !(
+                  link.href.includes('daily-question') ||
                   link.getAttribute('class')?.includes('rounded') ||
                   link.getAttribute('data-state') ||
-                  link.getAttribute('class')?.includes('no-underline'))
+                  link.getAttribute('class')?.includes('no-underline')
+                )
               );
             });
             // console.log(matchingLinks)
             const cnt = Math.ceil(matchingLinks.length / 100);
             let loaded = 0;
             let initIdx = 0;
-            console.log(matchingLinks[0].href)
+            console.log(matchingLinks[0].href);
             for (let i = 0; i < cnt; i++) {
               await sleep(200);
-              for(let idx = 0; idx < 100; idx++) {
+              for (let idx = 0; idx < 100; idx++) {
                 if (initIdx == matchingLinks.length) break;
                 let url = matchingLinks[initIdx].href;
                 let titleSlug = getSlug(url);
@@ -2149,7 +2149,7 @@
                   break;
                 }
                 if (pbstatus[titleSlug] && !pbstatus[titleSlug]['status'].includes('NOT_STARTED')) {
-                    pbstatus[titleSlug]['status'] = 'NOT_STARTED';
+                  pbstatus[titleSlug]['status'] = 'NOT_STARTED';
                 }
                 // console.log(titleSlug)
                 initIdx += 1;
@@ -2159,18 +2159,17 @@
               element.progress('demo-filter-progress1', `${showval}%`);
             }
             pbstatus[pbstatusVersion] = {};
-              GM_setValue('pbstatus', JSON.stringify(pbstatus));
-              layer.msg('重置题目状态完成!');
-              await sleep(1000);
-              layer.closeAll();
-              layer.msg('重新加载页面中!');
-              await sleep(1000);
-              location.reload();
+            GM_setValue('pbstatus', JSON.stringify(pbstatus));
+            layer.msg('重置题目状态完成!');
+            await sleep(1000);
+            layer.closeAll();
+            layer.msg('重新加载页面中!');
+            await sleep(1000);
+            location.reload();
           }
         });
       });
     }
-
 
     let t1; // pb
     let pbCnt = 0;
