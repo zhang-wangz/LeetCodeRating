@@ -11,7 +11,7 @@
 
     - 该功能可以通过新题库页如下筛选获取
 
-  ![image-20250429182041760](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20250429182041760.png)
+  ![image-20250429182041760](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20250429182041760.png)
 
   ​	plus是vip题目，非plus是免费题目
 
@@ -29,46 +29,46 @@
 ##### 2.3.1 新功能速递，来自灵佬建议~
 用户更新到2.3.1之后，在任意界面打开会提示初始化所有题目状态，点击确认
 
-![image-20240728090853004](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728090853004.png)
+![image-20240728090853004](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728090853004.png)
 
 弹出同步弹窗后，点击同步按钮，等待同步结束后，点击右上角x号即同步结束
 
-![image-20240728090958907](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728090958907.png)
+![image-20240728090958907](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728090958907.png)
 
 同步结束后，可在任意讨论区查看题目链接后面的标识，白圈代表用户没做过该题，绿色勾表示已ac，红色代表尝试过但是最终没有ac。
 2.3.9补丁包更新， 尝试过但是最终没有ac的情况下，图标改成了力扣官方使用的黄色双环进行代替，贴合设计。
 
-![image-20240728091107894](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091107894.png)
+![image-20240728091107894](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091107894.png)
 
 2024.7.29 新增加题解区显示完成情况，如下图：
 
-![image-20240729092718834](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240729092718834.png)
+![image-20240729092718834](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240729092718834.png)
 
 
 
 另外，当有新的题目提交时，插件会自动更新用户做题状态，无需手动操作。缺点是如果用户关闭插件，那么讨论区的题目状态可能和用户的lc状态不会时时保持一致。
 
-![image-20240728091317858](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091317858.png)
+![image-20240728091317858](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091317858.png)
 
 为了避免以上的情况出现，插件另外提供了两个手动同步按钮在界面上，分别在题目页面和讨论区页面
 
-![image-20240728091447599](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091447599.png)
+![image-20240728091447599](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091447599.png)
 
-![image-20240728091459269](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091459269.png)
+![image-20240728091459269](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091459269.png)
 
 两个按钮打开的是同一个弹窗，和初始化同步的过程一致
 
-![image-20240728091527059](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091527059.png)
+![image-20240728091527059](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091527059.png)
 
 以上两个功能依赖于油猴插件界面的两个开关，点击即可关闭功能，更新2.3.1之后默认为开启状态
 
-![image-20240728091638492](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091638492.png)
+![image-20240728091638492](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728091638492.png)
 
 2.3.3补丁更新， 新增加一个按钮，默认关闭，点击开启之后，讨论区题目状态挪到最前面。
 
-![image-20240728182436862](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728182436862.png)
+![image-20240728182436862](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728182436862.png)
 
-![image-20240728182445984](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728182445984.png)
+![image-20240728182445984](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240728182445984.png)
 
 
 如果测试功能有问题，欢迎提交issue或者加vx或者加企鹅群进行交流~ 以上。
@@ -86,32 +86,32 @@
 
 ##### 功能 灵茶信息，题库页面显示
 
-  ![image](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/img.png)
+  ![image](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/img.png)
 
 ##### 功能 题库页周赛难度评分(不包括灵茶)
 
   ​	此功能只有存在周赛分数据的题目才会显示，如果看到一排都没有，那就是这些题目都没有题目分，往后移动就有了。（老是有新朋友询问，这里说明一下）
 
-  ![image1](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/img_1.png)
+  ![image1](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/img_1.png)
 
 ##### 功能 题目页周赛难度评分
 
   控制题目页难度分显示。注意，难度分上面一排数据默认显示，无法关闭，点击算术评级按钮，可以查看对应算术评级对应的难度说明。
 
-  ![image-20240413223413032](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413223413032.png)
+  ![image-20240413223413032](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413223413032.png)
 
 ##### 功能 题解复制去除版权信息
 
   2.1.10 新恢复功能，之前迭代中因为技术难度去除了，现在增加回来，题解区，点击复制按钮后，弹框显示成功，粘贴后去除版权尾巴。
 
-  ![image-20240413223708289](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413223708289.png)
+  ![image-20240413223708289](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413223708289.png)
 
 
 ##### 功能 题目页侧边栏分数显示
 
   开启后将自动加载侧边栏分数
 
-  ![image-20240413223938033](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413223938033.png)
+  ![image-20240413223938033](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413223938033.png)
 
 ##### 功能 题目页题目搜索框
 
@@ -119,7 +119,7 @@
 
   已适配深色模式
 
-  ![image-20240413224048569](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413224048569.png)
+  ![image-20240413224048569](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413224048569.png)
 
 ##### 功能 题目搜索页周赛难度评分
 
@@ -134,7 +134,7 @@
 
   后面的xxx为力扣生成的题单id
 
-  ![image2](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/img_2.png)
+  ![image2](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/img_2.png)
 
 ##### 功能 学习计划周赛难度评分
 
@@ -142,7 +142,7 @@
 
   例如https://leetcode.cn/studyplan/top-interview-150/
 
-  ![image-20240413224920329](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413224920329.png)
+  ![image-20240413224920329](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413224920329.png)
 
 ##### 功能 竞赛页面双栏布局
 
@@ -154,7 +154,7 @@
 
   简单理解，就是上下排列改为左右排列，方便做题
 
-  ![image-20240413225124712](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413225124712.png)
+  ![image-20240413225124712](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413225124712.png)
 
 ##### 功能  算术评级
 
@@ -164,9 +164,9 @@
 
   开启后，会关闭一些信息显示
 
-  ![image3](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/img_3.png)
+  ![image3](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/img_3.png)
 
-  ![image-20240413225531805](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413225531805.png)
+  ![image-20240413225531805](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413225531805.png)
 
 ##### 功能 自动切换白天黑夜模式(早8晚8切换制)
 
@@ -176,6 +176,6 @@
 
   开启后，会在界面上显示一个纸片人，纸片人下方在登录力扣之后会根据当前做题数显示对应等级(根据题目数量，难度进行计算)，在不同的界面纸片人会给予一些提示(自行探索), 纸片人会自动讲述情话～可替换形象
 
-  ![image-20240413230836029](https://hub.gitmirror.com/raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413230836029.png)
+  ![image-20240413230836029](https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/main/images/image-20240413230836029.png)
 
 <br/>
