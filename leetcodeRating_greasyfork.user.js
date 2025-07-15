@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.0.5
+// @version      3.0.6
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,7 +34,7 @@
   function userScript() {
     'use strict';
 
-    const version = '3.0.5';
+    const version = '3.0.6';
     let pbstatusVersion = 'version16';
     // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
@@ -115,6 +115,21 @@
               </div>
           </div>
           `;
+
+    const pbstatusContent1 = `
+          <div style="text-align: center; padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+              <strong class="myfont"> 希望有大佬可以美化这丑丑的界面～ =v= </strong>
+              <p style="padding-top: 10px;"></p>
+              <div class="layui-progress layui-progress-big" lay-showPercent="true" lay-filter="demo-filter-progress1">
+                  <div class="layui-progress-bar" lay-percent="0%">
+                  </div>
+              </div>
+              <p style="padding-top: 20px;"></p>
+              <div class="layui-btn-container" style="">
+                  <button id="statusasyc1" class="layui-btn layui-btn-radius" lay-on="loading1">重置</button>
+              </div>
+          </div>
+          `;
     const levelContent = `
           1      无算法要求
           2      知道常用数据结构和算法并简单使用
@@ -139,9 +154,24 @@
       shadeClose: true
     };
 
+    // layer复用
+    const layer_sync1 = {
+      type: 1,
+      content: pbstatusContent1,
+      title: '重置当前页面题目状态',
+      area: ['550px', '250px'],
+      shade: 0.6,
+      shadeClose: true
+    };
+
     const open_layer_sync = () => {
       layer.open(layer_sync);
       layui.element.render('progress', 'demo-filter-progress');
+    };
+
+    const open_layer_sync1 = () => {
+      layer.open(layer_sync1);
+      layui.element.render('progress', 'demo-filter-progress1');
     };
 
     // 判断observer是否已存在，如果存在，则断开重新创建
@@ -545,6 +575,13 @@
             true,
             true
           ],
+          [
+            'switchpbstatusresetBtn',
+            'pbstatusResetBtn function',
+            '讨论页重置当前题目状态按钮',
+            true,
+            true
+          ],
           ['switchperson', 'person function', '纸片人', false, true]
         ],
         menu_ID = [],
@@ -858,14 +895,30 @@
       if (document.querySelector('#statusBtn')) return;
       let span = document.createElement('span');
       span.setAttribute('data-small-spacing', 'true');
+      span.setAttribute('hidden', 'true');
       span.setAttribute('id', 'statusBtn');
+
+      let span1 = document.createElement('span');
+      span1.setAttribute('data-small-spacing', 'true');
+      span1.setAttribute('hidden', 'true');
+      span1.setAttribute('id', 'statusBtn');
       // 判断同步按钮
       if (GM_getValue('switchpbstatusBtn')) {
+        span.removeAttribute('hidden');
         // console.log(levelData[id])
         span.innerHTML = `<i style="font-size:12px;" class="layui-icon layui-icon-refresh"></i> 同步题目状态`;
         span.onclick = open_layer_sync;
         // 使用layui的渲染
         layuiload();
+      }
+      // 判断重置按钮
+      if (GM_getValue('switchpbstatusresetBtn')) {
+        span1.removeAttribute('hidden');
+        // console.log(levelData[id])
+        span1.innerHTML = `<i style="font-size:12px;" class="layui-icon layui-icon-refresh"></i> 重置当前页面题目状态`;
+        span1.onclick = open_layer_sync1;
+        // 使用layui的渲染
+        layuiload1();
       }
       new ElementGetter().each('.flex-wrap.items-center', document, userinfo => {
         if (userinfo?.lastChild?.textContent?.includes('发布于')) {
@@ -873,7 +926,14 @@
           span.setAttribute('class', userinfo.lastChild.getAttribute('class'));
           span.setAttribute('class', span.getAttribute('class') + ' hover:text-blue-s');
           span.setAttribute('style', 'cursor:pointer');
-          userinfo.appendChild(span);
+
+          span1.setAttribute('class', userinfo.lastChild.getAttribute('class'));
+          span1.setAttribute('class', span1.getAttribute('class') + ' hover:text-blue-s');
+          span1.setAttribute('style', 'cursor:pointer');
+          if(!span.getAttribute("hidden"))
+            userinfo.appendChild(span);
+          if(!span1.getAttribute("hidden"))
+            userinfo.appendChild(span1);
         }
       });
       // console.log("end...")
@@ -2044,6 +2104,74 @@
         });
       });
     }
+
+    async function layuiload1() {
+      // 使用layui的渲染
+      layui.use(function () {
+        let element = layui.element;
+        let util = layui.util;
+        let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
+        // 普通事件
+        util.on('lay-on', {
+          // loading
+          loading1: async function (othis) {
+            const DISABLED = 'layui-btn-disabled';
+            if (othis.hasClass(DISABLED)) return;
+            othis.addClass(DISABLED);
+            // 获取所有的<a>标签
+            let links = document.querySelectorAll('a');
+            // console.log(links)
+            // 过滤出符合条件的<a>标签
+            let matchingLinks = Array.from(links).filter(link => {
+              return (
+                link.href.match(pbUrl) &&
+                !link.href.match(pbSolutionUrl) &&
+                !link.href.match(pbSubmissionsUrl) &&
+                !(link.href.includes('daily-question') ||
+                  link.getAttribute('class')?.includes('rounded') ||
+                  link.getAttribute('data-state') ||
+                  link.getAttribute('class')?.includes('no-underline'))
+              );
+            });
+            // console.log(matchingLinks)
+            const cnt = Math.ceil(matchingLinks.length / 100);
+            let loaded = 0;
+            let initIdx = 0;
+            console.log(matchingLinks[0].href)
+            for (let i = 0; i < cnt; i++) {
+              await sleep(200);
+              for(let idx = 0; idx < 100; idx++) {
+                if (initIdx == matchingLinks.length) break;
+                let url = matchingLinks[initIdx].href;
+                let titleSlug = getSlug(url);
+                if (!titleSlug) {
+                  initIdx += 1;
+                  break;
+                }
+                if (pbstatus[titleSlug] && !pbstatus[titleSlug]['status'].includes('NOT_STARTED')) {
+                    pbstatus[titleSlug]['status'] = 'NOT_STARTED';
+                }
+                // console.log(titleSlug)
+                initIdx += 1;
+              }
+              loaded += 1;
+              const showval = Math.trunc((loaded / cnt) * 100);
+              element.progress('demo-filter-progress1', `${showval}%`);
+            }
+            pbstatus[pbstatusVersion] = {};
+              GM_setValue('pbstatus', JSON.stringify(pbstatus));
+              layer.msg('重置题目状态完成!');
+              await sleep(1000);
+              layer.closeAll();
+              layer.msg('重新加载页面中!');
+              await sleep(1000);
+              location.reload();
+          }
+        });
+      });
+    }
+
+
     let t1; // pb
     let pbCnt = 0;
     let pbCnt2 = 0;

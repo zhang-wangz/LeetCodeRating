@@ -1,6 +1,6 @@
 {
-  "version": "3.0.5",
-  "content": "PR by @eurfelux and @jianchau 去除题目提交页面UI错误显示的状态和分数",
+  "version": "3.0.6",
+  "content": "讨论区新增重置当前页面下题目状态的按钮，具体查看使用文档～",
   "papermanpic": "https://i.mij.rip/2025/04/29/1e40225e739fba34536e4ad18aa7d718.png"
 }
 
