@@ -372,7 +372,7 @@
     GM_xmlhttpRequest({
       method: "get",
       url:
-        "https://raw.githubusercontents.com/zerotrac/leetcode_problem_rating/main/data.json" +
+        "https://raw.githubusercontent.com/zerotrac/leetcode_problem_rating/main/data.json" +
         "?timeStamp=" +
         new Date().getTime(),
       headers: {
@@ -653,7 +653,7 @@
     GM_xmlhttpRequest({
       method: "get",
       url:
-        "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/version.json" +
+        "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/english/version.json" +
         "?timeStamp=" +
         new Date().getTime(),
       headers: {
@@ -675,7 +675,7 @@
                 "</pre>",
               yes: function (index) {
                 const c = window.open(
-                  "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/leetcodeRating_greasyfork.user.js" +
+                  "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/english/leetcodeRating_greasyfork.user.js" +
                     "?timeStamp=" +
                     new Date().getTime()
                 )
@@ -704,5 +704,5 @@
     `[Script Init] t2rate data available: ${Object.keys(t2rate).length} entries`
   )
 
-  startTimers(location.href, 2000)  // 2秒间隔
+  startTimers(location.href, 2000) // 2秒间隔
 })()
