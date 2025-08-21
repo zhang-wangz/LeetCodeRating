@@ -32,11 +32,10 @@
 // @note         2023-12-14 1.1.5 fix the error that scores are not displayed properly due to ui changes in problem set page
 // ==/UserScript==
 
-;(function () {
+(function () {
   "use strict"
   let t2rate = {}
-  let latestpb = {}
-  let version = "1.1.5"
+  const version = "1.1.5"
 
   // a timer manager for all pages
   const TimerManager = {
@@ -78,14 +77,14 @@
     },
   }
   let preDate
-  let allProblemsUrl = "https://leetcode.com/problemset" // the problems page, contains all problems
-  let problemListUrl = "https://leetcode.com/problem-list" // the problem list page, such as "https://leetcode.com/problem-list/array/"
-  let problemUrl = "https://leetcode.com/problems" // the specific problem page, such as "https://leetcode.com/problems/two-sum/description/"
+  const allProblemsUrl = "https://leetcode.com/problemset" // the problems page, contains all problems
+  const problemListUrl = "https://leetcode.com/problem-list" // the problem list page, such as "https://leetcode.com/problem-list/array/"
+  const problemUrl = "https://leetcode.com/problems" // the specific problem page, such as "https://leetcode.com/problems/two-sum/description/"
   GM_addStyle(GM_getResourceText("css"))
 
   // 深拷贝 deep clone
   function deepclone(obj) {
-    let str = JSON.stringify(obj)
+    const str = JSON.stringify(obj)
     return JSON.parse(str)
   }
 
@@ -114,15 +113,11 @@
     return load
   }
 
-  // 获取数字 get the contest number
-  function getcontestNumber(url) {
-    return parseInt(url.substr(15))
-  }
 
   // 获取时间
   function getCurrentDate(format) {
-    let now = new Date()
-    let year = now.getFullYear() //得到年份
+    const now = new Date()
+    const year = now.getFullYear() //得到年份
     let month = now.getMonth() //得到月份
     let date = now.getDate() //得到日期
     let hour = now.getHours() //得到小时
@@ -317,9 +312,9 @@
     }`
   )
 
-  latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
+//   latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
   preDate = GM_getValue("preDate", "")
-  let now = getCurrentDate(1)
+  const now = getCurrentDate(1)
 
   console.log(
     `[Data Init] preDate: ${preDate}, now: ${now}, tagVersion exists: ${
@@ -509,7 +504,7 @@
     }
   }
 
-  ;[...document.querySelectorAll("*")].forEach((item) => {
+  [...document.querySelectorAll("*")].forEach((item) => {
     item.oncopy = function (e) {
       e.stopPropagation()
     }
@@ -532,10 +527,10 @@
       onload: function (res) {
         if (res.status === 200) {
           console.log("enter home page check version once...")
-          let dataStr = res.response
-          let json = JSON.parse(dataStr)
-          let v = json["version"]
-          let upcontent = json["content"]
+          const dataStr = res.response
+          const json = JSON.parse(dataStr)
+          const v = json["version"]
+          const upcontent = json["content"]
           if (v != version) {
             layer.open({
               content:
@@ -543,8 +538,8 @@
                 "update content: <br/>" +
                 upcontent +
                 "</pre>",
-              yes: function (index, layer0) {
-                let c = window.open(
+              yes: function (index) {
+                const c = window.open(
                   "https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/leetcodeRating_greasyfork.user.js" +
                     "?timeStamp=" +
                     new Date().getTime()
