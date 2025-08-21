@@ -41,9 +41,9 @@
     // a timer manager for all pages
     const TimerManager = {
         timers: {
-            allProblems: null,      // 题目列表页 contains all the problems
-            problem: null,          // 单题页 the specific problem page
-            problemList: null       // 题单页 the problem list page
+            allProblems: null, // 题目列表页 contains all the problems
+            problem: null, // 单题页 the specific problem page
+            problemList: null // 题单页 the problem list page
         },
         
         // 设置定时器 set timer
@@ -144,144 +144,133 @@
       return time;
     }
 
+    function getProblemIndex(problem) {
+        // we can't use problem.id because for some problems, the id here is not the problem index, so we have to extract problem index from title text
+        const titleElement = problem.querySelector('.text-body .ellipsis')
+        if (!titleElement) return null;
+        const titleText = titleElement.textContent || titleElement.innerText
+        const match = titleText.match(/^(\d+)\.\s/)
+        if (!match) return null;
+        return match[1]
+    }
 
 
-    let t  // all and tag
-    let t1, le // pb
-    function getData() {
-        console.log('[LeetCodeRating] getData() polling - ' + new Date().toLocaleTimeString());
+
+
+    let lastProcessedListContent
+    let lastProcessedProblemId
+    function getAllProblemsData() {
+        console.log('[LeetCodeRating] getAllProblemsData() polling - ' + new Date().toLocaleTimeString());
         try {
-            const problemList = document.querySelector("#__next > div > div > div:nth-child(2) > div > div:nth-child(4) > div:nth-child(2) > div > div > div:nth-child(2)")
-      // pb页面加载时直接返回
+            // find the element in devtools and click "copy JS path"
+            const problemList = document.querySelector("#__next > div.flex.min-h-screen.min-w-\\[360px\\].flex-col.text-label-1.dark\\:text-dark-label-1 > div.mx-auto.w-full.grow.lg\\:max-w-screen-xl.dark\\:bg-dark-layer-bg.lc-dsw-xl\\:max-w-none.flex.bg-white.p-0.md\\:max-w-none.md\\:p-0 > div > div.flex.w-full.flex-1.overflow-hidden > div > div.flex.flex-1.justify-center.overflow-hidden > div > div.mt-4.flex.flex-col.items-center.gap-4 > div.w-full.flex-1 > div")
+            console.log('getAllProblemsData problemList', problemList)
+            // pb页面加载时直接返回
             if (problemList == undefined) {
                 return
             }
 
             // 防止过多的无效操作
-            if (t != undefined && t == problemList.lastChild.innerHTML) {
+            if (lastProcessedListContent != undefined && lastProcessedListContent == problemList.innerHTML) {
+                console.log('lastProcessedListContent', lastProcessedListContent)
                 return
             }
 
             const problems = problemList.childNodes
+            console.log('getAllProblemsData problems', problems)
+            console.log('problems[0]', problems[0])
             for (const problem of problems) {
-                const length = problem.childNodes.length
-                const problemTitle = problem.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                const problemIndex = parseInt(problemTitle.split(".")[0], 10)
-                let problemDifficulty = problem.childNodes[4].childNodes[0].innerHTML
-                if (t2rate[problemIndex] != undefined) {
-                    console.log(`[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex]["Rating"]}`);
-                    problemDifficulty = t2rate[problemIndex]["Rating"]
-                    problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
-            } else {
-                    // 检查是否当前显示的是数字分数，如果是则恢复原始难度
-                    const currentText = problem.childNodes[4].childNodes[0].innerHTML;
-                    if (/^\d+$/.test(currentText)) {
-                        console.log(`[LeetCodeRating] No rating for problem ${problemIndex}, restoring original difficulty from numeric: ${currentText}`);
-                        // 从DOM class或其他方式获取原始难度，这里先用通用方法
-                        const difficultyElement = problem.childNodes[4].childNodes[0];
-                        const classList = difficultyElement.getAttribute('class') || '';
-                        
-                        let originalDifficulty = "Unknown";
-                        if (classList.includes('text-olive') || classList.includes('text-green')) {
-                            originalDifficulty = "Easy";
-                        } else if (classList.includes('text-yellow')) {
-                            originalDifficulty = "Medium";
-                        } else if (classList.includes('text-pink') || classList.includes('text-red')) {
-                            originalDifficulty = "Hard";
-                        }
-                        
-                        difficultyElement.innerHTML = originalDifficulty;
-                    }
+                const problemIndex = getProblemIndex(problem)
+                if (problemIndex == null) continue;
+
+                // get the difficulty display for the current problem
+                const problemDifficulty = problem.querySelector('p[class*="text-sd-easy"], p[class*="text-sd-medium"], p[class*="text-sd-hard"]')
+                if (problemDifficulty && t2rate[problemIndex] != undefined) {
+                    problemDifficulty.innerHTML = t2rate[problemIndex]["Rating"]
                 }
             }
-            t = deepclone(problemList.lastChild.innerHTML)
+            lastProcessedListContent = deepclone(problemList.innerHTML)
         } catch (e) {
             return
         }
     }
 
-
-
-
-    function getPblistData() {
-        console.log('[LeetCodeRating] getPblistData() polling - ' + new Date().toLocaleTimeString());
+    
+    function getProblemListData() {
+        console.log('[LeetCodeRating] getProblemListData() polling - ' + new Date().toLocaleTimeString());
         try {
-            const problemList = document.querySelector("#__next > div > div.mx-auto.mt-\\[50px\\].w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl.bg-overlay-1.dark\\:bg-dark-overlay-1.md\\:bg-paper.md\\:dark\\:bg-dark-paper > div > div.col-span-4.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(2) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
-            if (t != undefined && t == problemList.lastChild.innerHTML) {
+            const problemList = document.querySelector("#__next > div.flex.min-h-screen.min-w-\\[360px\\].flex-col.text-label-1.dark\\:text-dark-label-1 > div.mx-auto.w-full.grow.lg\\:max-w-screen-xl.dark\\:bg-dark-layer-bg.lc-dsw-xl\\:max-w-none.flex.bg-white.p-0.md\\:max-w-none.md\\:p-0 > div > div.lc-dsw-lg\\:flex-row.lc-dsw-lg\\:px-6.lc-dsw-lg\\:gap-8.lc-dsw-lg\\:justify-center.lc-dsw-xl\\:pl-10.flex.min-h-\\[600px\\].flex-1.flex-col.justify-start.px-4 > div.lc-dsw-lg\\:max-w-\\[699px\\].mt-6.flex.w-full.flex-col.items-center.gap-4 > div.lc-dsw-lg\\:max-w-\\[699px\\].w-full.flex-1 > div > div > div.absolute.left-0.top-0.h-full.w-full > div")
+
+            if (problemList == undefined) {
                 return
             }
-            let problems = problemList.childNodes
-            for (let problem of problems) {
-                let length = problem.childNodes.length
-                let problemTitle = problem.childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerText
-                let problemIndex = problemTitle.split(".")[0].trim()
-                let problemDifficulty = problem.childNodes[4].childNodes[0].innerHTML
 
-                if (t2rate[problemIndex] != undefined) {
-                    problemDifficulty = t2rate[problemIndex]["Rating"]
-                    problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
-                } 
-                else {
-                    let nd2ch = { "text-olive dark:text-dark-olive": "Easy", "text-yellow dark:text-dark-yellow": "Medium", "text-pink dark:text-dark-pink": "Hard" }
-                    let cls = problem.childNodes[4].childNodes[0].getAttribute("class")
-                    problem.childNodes[4].childNodes[0].innerHTML = nd2ch[cls]
+            if (lastProcessedListContent != undefined && lastProcessedListContent == problemList.innerHTML) {
+                return
+            }
+            const problems = problemList.childNodes
+            for (const problem of problems) {
+                const problemIndex = getProblemIndex(problem)
+                if (problemIndex == null) continue;
+
+                const problemDifficulty = problem.querySelector('p[class*="text-sd-easy"], p[class*="text-sd-medium"], p[class*="text-sd-hard"]')
+                if (problemDifficulty && t2rate[problemIndex] != undefined) {
+                    problemDifficulty.innerHTML = t2rate[problemIndex]["Rating"]
                 }
             }
-            t = deepclone(problemList.lastChild.innerHTML)
+            lastProcessedListContent = deepclone(problemList.lastChild.innerHTML)
         } catch (e) {
             return
         }
     }
 
-    function getpb() {
-        console.log('[LeetCodeRating] getpb() polling - ' + new Date().toLocaleTimeString());
+    function getProblemData() {
+        console.log('[LeetCodeRating] getProblemData() polling - ' + new Date().toLocaleTimeString());
         try {
+            const problemTitle = document.querySelector("#qd-content > div > div.flexlayout__tab > div > div > div > div > div > a")
 
-            // 旧版的标题位置
-            let problemTitle = document.querySelector("#app > div > div.main__2_tD > div.content__3fR6 > div > div.side-tools-wrapper__1TS9 > div > div.css-1gd46d6-Container.e5i1odf0 > div.css-jtoecv > div > div.tab-pane__ncJk.css-1eusa4c-TabContent.e5i1odf5 > div > div.css-101rr4k > div.css-v3d350")
-            console.log('[LeetCodeRating] Old version problemTitle:', problemTitle ? 'Found' : 'Not found');
+            console.log('[LeetCodeRating] problemTitle:', problemTitle ? 'Found' : 'Not found');
             if (problemTitle == undefined) {
-                // 新版逻辑
-                problemTitle = document.querySelector("#qd-content > div > div.flexlayout__tab > div > div > div > div > div > a")
-                console.log('[LeetCodeRating] New version problemTitle:', problemTitle ? 'Found' : 'Not found');
-                if (problemTitle == undefined) {
-                    console.log('[LeetCodeRating] getpb() - No problemTitle found, returning early');
-                    t1 = "unknown"
-                    return
-                }
-                const problemIndex = problemTitle.innerText.split(".")[0].trim()
-                const colorSpan = document.querySelector("#qd-content > div > div.flexlayout__tab > div > div > div.flex.gap-1 > div") // 不确定要不要删除最后一个 "div"
-                // const pa = colorSpan.parentNode.parentNode
-                if (t1 != undefined && t1 == problemIndex) {
-                    return
-                }
-                // 新版统计难度分数并且修改
-                let problemDifficulty = colorSpan.getAttribute("class")
-                if (t2rate[problemIndex] != undefined) {
-                    console.log(`[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex]["Rating"]}`);
-                    colorSpan.innerHTML = t2rate[problemIndex]["Rating"]
-      } else {
-                    console.log(`[LeetCodeRating] No rating found for problem ${problemIndex}, restoring original difficulty`);
-                    // 恢复原始难度显示
-                    let difficultyMap = {
-                        "text-olive": "Easy",
-                        "text-yellow": "Medium", 
-                        "text-pink": "Hard"
-                    };
-                    
-                    // 检查class中包含哪种难度
-                    let originalDifficulty = "Unknown";
-                    for (let diffClass in difficultyMap) {
-                        if (problemDifficulty && problemDifficulty.includes(diffClass)) {
-                            originalDifficulty = difficultyMap[diffClass];
-                            break;
-                        }
-                    }
-                    colorSpan.innerHTML = originalDifficulty;
-                }
-
-                t1 = deepclone(problemIndex)
+                lastProcessedProblemId = "unknown"
+                return
             }
+
+            const problemIndex = problemTitle.innerText.split(".")[0].trim()
+
+            if (lastProcessedProblemId != undefined && lastProcessedProblemId == problemIndex) {
+                return
+            }
+
+            const colorSpan = document.querySelector("#qd-content > div > div.flexlayout__tab > div > div > div.flex.gap-1 > div")
+
+            // 新版统计难度分数并且修改
+            if (t2rate[problemIndex] != undefined) {
+                console.log(`[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex]["Rating"]}`);
+                colorSpan.innerHTML = t2rate[problemIndex]["Rating"]
+            } 
+            else {
+                console.log(`[LeetCodeRating] No rating found for problem ${problemIndex}, restoring original difficulty`);
+                // 恢复原始难度显示
+                const problemDifficulty = colorSpan.getAttribute("class")
+                const difficultyMap = {
+                    "text-difficulty-easy": "Easy",
+                    "text-difficulty-medium": "Medium", 
+                    "text-difficulty-hard": "Hard"
+                };
+                
+                // 检查class中包含哪种难度
+                let originalDifficulty = "Unknown";
+                for (const diffClass in difficultyMap) {
+                    if (problemDifficulty && problemDifficulty.includes(diffClass)) {
+                        originalDifficulty = difficultyMap[diffClass];
+                        break;
+                    }
+                }
+                colorSpan.innerHTML = originalDifficulty;
+            }
+
+            lastProcessedProblemId = deepclone(problemIndex)
+            
         } catch (e) {
             return
         }
@@ -296,7 +285,7 @@
     
     console.log(`[Data Init] preDate: ${preDate}, now: ${now}, tagVersion exists: ${t2rate["tagVersion"] != undefined}`);
     
-    if (t2rate["tagVersion"] == undefined || (preDate == "" || preDate != now)) {
+    if (t2rate["tagVersion"] == undefined || preDate == "" || preDate != now) {
         console.log(`[Data Init] Need to fetch new data from server`);
         
         GM_xmlhttpRequest({
@@ -310,8 +299,8 @@
                     console.log(`[Data Init] Successfully fetched data from server`);
                     // 保留唯一标识
                     t2rate = {}
-                    let dataStr = res.response
-                    let json = eval(dataStr)
+                    const dataStr = res.response
+                    const json = eval(dataStr)
                     console.log(`[Data Init] Parsed ${json.length} problem records`);
                     
                     for (const element of json) {
@@ -324,7 +313,8 @@
                     preDate = now
                     GM_setValue("preDate", preDate)
                     GM_setValue("t2ratedb", JSON.stringify(t2rate))
-      } else {
+                } 
+                else {
                     console.log(`[Data Init] Failed to fetch data, status: ${res.status}`);
                 }
             },
@@ -343,9 +333,9 @@
 
         // 根据URL匹配对应的页面类型和函数
         const pageConfig = {
-            allProblems: { url: allProblemsUrl, func: getData, name: 'getData()' },
-            problem: { url: problemUrl, func: getpb, name: 'getpb()' },
-            problemList: { url: problemListUrl, func: getPblistData, name: 'getPblistData()' }
+            allProblems: { url: allProblemsUrl, func: getAllProblemsData, name: 'getAllProblemsData()' },
+            problem: { url: problemUrl, func: getProblemData, name: 'getProblemData()' },
+            problemList: { url: problemListUrl, func: getProblemListData, name: 'getProblemListData()' }
         };
         
         console.log(`[clearAndStart] Page config:`, pageConfig);
@@ -358,8 +348,8 @@
             if (url.startsWith(config.url)) {
                 currentPageType = type;
                 console.log(`[clearAndStart] Matched page type: ${currentPageType}`);
-                  break;
-                }
+                break;
+            }
         }
         
         if (!currentPageType) {
@@ -374,9 +364,9 @@
                     console.log(`[LeetCodeRating] Immediate execution for URL change: ${funcName} (attempt ${retryCount + 1})`);
                     
                     // 记录执行前的状态
-                    const beforeState = { t1: t1, t: t };
+                    const beforeState = { lastProcessedProblemId: lastProcessedProblemId, lastProcessedListContent: lastProcessedListContent };
                     func();
-                    const afterState = { t1: t1, t: t };
+                    const afterState = { lastProcessedProblemId: lastProcessedProblemId, lastProcessedListContent: lastProcessedListContent };
                     
                     // 检查是否成功执行（状态有变化）
                     const hasChanges = JSON.stringify(beforeState) !== JSON.stringify(afterState);
@@ -385,9 +375,11 @@
                         retryCount++;
                         console.log(`[LeetCodeRating] ${funcName} - No changes detected, retrying in ${200 * retryCount}ms...`);
                         setTimeout(tryExecute, 200 * retryCount); // 递增延迟: 200ms, 400ms, 600ms
-                    } else if (hasChanges) {
+                    } 
+                    else if (hasChanges) {
                         console.log(`[LeetCodeRating] ${funcName} - Successfully executed with changes`);
-          } else {
+                    } 
+                    else {
                         console.log(`[LeetCodeRating] ${funcName} - Max retries reached, will rely on timer`);
                     }
                 };
@@ -405,14 +397,7 @@
             console.log(`[clearAndStart] Starting timer for ${currentPageType} with ${timeout}ms interval`);
             const timerId = setInterval(config.func, timeout);
             TimerManager.set(currentPageType, timerId);
-            
-            // 特殊处理：单题页面同时启动题目列表检测
-            if (currentPageType === 'problem') {
-                console.log(`[clearAndStart] Special case: problem page, also starting getData timer`);
-                executeWithRetry(getData, 'getData()');
-                const allTimerId = setInterval(getData, timeout);
-                TimerManager.set('allProblems', allTimerId);
-            }
+
             
             console.log(`[clearAndStart] Setup complete for page type: ${currentPageType}`);
         } else {
@@ -420,11 +405,11 @@
         }
 
         // 添加URL变化监听
-      if (isAddEvent) {
-        window.addEventListener('urlchange', () => {
+        if (isAddEvent) {
+            window.addEventListener('urlchange', () => {
                 console.log('urlchange event happened');
-          let newUrl = location.href;
-                clearAndStart(newUrl, 2000, false);
+                const newUrl = location.href;
+                clearAndStart(newUrl, 10000, false);
         });
       }
     }
@@ -440,27 +425,27 @@
 
     // 版本更新机制 (仅在主页检查)
     if (window.location.href.startsWith(allProblemsUrl)) {
-      GM_xmlhttpRequest({
+        GM_xmlhttpRequest({
             method: "get",
             url: 'https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/version.json' + "?timeStamp=" + new Date().getTime(),
-        headers: {
+            headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
-        },
+            },
         onload: function (res) {
-          if (res.status === 200) {
+            if (res.status === 200) {
                     console.log("enter home page check version once...")
                     let dataStr = res.response
                     let json = JSON.parse(dataStr)
                     let v = json["version"]
                     let upcontent = json["content"]
                     if (v != version) {
-                layer.open({
+                        layer.open({
                             content: '<pre style="color:#000">Update notice: <br/>leetcodeRating difficulty plugin has a new version, please go to update ~ <br/>' + "update content: <br/>" + upcontent + "</pre>",
-                  yes: function (index, layer0) {
-                                let c = window.open("https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/leetcodeRating_greasyfork.user.js" + "?timeStamp=" + new Date().getTime())
-                                c.close()
-                                layer.close(index)
-                  }
+                        yes: function (index, layer0) {
+                            let c = window.open("https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/leetcodeRating_greasyfork.user.js" + "?timeStamp=" + new Date().getTime())
+                            c.close()
+                            layer.close(index)
+                    }
                 });
               } else {
                         console.log("leetcodeRating difficulty plugin is currently the latest version~")
@@ -474,9 +459,9 @@
       });
     }
 
-    // 启动主程序，使用2000ms间隔，并添加URL变化监听
+    // 启动主程序，使用10000ms间隔，并添加URL变化监听
     console.log(`[Script Init] Starting LeetCodeRating script v${version}`);
     console.log(`[Script Init] Current URL: ${location.href}`);
     console.log(`[Script Init] t2rate data available: ${Object.keys(t2rate).length} entries`);
-    clearAndStart(location.href, 2000, true);
+    clearAndStart(location.href, 10000, true);
 })();
