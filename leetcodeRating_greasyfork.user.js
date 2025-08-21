@@ -504,7 +504,7 @@
       window.addEventListener("urlchange", () => {
         console.log("urlchange event happened")
         const newUrl = location.href
-        clearAndStart(newUrl, 10000, false)
+        clearAndStart(newUrl, 3000, false)
       })
     }
   }
@@ -567,11 +567,11 @@
     })
   }
 
-  // 启动主程序，使用10000ms间隔，并添加URL变化监听
+  // 启动主程序，使用3000ms间隔，并添加URL变化监听
   console.log(`[Script Init] Starting LeetCodeRating script v${version}`)
   console.log(`[Script Init] Current URL: ${location.href}`)
   console.log(
     `[Script Init] t2rate data available: ${Object.keys(t2rate).length} entries`
   )
-  clearAndStart(location.href, 10000, true)
+  clearAndStart(location.href, 3000, true)
 })()
