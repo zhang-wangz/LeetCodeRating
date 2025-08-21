@@ -704,5 +704,5 @@
     `[Script Init] t2rate data available: ${Object.keys(t2rate).length} entries`
   )
 
-  startTimers(location.href, 2000)  // 2秒间隔
+  startTimers(location.href, 2000) // 2秒间隔
 })()
