@@ -760,53 +760,53 @@
     `,
         variables: {
           categorySlug: 'all-code-essentials',
-          searchKeyword: "",
+          searchKeyword: '',
           skip: skip,
           limit: limit,
           filters: {
-  "filterCombineType": "ALL",
-  "statusFilter": {
-    "questionStatuses": [],
-    "operator": "IS"
-  },
-  "difficultyFilter": {
-    "difficulties": [],
-    "operator": "IS"
-  },
-  "languageFilter": {
-    "languageSlugs": [],
-    "operator": "IS"
-  },
-  "topicFilter": {
-    "topicSlugs": [],
-    "operator": "IS"
-  },
-  "acceptanceFilter": {},
-  "frequencyFilter": {},
-  "frontendIdFilter": {},
-  "lastSubmittedFilter": {},
-  "publishedFilter": {},
-  "companyFilter": {
-    "companySlugs": [],
-    "operator": "IS"
-  },
-  "positionFilter": {
-    "positionSlugs": [],
-    "operator": "IS"
-  },
-  "contestPointFilter": {
-    "contestPoints": [],
-    "operator": "IS"
-  },
-  "premiumFilter": {
-    "premiumStatus": [],
-    "operator": "IS"
-  }
-},
-          sortBy: {
-                "sortField": "CUSTOM",
-                "sortOrder": "ASCENDING"
+            filterCombineType: 'ALL',
+            statusFilter: {
+              questionStatuses: [],
+              operator: 'IS'
+            },
+            difficultyFilter: {
+              difficulties: [],
+              operator: 'IS'
+            },
+            languageFilter: {
+              languageSlugs: [],
+              operator: 'IS'
+            },
+            topicFilter: {
+              topicSlugs: [],
+              operator: 'IS'
+            },
+            acceptanceFilter: {},
+            frequencyFilter: {},
+            frontendIdFilter: {},
+            lastSubmittedFilter: {},
+            publishedFilter: {},
+            companyFilter: {
+              companySlugs: [],
+              operator: 'IS'
+            },
+            positionFilter: {
+              positionSlugs: [],
+              operator: 'IS'
+            },
+            contestPointFilter: {
+              contestPoints: [],
+              operator: 'IS'
+            },
+            premiumFilter: {
+              premiumStatus: [],
+              operator: 'IS'
             }
+          },
+          sortBy: {
+            sortField: 'CUSTOM',
+            sortOrder: 'ASCENDING'
+          }
         },
         operationName: 'problemsetQuestionListV2'
       };
@@ -1222,7 +1222,7 @@
                 };
                 let status;
                 ajaxReq('POST', lcgraphql, headers, postdata, response => {
-                  console.log("用户题目状态: ", response.data.question.status)
+                  console.log('用户题目状态: ', response.data.question.status);
                   status = response.data.question.status;
                 });
                 // 如果之前为ac状态，那么停止更新，直接返回
@@ -2678,7 +2678,7 @@
       let checkVersionLayer = GM_getValue('switchupdate')
         ? preDate1 == '' || preDate1 != now
         : true;
-      console.log("checkVersionLayer: ", checkVersionLayer)
+      console.log('checkVersionLayer: ', checkVersionLayer);
       GM_xmlhttpRequest({
         method: 'get',
         url: versionUrl + '?timeStamp=' + new Date().getTime(),
@@ -3148,10 +3148,10 @@
         setTimeout(getkoto, 8000);
       }
       function echokoto(result) {
-        console.log(result)
+        console.log(result);
         let hc = result;
         document.getElementById('hitokoto').textContent = hc.hitokoto;
-        console.log(hc.hitokoto)
+        console.log(hc.hitokoto);
       }
       setTimeout(getkoto, 8000);
     }
