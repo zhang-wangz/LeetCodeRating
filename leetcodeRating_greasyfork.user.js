@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.0.6
+// @version      3.0.7
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,8 +34,8 @@
   function userScript() {
     'use strict';
 
-    const version = '3.0.6';
-    let pbstatusVersion = 'version16';
+    const version = '3.0.7';
+    let pbstatusVersion = 'version19';
     // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -723,50 +723,92 @@
 
     function allPbPostData(skip, limit) {
       let reqs = {
-        query: `query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
-                  problemsetQuestionList(
-                      categorySlug: $categorySlug
-                      limit: $limit
-                      skip: $skip
-                      filters: $filters
-                  ) {
-                      hasMore
-                      total
-                      questions {
-                      acRate
-                      difficulty
-                      freqBar
-                      frontendQuestionId
-                      isFavor
-                      paidOnly
-                      solutionNum
-                      status
-                      title
-                      titleCn
-                      titleSlug
-                      topicTags {
-                          name
-                          nameTranslated
-                          id
-                          slug
-                      }
-                      extra {
-                          hasVideoSolution
-                          topCompanyTags {
-                          imgUrl
-                          slug
-                          numSubscribed
-                          }
-                      }
-                      }
-                  }
-              }`,
+        query: `
+    query problemsetQuestionListV2($filters: QuestionFilterInput, $limit: Int, $searchKeyword: String, $skip: Int, $sortBy: QuestionSortByInput, $categorySlug: String) {
+  problemsetQuestionListV2(
+    filters: $filters
+    limit: $limit
+    searchKeyword: $searchKeyword
+    skip: $skip
+    sortBy: $sortBy
+    categorySlug: $categorySlug
+  ) {
+    questions {
+      id
+      titleSlug
+      title
+      translatedTitle
+      questionFrontendId
+      paidOnly
+      difficulty
+      topicTags {
+        name
+        slug
+        nameTranslated
+      }
+      status
+      isInMyFavorites
+      frequency
+      acRate
+      contestPoint
+    }
+    totalLength
+    finishedLength
+    hasMore
+  }
+}
+    `,
         variables: {
           categorySlug: 'all-code-essentials',
+          searchKeyword: "",
           skip: skip,
           limit: limit,
-          filters: {}
-        }
+          filters: {
+  "filterCombineType": "ALL",
+  "statusFilter": {
+    "questionStatuses": [],
+    "operator": "IS"
+  },
+  "difficultyFilter": {
+    "difficulties": [],
+    "operator": "IS"
+  },
+  "languageFilter": {
+    "languageSlugs": [],
+    "operator": "IS"
+  },
+  "topicFilter": {
+    "topicSlugs": [],
+    "operator": "IS"
+  },
+  "acceptanceFilter": {},
+  "frequencyFilter": {},
+  "frontendIdFilter": {},
+  "lastSubmittedFilter": {},
+  "publishedFilter": {},
+  "companyFilter": {
+    "companySlugs": [],
+    "operator": "IS"
+  },
+  "positionFilter": {
+    "positionSlugs": [],
+    "operator": "IS"
+  },
+  "contestPointFilter": {
+    "contestPoints": [],
+    "operator": "IS"
+  },
+  "premiumFilter": {
+    "premiumStatus": [],
+    "operator": "IS"
+  }
+},
+          sortBy: {
+                "sortField": "CUSTOM",
+                "sortOrder": "ASCENDING"
+            }
+        },
+        operationName: 'problemsetQuestionListV2'
       };
       reqs.key = 'LeetcodeRating';
       return reqs;
@@ -778,7 +820,7 @@
         'Content-Type': 'application/json'
       };
       ajaxReq('POST', lcgraphql, headers, allPbPostData(0, 0), res => {
-        total = res.data.problemsetQuestionList.total;
+        total = res.data.problemsetQuestionListV2.totalLength;
       });
       return total;
     }
@@ -798,7 +840,7 @@
       let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
       let titleSlug = getSlug(pburl);
       if (!titleSlug) return [null, null, null];
-      let status = pbstatus[titleSlug] == null ? 'NOT_STARTED' : pbstatus[titleSlug]['status'];
+      let status = pbstatus[titleSlug] == null ? 'TO_DO' : pbstatus[titleSlug]['status'];
       // 获取分数
       let score;
       let idExist = pbstatus[titleSlug] != null && t2rate[pbstatus[titleSlug]['id']] != null;
@@ -867,8 +909,8 @@
         return;
       }
       // console.log(status);
-      // 1 ac 2 tried 3 not_started
-      let code = status == 'NOT_STARTED' ? 3 : status == 'AC' ? 1 : 2;
+      // 1 SOLVED 2 ATTEMPTED 3 TO_DO
+      let code = status == 'TO_DO' ? 3 : status == 'SOLVED' ? 1 : 2;
       // console.log(code);
       let iconStr = getPbstatusIcon(code, score, paid);
       let iconEle = document.createElement('span');
@@ -1159,7 +1201,7 @@
                 let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
                 let slug = getSlug(location.href);
                 if (!pbstatus[slug]) pbstatus[slug] = {};
-                pbstatus[slug]['status'] = 'AC';
+                pbstatus[slug]['status'] = 'SOLVED';
                 GM_setValue('pbstatus', JSON.stringify(pbstatus));
                 console.log('提交成功，当前题目状态已更新');
               } else if (resp?.status_msg && !resp.status_msg.includes('Accepted')) {
@@ -1180,18 +1222,19 @@
                 };
                 let status;
                 ajaxReq('POST', lcgraphql, headers, postdata, response => {
+                  console.log("用户题目状态: ", response.data.question.status)
                   status = response.data.question.status;
                 });
                 // 如果之前为ac状态，那么停止更新，直接返回
                 if (status && status == 'ac') {
                   if (!pbstatus[slug]) pbstatus[slug] = {};
-                  pbstatus[slug]['status'] = 'AC';
+                  pbstatus[slug]['status'] = 'SOLVED';
                   GM_setValue('pbstatus', JSON.stringify(pbstatus));
                   console.log('提交失败,但是之前已经ac过该题，所以状态为ac');
                 } else {
                   // 之前没有提交过或者提交过但是没有ac的状态，那么仍然更新为提交失败状态
                   if (!pbstatus[slug]) pbstatus[slug] = {};
-                  pbstatus[slug]['status'] = 'TRIED';
+                  pbstatus[slug]['status'] = 'ATTEMPTED';
                   GM_setValue('pbstatus', JSON.stringify(pbstatus));
                   console.log('提交失败, 当前题目状态已更新');
                 }
@@ -2069,14 +2112,14 @@
                   headers,
                   allPbPostData(i * 100, 100),
                   async res => {
-                    const questions = res.data.problemsetQuestionList.questions;
+                    const questions = res.data.problemsetQuestionListV2.questions;
                     for (const pb of questions) {
                       pbstatus[pb.titleSlug] = {
                         titleSlug: pb.titleSlug,
-                        id: pb.frontendQuestionId,
+                        id: pb.questionFrontendId,
                         status: pb.status,
                         title: pb.title,
-                        titleCn: pb.titleCn,
+                        titleCn: pb.translatedTitle,
                         difficulty: pb.difficulty,
                         paidOnly: pb.paidOnly
                       };
@@ -2097,6 +2140,9 @@
               layer.msg('同步所有题目状态完成!');
               await sleep(1000);
               layer.closeAll();
+              layer.msg('重新加载页面中!');
+              await sleep(1000);
+              location.reload();
             });
           }
         });
@@ -2148,8 +2194,8 @@
                   initIdx += 1;
                   break;
                 }
-                if (pbstatus[titleSlug] && !pbstatus[titleSlug]['status'].includes('NOT_STARTED')) {
-                  pbstatus[titleSlug]['status'] = 'NOT_STARTED';
+                if (pbstatus[titleSlug] && !pbstatus[titleSlug]['status'].includes('TO_DO')) {
+                  pbstatus[titleSlug]['status'] = 'TO_DO';
                 }
                 // console.log(titleSlug)
                 initIdx += 1;
@@ -2252,7 +2298,7 @@
         let tipsChildone = tipsPa.childNodes[1];
         // 题目内容, 插入后变成原tips栏目
         let pbDescription = tipsPa.childNodes[2];
-        if (pbDescription?.childNodes[0]?.getAttribute('data-track-load') != null) {
+        if (pbDescription?.getAttribute('class') == null) {
           let divTips = document.createElement('div');
           divTips.setAttribute('class', 'flex gap-1');
           let abody = document.createElement('a');
@@ -2560,7 +2606,7 @@
             pbName2Id = {};
             pbNamee2Id = {};
             let dataStr = res.response;
-            let json = eval(dataStr);
+            let json = JSON.parse(dataStr);
             for (const element of json) {
               t2rate[element.ID] = element;
               t2rate[element.ID]['Rating'] = Number.parseInt(
@@ -2606,7 +2652,7 @@
             levelTc2Id = {};
             levelTe2Id = {};
             let dataStr = res.response;
-            let json = eval(dataStr);
+            let json = JSON.parse(dataStr);
             for (const element of json) {
               if (typeof element.TitleCn == 'string') {
                 let titlec = element.TitleCn;
@@ -2632,6 +2678,7 @@
       let checkVersionLayer = GM_getValue('switchupdate')
         ? preDate1 == '' || preDate1 != now
         : true;
+      console.log("checkVersionLayer: ", checkVersionLayer)
       GM_xmlhttpRequest({
         method: 'get',
         url: versionUrl + '?timeStamp=' + new Date().getTime(),
@@ -2640,7 +2687,7 @@
         },
         onload: function (res) {
           if (res.status === 200) {
-            // console.log('check version success...');
+            console.log('check version success...');
             const dataStr = res.response;
             const json = JSON.parse(dataStr);
             const remoteVersion = json['version'];
@@ -2649,10 +2696,10 @@
             papermanpic = json['papermanpic'];
             // 通过更新 CSS 变量来更新纸片人
             document.documentElement.style.setProperty('--mumu-img', `url(${papermanpic})`);
-            console.log(papermanpic);
-            if (remoteVersion > version) {
+            // console.log(papermanpic);
+            if (remoteVersion != version) {
               if (checkVersionLayer) {
-                // console.log('弹窗更新栏一次..');
+                console.log('弹窗更新栏一次..');
                 layer.open({
                   area: ['500px', '300px'],
                   content:
@@ -2672,10 +2719,10 @@
                   }
                 });
               } else {
-                // console.log('有新的版本，但是已经弹窗过且开启了最多只更新一次功能，等待明天弹窗..');
+                console.log('有新的版本，但是已经弹窗过且开启了最多只更新一次功能，等待明天弹窗..');
               }
             } else {
-              // console.log('leetcodeRating难度分插件当前已经是最新版本~');
+              console.log('leetcodeRating难度分插件当前已经是最新版本~');
             }
           }
         },
@@ -2721,7 +2768,7 @@
           }
       `);
 
-    // TODO 分割
+    // TODO 分割计划
     // spig js 纸片人相关
     if (GM_getValue('switchperson')) {
       const isindex = true;
@@ -3098,14 +3145,15 @@
             echokoto(res);
           })
           .catch(xhr => xhr);
-        setTimeout(getkoto, 6000);
+        setTimeout(getkoto, 8000);
       }
       function echokoto(result) {
-        let hc = eval(result);
+        console.log(result)
+        let hc = result;
         document.getElementById('hitokoto').textContent = hc.hitokoto;
-        // console.log(hc.content)
+        console.log(hc.hitokoto)
       }
-      setTimeout(getkoto, 5000);
+      setTimeout(getkoto, 8000);
     }
   }
   userScript();
