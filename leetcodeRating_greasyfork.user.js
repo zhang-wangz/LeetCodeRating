@@ -36,6 +36,10 @@
   "use strict"
   let t2rate = {}
   const version = "1.1.5"
+  const DEBUG_MODE = false
+  if (!DEBUG_MODE) {
+    console.log = () => {}
+  }
 
   // a timer manager for all pages
   const TimerManager = {
@@ -88,31 +92,68 @@
     return JSON.parse(str)
   }
 
-  // 监听URL变化事件
-  function initUrlChange() {
-    let isLoad = false
-    const load = () => {
-      if (isLoad) return
-      isLoad = true
+  // URL变化监听管理器 (已注释掉，改用纯定时器方式)
+  /*
+  const UrlChangeManager = {
+    isInitialized: false,
+    urlChangeHandler: null,
+    
+    // 初始化URL变化监听
+    init() {
+      if (this.isInitialized) return
+      this.isInitialized = true
+      
       const oldPushState = history.pushState
       const oldReplaceState = history.replaceState
+      
       history.pushState = function pushState(...args) {
         const res = oldPushState.apply(this, args)
         window.dispatchEvent(new Event("urlchange"))
         return res
       }
+      
       history.replaceState = function replaceState(...args) {
         const res = oldReplaceState.apply(this, args)
         window.dispatchEvent(new Event("urlchange"))
         return res
       }
+      
       window.addEventListener("popstate", () => {
         window.dispatchEvent(new Event("urlchange"))
       })
+      
+      console.log("[UrlChangeManager] URL change detection initialized")
+    },
+    
+    // 设置URL变化处理器（确保只有一个）
+    setHandler(handler) {
+      // 移除旧的处理器
+      if (this.urlChangeHandler) {
+        window.removeEventListener("urlchange", this.urlChangeHandler)
+        console.log("[UrlChangeManager] Removed old urlchange handler")
+      }
+      
+      // 设置新的处理器
+      this.urlChangeHandler = handler
+      window.addEventListener("urlchange", this.urlChangeHandler)
+      console.log("[UrlChangeManager] Set new urlchange handler")
+    },
+    
+    // 清理处理器
+    clearHandler() {
+      if (this.urlChangeHandler) {
+        window.removeEventListener("urlchange", this.urlChangeHandler)
+        this.urlChangeHandler = null
+        console.log("[UrlChangeManager] Cleared urlchange handler")
+      }
     }
-    return load
   }
 
+  // 监听URL变化事件（保持向后兼容）
+  function initUrlChange() {
+    return () => UrlChangeManager.init()
+  }
+  */
 
   // 获取时间
   function getCurrentDate(format) {
@@ -154,6 +195,8 @@
 
   let lastProcessedListContent
   let lastProcessedProblemId
+  // let lastProcessedUrl = ""  // URL变化检测相关
+  // let urlChangeTimeout = null  // URL变化检测相关
   function getAllProblemsData() {
     console.log(
       "[LeetCodeRating] getAllProblemsData() polling - " +
@@ -191,7 +234,7 @@
           'p[class*="text-sd-easy"], p[class*="text-sd-medium"], p[class*="text-sd-hard"]'
         )
         if (problemDifficulty && t2rate[problemIndex] != undefined) {
-          problemDifficulty.innerHTML = t2rate[problemIndex]["Rating"]
+          problemDifficulty.innerHTML = t2rate[problemIndex].Rating
         }
       }
       lastProcessedListContent = deepclone(problemList.innerHTML)
@@ -229,7 +272,7 @@
           'p[class*="text-sd-easy"], p[class*="text-sd-medium"], p[class*="text-sd-hard"]'
         )
         if (problemDifficulty && t2rate[problemIndex] != undefined) {
-          problemDifficulty.innerHTML = t2rate[problemIndex]["Rating"]
+          problemDifficulty.innerHTML = t2rate[problemIndex].Rating
         }
       }
       lastProcessedListContent = deepclone(problemList.lastChild.innerHTML)
@@ -273,9 +316,9 @@
       // 新版统计难度分数并且修改
       if (t2rate[problemIndex] != undefined) {
         console.log(
-          `[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex]["Rating"]}`
+          `[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex].Rating}`
         )
-        colorSpan.innerHTML = t2rate[problemIndex]["Rating"]
+        colorSpan.innerHTML = t2rate[problemIndex].Rating
       } else {
         console.log(
           `[LeetCodeRating] No rating found for problem ${problemIndex}, restoring original difficulty`
@@ -312,17 +355,17 @@
     }`
   )
 
-//   latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
+  //   latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
   preDate = GM_getValue("preDate", "")
   const now = getCurrentDate(1)
 
   console.log(
     `[Data Init] preDate: ${preDate}, now: ${now}, tagVersion exists: ${
-      t2rate["tagVersion"] != undefined
+      t2rate.tagVersion != undefined
     }`
   )
 
-  if (t2rate["tagVersion"] == undefined || preDate == "" || preDate != now) {
+  if (t2rate.tagVersion == undefined || preDate == "" || preDate != now) {
     console.log(`[Data Init] Need to fetch new data from server`)
 
     GM_xmlhttpRequest({
@@ -345,11 +388,11 @@
 
           for (const element of json) {
             t2rate[element.ID] = element
-            t2rate[element.ID]["Rating"] = Number.parseInt(
-              Number.parseFloat(element["Rating"]) + 0.5
+            t2rate[element.ID].Rating = Number.parseInt(
+              Number.parseFloat(element.Rating) + 0.5
             )
           }
-          t2rate["tagVersion"] = {}
+          t2rate.tagVersion = {}
           console.log(
             `[Data Init] Processed t2rate, final keys count: ${
               Object.keys(t2rate).length
@@ -370,6 +413,77 @@
     })
   }
 
+  function startTimers(url, timeout) {
+    console.log(`[startTimers] Starting with URL: ${url}, timeout: ${timeout}`)
+
+    // 清理所有定时器
+    TimerManager.clearAll()
+
+    // 根据URL匹配对应的页面类型和函数
+    const pageConfig = {
+      allProblems: {
+        url: allProblemsUrl,
+        func: getAllProblemsData,
+        name: "getAllProblemsData()",
+      },
+      problem: {
+        url: problemUrl,
+        func: getProblemData,
+        name: "getProblemData()",
+      },
+      problemList: {
+        url: problemListUrl,
+        func: getProblemListData,
+        name: "getProblemListData()",
+      },
+    }
+
+    console.log(`[startTimers] Page config:`, pageConfig)
+    console.log(
+      `[startTimers] URL patterns - allProblems: ${allProblemsUrl}, problem: ${problemUrl}, problemList: ${problemListUrl}`
+    )
+
+    // 找到匹配的页面类型
+    let currentPageType = null
+    for (const [type, config] of Object.entries(pageConfig)) {
+      console.log(
+        `[startTimers] Checking if ${url} starts with ${
+          config.url
+        }: ${url.startsWith(config.url)}`
+      )
+      if (url.startsWith(config.url)) {
+        currentPageType = type
+        console.log(`[startTimers] Matched page type: ${currentPageType}`)
+        break
+      }
+    }
+
+    if (!currentPageType) {
+      console.log(`[startTimers] No matching page type found for URL: ${url}`)
+      return
+    }
+
+    const config = pageConfig[currentPageType]
+    console.log(`[startTimers] Using config for ${currentPageType}:`, config)
+
+    // 立即执行一次
+    console.log(`[startTimers] Starting immediate execution for ${config.name}`)
+    config.func()
+
+    // 启动定时器
+    console.log(
+      `[startTimers] Starting timer for ${currentPageType} with ${timeout}ms interval`
+    )
+    const timerId = setInterval(config.func, timeout)
+    TimerManager.set(currentPageType, timerId)
+
+    console.log(
+      `[startTimers] Setup complete for page type: ${currentPageType}`
+    )
+  }
+
+  // 原版的 clearAndStart 函数 (已注释掉，改用 startTimers)
+  /*
   function clearAndStart(url, timeout, isAddEvent) {
     console.log(
       `[clearAndStart] Starting with URL: ${url}, timeout: ${timeout}`
@@ -494,15 +608,35 @@
       console.log(`[clearAndStart] No page type matched, no timers started`)
     }
 
-    // 添加URL变化监听
+    // 添加URL变化监听 (已注释掉，改用纯定时器方式)
     if (isAddEvent) {
-      window.addEventListener("urlchange", () => {
+      const urlChangeHandler = () => {
         console.log("urlchange event happened")
         const newUrl = location.href
-        clearAndStart(newUrl, 3000, false)
-      })
+        
+        // 防抖处理：如果URL没有变化，忽略此次事件
+        if (newUrl === lastProcessedUrl) {
+          console.log("[UrlChangeManager] URL unchanged, ignoring event")
+          return
+        }
+        
+        // 清除之前的延时器
+        if (urlChangeTimeout) {
+          clearTimeout(urlChangeTimeout)
+        }
+        
+        // 延时执行，防止频繁触发
+        urlChangeTimeout = setTimeout(() => {
+          console.log(`[UrlChangeManager] Processing URL change: ${lastProcessedUrl} -> ${newUrl}`)
+          lastProcessedUrl = newUrl
+          clearAndStart(newUrl, 2000, false)
+          urlChangeTimeout = null
+        }, 100) // 100ms防抖延时
+      }
+      UrlChangeManager.setHandler(urlChangeHandler)
     }
   }
+  */
 
   [...document.querySelectorAll("*")].forEach((item) => {
     item.oncopy = function (e) {
@@ -510,8 +644,8 @@
     }
   })
 
-  // 初始化URL变化监听
-  initUrlChange()()
+  // 初始化URL变化监听 (已注释掉，改用纯定时器方式)
+  // initUrlChange()()
 
   // 版本更新机制 (仅在主页检查)
   if (window.location.href.startsWith(allProblemsUrl)) {
@@ -529,8 +663,8 @@
           console.log("enter home page check version once...")
           const dataStr = res.response
           const json = JSON.parse(dataStr)
-          const v = json["version"]
-          const upcontent = json["content"]
+          const v = json.version
+          const upcontent = json.content
           if (v != version) {
             layer.open({
               content:
@@ -562,11 +696,12 @@
     })
   }
 
-  // 启动主程序，使用3000ms间隔，并添加URL变化监听
+  // 启动主程序，使用2000ms间隔
   console.log(`[Script Init] Starting LeetCodeRating script v${version}`)
   console.log(`[Script Init] Current URL: ${location.href}`)
   console.log(
     `[Script Init] t2rate data available: ${Object.keys(t2rate).length} entries`
   )
-  clearAndStart(location.href, 3000, true)
+
+  startTimers(location.href, 2000)  // 2秒间隔
 })()
