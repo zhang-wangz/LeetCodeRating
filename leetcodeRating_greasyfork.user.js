@@ -36,18 +36,49 @@
     'use strict';
     let t2rate = {}
     let latestpb = {}
-    let id1 = ""
-    let id2 = ""
-    let id3 = ""
-    let id4 = ""
-    let id5 = ""
-    let id6 = ""
     let version = "1.1.5"
+    
+    // a timer manager for all pages
+    const TimerManager = {
+        timers: {
+            allProblems: null,      // 题目列表页 contains all the problems
+            problem: null,          // 单题页 the specific problem page
+            problemList: null       // 题单页 the problem list page
+        },
+        
+        // 设置定时器 set timer
+        set(type, intervalId) {
+            this.clear(type);
+            this.timers[type] = intervalId;
+            console.log(`[TimerManager] Set timer for ${type}: ${intervalId}`);
+        },
+        
+        // 清除指定类型的定时器 clear the timer for the specific type
+        clear(type) {
+            if (this.timers[type]) {
+                clearInterval(this.timers[type]);
+                console.log(`[TimerManager] Cleared timer for ${type}: ${this.timers[type]}`);
+                this.timers[type] = null;
+            }
+        },
+        
+        // 清除所有定时器 clear all timers
+        clearAll() {
+            Object.keys(this.timers).forEach(type => {
+                this.clear(type);
+            });
+            console.log('[TimerManager] Cleared all timers');
+        },
+        
+        // 获取定时器ID get the timer id
+        get(type) {
+            return this.timers[type];
+        }
+    };
     let preDate
-    let allUrl = "https://leetcode.com/problemset"
-    let tagUrl = "https://leetcode.com/tag"
-    let pblistUrl = "https://leetcode.com/problem-list"
-    let pbUrl = "https://leetcode.com/problems"
+    let allProblemsUrl = "https://leetcode.com/problemset" // the problems page, contains all problems
+    let problemListUrl = "https://leetcode.com/problem-list" // the problem list page, such as "https://leetcode.com/problem-list/array/"
+    let problemUrl = "https://leetcode.com/problems" // the specific problem page, such as "https://leetcode.com/problems/two-sum/description/"
     GM_addStyle(GM_getResourceText("css"));
 
     // 深拷贝 deep clone
@@ -56,36 +87,61 @@
         return JSON.parse(str);
     }
 
+    // 监听URL变化事件
+    function initUrlChange() {
+      let isLoad = false;
+      const load = () => {
+        if (isLoad) return;
+        isLoad = true;
+        const oldPushState = history.pushState;
+        const oldReplaceState = history.replaceState;
+        history.pushState = function pushState(...args) {
+          const res = oldPushState.apply(this, args);
+          window.dispatchEvent(new Event('urlchange'));
+          return res;
+        };
+        history.replaceState = function replaceState(...args) {
+          const res = oldReplaceState.apply(this, args);
+          window.dispatchEvent(new Event('urlchange'));
+          return res;
+        };
+        window.addEventListener('popstate', () => {
+          window.dispatchEvent(new Event('urlchange'));
+        });
+      };
+      return load;
+    }
+
     // 获取数字 get the contest number
     function getcontestNumber(url) {
-        return parseInt(url.substr(15));
+      return parseInt(url.substr(15));
     }
 
     // 获取时间
     function getCurrentDate(format) {
-        let now = new Date();
-        let year = now.getFullYear(); //得到年份 
-        let month = now.getMonth(); //得到月份 
-        let date = now.getDate(); //得到日期
-        let hour = now.getHours(); //得到小时
-        let minu = now.getMinutes(); //得到分钟
-        let sec = now.getSeconds(); //得到秒
-        month = month + 1;
+      let now = new Date();
+      let year = now.getFullYear(); //得到年份
+      let month = now.getMonth(); //得到月份
+      let date = now.getDate(); //得到日期
+      let hour = now.getHours(); //得到小时
+      let minu = now.getMinutes(); //得到分钟
+      let sec = now.getSeconds(); //得到秒
+      month = month + 1;
         if (month < 10) month = "0" + month;
         if (date < 10) date = "0" + date;
         if (hour < 10) hour = "0" + hour;
         if (minu < 10) minu = "0" + minu;
         if (sec < 10) sec = "0" + sec;
         let time = "";
-        // 精确到天
-        if (format == 1) {
+      // 精确到天
+      if (format == 1) {
             time = year + "年" + month + "月" + date + "日";
-        }
-        // 精确到分
-        else if (format == 2) {
+      }
+      // 精确到分
+      else if (format == 2) {
             time = year + "-" + month + "-" + date + " " + hour + ":" + minu + ":" + sec;
-        }
-        return time;
+      }
+      return time;
     }
 
 
@@ -93,9 +149,10 @@
     let t  // all and tag
     let t1, le // pb
     function getData() {
+        console.log('[LeetCodeRating] getData() polling - ' + new Date().toLocaleTimeString());
         try {
             const problemList = document.querySelector("#__next > div > div > div:nth-child(2) > div > div:nth-child(4) > div:nth-child(2) > div > div > div:nth-child(2)")
-            // pb页面加载时直接返回
+      // pb页面加载时直接返回
             if (problemList == undefined) {
                 return
             }
@@ -112,8 +169,29 @@
                 const problemIndex = parseInt(problemTitle.split(".")[0], 10)
                 let problemDifficulty = problem.childNodes[4].childNodes[0].innerHTML
                 if (t2rate[problemIndex] != undefined) {
+                    console.log(`[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex]["Rating"]}`);
                     problemDifficulty = t2rate[problemIndex]["Rating"]
                     problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
+            } else {
+                    // 检查是否当前显示的是数字分数，如果是则恢复原始难度
+                    const currentText = problem.childNodes[4].childNodes[0].innerHTML;
+                    if (/^\d+$/.test(currentText)) {
+                        console.log(`[LeetCodeRating] No rating for problem ${problemIndex}, restoring original difficulty from numeric: ${currentText}`);
+                        // 从DOM class或其他方式获取原始难度，这里先用通用方法
+                        const difficultyElement = problem.childNodes[4].childNodes[0];
+                        const classList = difficultyElement.getAttribute('class') || '';
+                        
+                        let originalDifficulty = "Unknown";
+                        if (classList.includes('text-olive') || classList.includes('text-green')) {
+                            originalDifficulty = "Easy";
+                        } else if (classList.includes('text-yellow')) {
+                            originalDifficulty = "Medium";
+                        } else if (classList.includes('text-pink') || classList.includes('text-red')) {
+                            originalDifficulty = "Hard";
+                        }
+                        
+                        difficultyElement.innerHTML = originalDifficulty;
+                    }
                 }
             }
             t = deepclone(problemList.lastChild.innerHTML)
@@ -122,44 +200,11 @@
         }
     }
 
-
-    function getTagData() {
-        if (!window.location.href.startsWith(tagUrl)) {
-            clearInterval(id2)
-            id3 = setInterval(getpb, 1)
-            GM_setValue("pb", id3)
-            return
-        }
-        try {
-            const problemList = document.querySelector("#app > div > div.ant-row.content__xk8m > div > div > div > table > tbody")
-            if (t != undefined && t == problemList.lastChild.innerHTML) {
-                return
-            }
-            let problems = problemList.childNodes
-            for (let problem of problems) {
-                let length = problem.childNodes.length
-                let problemIndex = problem.childNodes[1].innerText.trim()
-                let problemDifficulty = problem.childNodes[4].childNodes[0].innerHTML
-                if (t2rate[problemIndex] != undefined) {
-                    problemDifficulty = t2rate[problemIndex]["Rating"]
-                    problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
-                }
-            }
-            t = deepclone(problemList.lastChild.innerHTML)
-        } catch (e) {
-            return
-        }
-    }
 
 
 
     function getPblistData() {
-        if (!window.location.href.startsWith(pblistUrl)) {
-            clearInterval(id5)
-            id3 = setInterval(getpb, 1)
-            GM_setValue("pb", id3)
-            return
-        }
+        console.log('[LeetCodeRating] getPblistData() polling - ' + new Date().toLocaleTimeString());
         try {
             const problemList = document.querySelector("#__next > div > div.mx-auto.mt-\\[50px\\].w-full.grow.p-4.md\\:mt-0.md\\:max-w-\\[888px\\].md\\:p-6.lg\\:max-w-screen-xl.bg-overlay-1.dark\\:bg-dark-overlay-1.md\\:bg-paper.md\\:dark\\:bg-dark-paper > div > div.col-span-4.md\\:col-span-2.lg\\:col-span-3 > div:nth-child(2) > div.-mx-4.md\\:mx-0 > div > div > div:nth-child(2)")
             if (t != undefined && t == problemList.lastChild.innerHTML) {
@@ -175,7 +220,8 @@
                 if (t2rate[problemIndex] != undefined) {
                     problemDifficulty = t2rate[problemIndex]["Rating"]
                     problem.childNodes[4].childNodes[0].innerHTML = problemDifficulty
-                } else {
+                } 
+                else {
                     let nd2ch = { "text-olive dark:text-dark-olive": "Easy", "text-yellow dark:text-dark-yellow": "Medium", "text-pink dark:text-dark-pink": "Hard" }
                     let cls = problem.childNodes[4].childNodes[0].getAttribute("class")
                     problem.childNodes[4].childNodes[0].innerHTML = nd2ch[cls]
@@ -188,29 +234,18 @@
     }
 
     function getpb() {
-        if (!window.location.href.startsWith(pbUrl)) {
-            clearInterval(id3)
-            if (window.location.href.startsWith(allUrl)) {
-                id1 = setInterval(getData, 1)
-                GM_setValue("all", id1)
-            } else if (window.location.href.startsWith(tagUrl)) {
-                id2 = setInterval(getTagData, 1)
-                GM_setValue("tag", id2)
-            } else if (window.location.href.startsWith(pblistUrl)) {
-                id5 = setInterval(getPblistData, 1)
-                GM_setValue("pblist", id5)
-            }
-            return
-        }
-
+        console.log('[LeetCodeRating] getpb() polling - ' + new Date().toLocaleTimeString());
         try {
 
             // 旧版的标题位置
             let problemTitle = document.querySelector("#app > div > div.main__2_tD > div.content__3fR6 > div > div.side-tools-wrapper__1TS9 > div > div.css-1gd46d6-Container.e5i1odf0 > div.css-jtoecv > div > div.tab-pane__ncJk.css-1eusa4c-TabContent.e5i1odf5 > div > div.css-101rr4k > div.css-v3d350")
+            console.log('[LeetCodeRating] Old version problemTitle:', problemTitle ? 'Found' : 'Not found');
             if (problemTitle == undefined) {
                 // 新版逻辑
                 problemTitle = document.querySelector("#qd-content > div > div.flexlayout__tab > div > div > div > div > div > a")
+                console.log('[LeetCodeRating] New version problemTitle:', problemTitle ? 'Found' : 'Not found');
                 if (problemTitle == undefined) {
+                    console.log('[LeetCodeRating] getpb() - No problemTitle found, returning early');
                     t1 = "unknown"
                     return
                 }
@@ -223,194 +258,29 @@
                 // 新版统计难度分数并且修改
                 let problemDifficulty = colorSpan.getAttribute("class")
                 if (t2rate[problemIndex] != undefined) {
+                    console.log(`[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex]["Rating"]}`);
                     colorSpan.innerHTML = t2rate[problemIndex]["Rating"]
-                }
-                /*
-                // 新版逻辑，准备做周赛链接,如果已经不存在组件就执行操作
-                let url = "https://leetcode.com/contest/"
-                let zhUrl = "https://leetcode.com/contest/"
-                let q = pa.lastChild
-                let le = pa.childNodes.length
-                if (q.textContent == "") {
-                    let abody = document.createElement("a")
-                    abody.setAttribute("data-small-spacing", "true")
-                    abody.setAttribute("class", "css-nabodd-Button e167268t1")
-
-                    let abody2 = document.createElement("a")
-                    abody2.setAttribute("data-small-spacing", "true")
-                    abody2.setAttribute("class", "css-nabodd-Button e167268t1")
-
-                    let span = document.createElement("span")
-                    let span2 = document.createElement("span")
-                    // ContestID_en  ContestSlug
-                    if (t2rate[problemIndex] != undefined) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[problemIndex]["ContestSlug"])
-                        contestUrl = url
-                        span.innerText = t2rate[problemIndex]["ContestID_en"]
-                        span2.innerText = t2rate[problemIndex]["ProblemIndex"]
-
-                        abody.setAttribute("href", contestUrl + t2rate[problemIndex]["ContestSlug"])
-                        abody.setAttribute("target", "_blank")
-                        abody.removeAttribute("hidden")
-
-                        abody2.setAttribute("href", contestUrl + t2rate[problemIndex]["ContestSlug"] + "/problems/" + t2rate[problemIndex]["TitleSlug"])
-                        abody2.setAttribute("target", "_blank")
-                        abody2.removeAttribute("hidden")
-                    } else {
-                        span.innerText = "Unknown"
-                        abody.setAttribute("href", "")
-                        abody.setAttribute("target", "_self")
-                        abody.setAttribute("hidden", "true")
-
-                        span2.innerText = "Unknown"
-                        abody2.setAttribute("href", "")
-                        abody2.setAttribute("target", "_self")
-                        abody2.setAttribute("hidden", "true")
-                    }
-                    abody.appendChild(span)
-                    abody2.appendChild(span2)
-                    pa.appendChild(abody)
-                    pa.appendChild(abody2)
-                } else if (q.textContent.charAt(0) == "Q" || q.textContent == "未知") {  // 存在就直接替换
-                    if (t2rate[problemIndex] != undefined) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[problemIndex]["ContestSlug"])
-                        contestUrl = url
-                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[problemIndex]["ContestID_en"]
-                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[problemIndex]["ContestSlug"])
-                        pa.childNodes[le - 2].setAttribute("target", "_blank")
-                        pa.childNodes[le - 2].removeAttribute("hidden")
-
-                        pa.childNodes[le - 1].childNodes[0].innerText = t2rate[problemIndex]["ProblemIndex"]
-                        pa.childNodes[le - 1].setAttribute("href", contestUrl + t2rate[problemIndex]["ContestSlug"] + "/problems/" + t2rate[problemIndex]["TitleSlug"])
-                        pa.childNodes[le - 1].setAttribute("target", "_blank")
-                        pa.childNodes[le - 1].removeAttribute("hidden")
-                    } else {
-                        pa.childNodes[le - 2].childNodes[0].innerText = "unknown"
-                        pa.childNodes[le - 2].setAttribute("href", "")
-                        pa.childNodes[le - 2].setAttribute("target", "_self")
-                        pa.childNodes[le - 2].setAttribute("hidden", "true")
-
-                        pa.childNodes[le - 1].childNodes[0].innerText = "unknown"
-                        pa.childNodes[le - 1].setAttribute("href", "")
-                        pa.childNodes[le - 1].setAttribute("target", "_self")
-                        pa.childNodes[le - 1].setAttribute("hidden", "true")
-                    }
-                }
-                t1 = deepclone(id)
-
-            } else {
-                // 旧版逻辑，使用参数t和t1，分别代表标题的html和标题id
-
-                // 旧版题目左侧列表里面所有分数
-                let pbAll = document.querySelector("body > div.question-picker-detail__2A9V.show__GfjG > div.question-picker-detail-menu__3NQq.show__3hiR > div.lc-theme-dark.question-picker-questions-wrapper__13qM > div")
-                if (pbAll != undefined) {
-                    let childs = pbAll.childNodes
-                    for (const element of childs) {
-                        let v = element
-                        let length = v.childNodes.length
-                        let t = v.childNodes[0].childNodes[1].innerText
-                        let data = t.split(" ")[0]
-                        let id = data.slice(1)
-                        let nd = v.childNodes[length - 1].childNodes[0].innerText
-                        if (t2rate[id] != undefined) {
-                            nd = t2rate[id]["Rating"]
-                            v.childNodes[length - 1].childNodes[0].innerText = nd
+      } else {
+                    console.log(`[LeetCodeRating] No rating found for problem ${problemIndex}, restoring original difficulty`);
+                    // 恢复原始难度显示
+                    let difficultyMap = {
+                        "text-olive": "Easy",
+                        "text-yellow": "Medium", 
+                        "text-pink": "Hard"
+                    };
+                    
+                    // 检查class中包含哪种难度
+                    let originalDifficulty = "Unknown";
+                    for (let diffClass in difficultyMap) {
+                        if (problemDifficulty && problemDifficulty.includes(diffClass)) {
+                            originalDifficulty = difficultyMap[diffClass];
+                            break;
                         }
                     }
+                    colorSpan.innerHTML = originalDifficulty;
                 }
-                // 旧版标题修改位置
-                let data = t.innerText.split(".")
-                let id = data[0].trim()
-                let colorSpan = document.querySelector("#app > div > div.main__2_tD > div.content__3fR6 > div > div.side-tools-wrapper__1TS9 > div > div.css-1gd46d6-Container.e5i1odf0 > div.css-jtoecv > div > div.tab-pane__ncJk.css-1eusa4c-TabContent.e5i1odf5 > div > div.css-101rr4k > div.css-10o4wqw > div")
-                let pa = colorSpan.parentNode
-                if ((t1 != undefined && t1 == id) && (le != undefined && le <= pa.childNodes.length)) {
-                    return
-                }
-                // 统计难度分数
-                let nd = colorSpan.getAttribute("diff")
-                let nd2ch = { "easy": "Easy", "medium": "Medium", "hard": "Hard" }
-                if (t2rate[id] != undefined) {
-                    colorSpan.innerHTML = t2rate[id]["Rating"]
-                } else {
-                    colorSpan.innerHTML = nd2ch[nd]
-                }
-                // 准备做周赛链接,如果已经不存在组件就执行操作
-                let url = "https://leetcode.com/contest/"
-                let zhUrl = "https://leetcode.com/contest/"
-                if (le == undefined || le != pa.childNodes.length) {
 
-                    let button = document.createElement("button")
-                    button.setAttribute("class", "btn__r7r7 css-1rdgofi")
-                    let abody = document.createElement("a")
-                    abody.setAttribute("style", "color: #546E7A;")
-
-                    let button2 = document.createElement("button")
-                    button2.setAttribute("class", "btn__r7r7 css-1rdgofi")
-                    let abody2 = document.createElement("a")
-                    abody2.setAttribute("style", "color: #546E7A;")
-
-                    // ContestID_en  ContestSlug
-                    if (t2rate[id] != undefined) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        abody.innerText = t2rate[id]["ContestID_en"]
-                        abody2.innerText = t2rate[id]["ProblemIndex"]
-
-                        abody.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        abody.setAttribute("target", "_blank")
-                        abody.removeAttribute("hidden")
-
-                        abody2.setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        abody2.setAttribute("target", "_blank")
-                        abody2.removeAttribute("hidden")
-                    } else {
-                        span.innerText = "对应周赛未知"
-                        abody.setAttribute("href", "")
-                        abody.setAttribute("target", "_self")
-                        abody.setAttribute("hidden", "true")
-
-                        span2.innerText = "未知"
-                        abody2.setAttribute("href", "")
-                        abody2.setAttribute("target", "_self")
-                        abody2.setAttribute("hidden", "true")
-                    }
-
-                    button.appendChild(abody)
-                    button2.appendChild(abody2)
-                    pa.appendChild(button)
-                    pa.appendChild(button2)
-                } else if (le == pa.childNodes.length) {  // 存在就直接替换
-                    if (t2rate[id] != undefined) {
-                        let contestUrl;
-                        let num = getcontestNumber(t2rate[id]["ContestSlug"])
-                        if (num < 83) { contestUrl = zhUrl } else { contestUrl = url }
-                        pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]["ContestID_en"]
-                        pa.childNodes[le - 2].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"])
-                        pa.childNodes[le - 2].setAttribute("target", "_blank")
-                        pa.childNodes[le - 2].removeAttribute("hidden")
-
-                        pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = t2rate[id]["ProblemIndex"]
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("href", contestUrl + t2rate[id]["ContestSlug"] + "/problems/" + t2rate[id]["TitleSlug"])
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_blank")
-                        pa.childNodes[le - 1].childNodes[0].removeAttribute("hidden")
-                    } else {
-                        pa.childNodes[le - 2].childNodes[0].innerText = "对应周赛未知"
-                        pa.childNodes[le - 2].setAttribute("href", "")
-                        pa.childNodes[le - 2].setAttribute("target", "_self")
-                        pa.childNodes[le - 2].setAttribute("hidden", "true")
-
-                        pa.childNodes[le - 1].childNodes[0].childNodes[0].innerText = "未知"
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("href", "")
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("target", "_self")
-                        pa.childNodes[le - 1].childNodes[0].setAttribute("hidden", "true")
-                    }
-                }
-                */
-                // le = pa.childNodes.length
-                t1 = deepclone(id)
+                t1 = deepclone(problemIndex)
             }
         } catch (e) {
             return
@@ -418,10 +288,17 @@
     }
 
     t2rate = JSON.parse(GM_getValue("t2ratedb", "{}").toString())
+    console.log(`[Data Init] Loaded t2rate from storage, keys count: ${Object.keys(t2rate).length}`);
+    
     latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
     preDate = GM_getValue("preDate", "")
     let now = getCurrentDate(1)
+    
+    console.log(`[Data Init] preDate: ${preDate}, now: ${now}, tagVersion exists: ${t2rate["tagVersion"] != undefined}`);
+    
     if (t2rate["tagVersion"] == undefined || (preDate == "" || preDate != now)) {
+        console.log(`[Data Init] Need to fetch new data from server`);
+        
         GM_xmlhttpRequest({
             method: "get",
             url: 'https://raw.githubusercontents.com/zerotrac/leetcode_problem_rating/main/data.json' + "?timeStamp=" + new Date().getTime(),
@@ -430,19 +307,25 @@
             },
             onload: function (res) {
                 if (res.status === 200) {
+                    console.log(`[Data Init] Successfully fetched data from server`);
                     // 保留唯一标识
                     t2rate = {}
                     let dataStr = res.response
                     let json = eval(dataStr)
+                    console.log(`[Data Init] Parsed ${json.length} problem records`);
+                    
                     for (const element of json) {
                         t2rate[element.ID] = element
                         t2rate[element.ID]["Rating"] = Number.parseInt(Number.parseFloat(element["Rating"]) + 0.5)
                     }
                     t2rate["tagVersion"] = {}
+                    console.log(`[Data Init] Processed t2rate, final keys count: ${Object.keys(t2rate).length}`);
                     console.log("everyday getdate once...")
                     preDate = now
                     GM_setValue("preDate", preDate)
                     GM_setValue("t2ratedb", JSON.stringify(t2rate))
+      } else {
+                    console.log(`[Data Init] Failed to fetch data, status: ${res.status}`);
                 }
             },
             onerror: function (err) {
@@ -452,43 +335,98 @@
         });
     }
 
-    function clearAndStart(start, func, timeout) {
-        let lst = ['all', 'tag', 'pb', 'company', 'pblist', 'search']
-        lst.forEach(each => {
-            if (each !== start) {
-                let tmp = GM_getValue(each, -1)
-                clearInterval(tmp)
-            }
-        })
-        if (start !== "") {
-            let cnt = lst.indexOf(start) + 1
-            switch (cnt) {
-                case 1:
-                    id1 = setInterval(func, timeout)
-                    GM_setValue(start, id1)
-                    break
-                case 2:
-                    id2 = setInterval(func, timeout)
-                    GM_setValue(start, id2)
-                    break
-                case 3:
-                    id3 = setInterval(func, timeout)
-                    GM_setValue(start, id3)
-                    break
-                case 4:
-                    id4 = setInterval(func, timeout)
-                    GM_setValue(start, id4)
-                    break
-                case 5:
-                    id5 = setInterval(func, timeout)
-                    GM_setValue(start, id5)
-                    break
-                case 6:
-                    id6 = setInterval(func, timeout)
-                    GM_setValue(start, id6)
-                    break
-            }
+    function clearAndStart(url, timeout, isAddEvent) {
+        console.log(`[clearAndStart] Starting with URL: ${url}, timeout: ${timeout}`);
+        
+        // 清理所有定时器
+        TimerManager.clearAll();
+
+        // 根据URL匹配对应的页面类型和函数
+        const pageConfig = {
+            allProblems: { url: allProblemsUrl, func: getData, name: 'getData()' },
+            problem: { url: problemUrl, func: getpb, name: 'getpb()' },
+            problemList: { url: problemListUrl, func: getPblistData, name: 'getPblistData()' }
+        };
+        
+        console.log(`[clearAndStart] Page config:`, pageConfig);
+        console.log(`[clearAndStart] URL patterns - allProblems: ${allProblemsUrl}, problem: ${problemUrl}, problemList: ${problemListUrl}`);
+        
+        // 找到匹配的页面类型
+        let currentPageType = null;
+        for (const [type, config] of Object.entries(pageConfig)) {
+            console.log(`[clearAndStart] Checking if ${url} starts with ${config.url}: ${url.startsWith(config.url)}`);
+            if (url.startsWith(config.url)) {
+                currentPageType = type;
+                console.log(`[clearAndStart] Matched page type: ${currentPageType}`);
+                  break;
+                }
         }
+        
+        if (!currentPageType) {
+            console.log(`[clearAndStart] No matching page type found for URL: ${url}`);
+        }
+
+        if (currentPageType) {
+            // 智能重试机制：立即执行，如果失败则短暂延迟后重试
+            const executeWithRetry = (func, funcName, maxRetries = 3) => {
+                let retryCount = 0;
+                const tryExecute = () => {
+                    console.log(`[LeetCodeRating] Immediate execution for URL change: ${funcName} (attempt ${retryCount + 1})`);
+                    
+                    // 记录执行前的状态
+                    const beforeState = { t1: t1, t: t };
+                    func();
+                    const afterState = { t1: t1, t: t };
+                    
+                    // 检查是否成功执行（状态有变化）
+                    const hasChanges = JSON.stringify(beforeState) !== JSON.stringify(afterState);
+                    
+                    if (!hasChanges && retryCount < maxRetries) {
+                        retryCount++;
+                        console.log(`[LeetCodeRating] ${funcName} - No changes detected, retrying in ${200 * retryCount}ms...`);
+                        setTimeout(tryExecute, 200 * retryCount); // 递增延迟: 200ms, 400ms, 600ms
+                    } else if (hasChanges) {
+                        console.log(`[LeetCodeRating] ${funcName} - Successfully executed with changes`);
+          } else {
+                        console.log(`[LeetCodeRating] ${funcName} - Max retries reached, will rely on timer`);
+                    }
+                };
+                tryExecute();
+            };
+
+            const config = pageConfig[currentPageType];
+            console.log(`[clearAndStart] Using config for ${currentPageType}:`, config);
+            
+            // 立即执行
+            console.log(`[clearAndStart] Starting immediate execution for ${config.name}`);
+            executeWithRetry(config.func, config.name);
+            
+            // 启动定时器
+            console.log(`[clearAndStart] Starting timer for ${currentPageType} with ${timeout}ms interval`);
+            const timerId = setInterval(config.func, timeout);
+            TimerManager.set(currentPageType, timerId);
+            
+            // 特殊处理：单题页面同时启动题目列表检测
+            if (currentPageType === 'problem') {
+                console.log(`[clearAndStart] Special case: problem page, also starting getData timer`);
+                executeWithRetry(getData, 'getData()');
+                const allTimerId = setInterval(getData, timeout);
+                TimerManager.set('allProblems', allTimerId);
+            }
+            
+            console.log(`[clearAndStart] Setup complete for page type: ${currentPageType}`);
+        } else {
+            console.log(`[clearAndStart] No page type matched, no timers started`);
+        }
+
+        // 添加URL变化监听
+      if (isAddEvent) {
+        window.addEventListener('urlchange', () => {
+                console.log('urlchange event happened');
+          let newUrl = location.href;
+                clearAndStart(newUrl, 2000, false);
+        });
+      }
     }
 
     [...document.querySelectorAll('*')].forEach(item => {
@@ -497,50 +435,48 @@
         }
     });
 
-    if (window.location.href.startsWith(allUrl)) {
-        // 版本更新机制
-        GM_xmlhttpRequest({
+    // 初始化URL变化监听
+    initUrlChange()();
+
+    // 版本更新机制 (仅在主页检查)
+    if (window.location.href.startsWith(allProblemsUrl)) {
+      GM_xmlhttpRequest({
             method: "get",
             url: 'https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/version.json' + "?timeStamp=" + new Date().getTime(),
-            headers: {
+        headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
-            },
-            onload: function (res) {
-                if (res.status === 200) {
+        },
+        onload: function (res) {
+          if (res.status === 200) {
                     console.log("enter home page check version once...")
                     let dataStr = res.response
                     let json = JSON.parse(dataStr)
                     let v = json["version"]
                     let upcontent = json["content"]
                     if (v != version) {
-                        layer.open({
+                layer.open({
                             content: '<pre style="color:#000">Update notice: <br/>leetcodeRating difficulty plugin has a new version, please go to update ~ <br/>' + "update content: <br/>" + upcontent + "</pre>",
-                            yes: function (index, layer0) {
+                  yes: function (index, layer0) {
                                 let c = window.open("https://raw.githubusercontents.com/zhang-wangz/LeetCodeRating/english/leetcodeRating_greasyfork.user.js" + "?timeStamp=" + new Date().getTime())
                                 c.close()
                                 layer.close(index)
-                            }
-                        });
-                    } else {
+                  }
+                });
+              } else {
                         console.log("leetcodeRating difficulty plugin is currently the latest version~")
-                    }
-                }
-            },
-            onerror: function (err) {
+            }
+          }
+        },
+        onerror: function (err) {
                 console.log('error')
                 console.log(err)
-            }
-        });
-        clearAndStart('all', getData, 1)
-    } else if (window.location.href.startsWith(tagUrl)) {
-        clearAndStart('tag', getTagData, 1)
-    } else if (window.location.href.startsWith(pbUrl)) {
-        clearAndStart('pb', getpb, 1)
-        let id = setInterval(getData, 1)
-        GM_setValue("all", id)
-    } else if (window.location.href.startsWith(pblistUrl)) {
-        clearAndStart('pblist', getPblistData, 1)
-    } else {
-        clearAndStart('', undefined, 1)
+        }
+      });
     }
+
+    // 启动主程序，使用2000ms间隔，并添加URL变化监听
+    console.log(`[Script Init] Starting LeetCodeRating script v${version}`);
+    console.log(`[Script Init] Current URL: ${location.href}`);
+    console.log(`[Script Init] t2rate data available: ${Object.keys(t2rate).length} entries`);
+    clearAndStart(location.href, 2000, true);
 })();
