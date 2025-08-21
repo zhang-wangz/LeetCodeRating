@@ -1,0 +1,30 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "greasemonkey": true
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "globals": {
+    "GM_xmlhttpRequest": "readonly",
+    "GM_setValue": "readonly",
+    "GM_getValue": "readonly",
+    "GM_addStyle": "readonly",
+    "GM_getResourceText": "readonly",
+    "unsafeWindow": "readonly",
+    "$": "readonly",
+    "jQuery": "readonly",
+    "layer": "readonly"
+  },
+  "rules": {
+    "prefer-const": "error",
+    "no-unused-vars": "warn",
+    "no-console": "off",
+    "no-undef": "error"
+  }
+}
+
