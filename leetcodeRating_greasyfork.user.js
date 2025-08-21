@@ -38,8 +38,18 @@
   let t2rate = {}
   const version = "2.0.0"
   const DEBUG_MODE = false
+  
+  const originalConsoleLog = console.log
   if (!DEBUG_MODE) {
-    console.log = () => {}
+    try {
+      console.log = function(...args) {
+      }
+    } catch (e) {
+      window.console = Object.assign({}, console, {
+        log: function(...args) {
+        }
+      })
+    }
   }
 
   // a timer manager for all pages
@@ -208,7 +218,6 @@
       const problemList = document.querySelector(
         "#__next > div.flex.min-h-screen.min-w-\\[360px\\].flex-col.text-label-1.dark\\:text-dark-label-1 > div.mx-auto.w-full.grow.lg\\:max-w-screen-xl.dark\\:bg-dark-layer-bg.lc-dsw-xl\\:max-w-none.flex.bg-white.p-0.md\\:max-w-none.md\\:p-0 > div > div.flex.w-full.flex-1.overflow-hidden > div > div.flex.flex-1.justify-center.overflow-hidden > div > div.mt-4.flex.flex-col.items-center.gap-4 > div.w-full.flex-1 > div"
       )
-      console.log("getAllProblemsData problemList", problemList)
       // pb页面加载时直接返回
       if (problemList == undefined) {
         return
@@ -219,13 +228,10 @@
         lastProcessedListContent != undefined &&
         lastProcessedListContent == problemList.innerHTML
       ) {
-        console.log("lastProcessedListContent", lastProcessedListContent)
         return
       }
 
       const problems = problemList.childNodes
-      console.log("getAllProblemsData problems", problems)
-      console.log("problems[0]", problems[0])
       for (const problem of problems) {
         const problemIndex = getProblemIndex(problem)
         if (problemIndex == null) continue
@@ -669,19 +675,27 @@
           if (v != version) {
             layer.open({
               content:
-                '<pre style="color:#000">Update notice: <br/>leetcodeRating difficulty plugin has a new version, please go to update ~ <br/>' +
-                "update content: <br/>" +
+                '<div style="color:#000; padding: 8px;">' +
+                '<p><strong>LeetCodeRating</strong> has a new version!</p>' +
+                '<p><strong>Update content:</strong></p>' +
+                '<div style="background: #f5f5f5; padding: 8px; border-radius: 4px; margin: 8px 0;">' +
                 upcontent +
-                "</pre>",
+                '</div>' +
+                '</div>',
+              btn: ['Install Update', 'Later'],
               yes: function (index) {
-                const c = window.open(
+                // 打开脚本页面，让用户可以安装更新
+                window.open(
                   "https://raw.githubusercontent.com/zhang-wangz/LeetCodeRating/english/leetcodeRating_greasyfork.user.js" +
                     "?timeStamp=" +
-                    new Date().getTime()
+                    new Date().getTime(),
+                  "_blank"
                 )
-                c.close()
                 layer.close(index)
               },
+              btn2: function (index) {
+                layer.close(index)
+              }
             })
           } else {
             console.log(
