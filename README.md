@@ -24,7 +24,8 @@
 ### :iphone: 兼容性&安装
 
 请注意： 英文版只有题库页面，tag页面和题目页面展示周赛分，并且不支持其余中文站功能
-安装英文版本请切换github tag为english，英文版自2023年开始暂时停止维护，招募合适的维护员~
+安装英文版本请切换github tag为english
+英文版自2024年开始由[@wwwld1](https://github.com/wwwld1)进行维护，感谢贡献🙏
 
 Note: The English version only shows the difficulty rating of the question on the gallary page (problemset), the tag page and the question page, and does not support other functions in CN site. The English version will be temporarily suspended from 2023, and suitable maintainers are being recruited~
 [Click here to switch|点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
