@@ -2300,7 +2300,7 @@
         if (pbDescription?.getAttribute('plugin') == null) {
           let divTips = document.createElement('div');
           divTips.setAttribute('class', 'flex gap-1');
-          divTips.setAttribute('plugin', 'leetcodeRating')
+          divTips.setAttribute('plugin', 'leetcodeRating');
           let abody = document.createElement('a');
           abody.setAttribute('data-small-spacing', 'true');
           abody.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
