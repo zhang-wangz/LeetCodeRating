@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.0.7
+// @version      3.0.8
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,8 +34,10 @@
   function userScript() {
     'use strict';
 
-    const version = '3.0.7';
-    let pbstatusVersion = 'version19';
+    const version = '3.0.8';
+    let pbstatusVersion = 'version21';
+    let t2rateVersion = 'Version12';
+    let levelVersion = 'Version26';
     // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -95,9 +97,8 @@
     let levelTc2Id = JSON.parse(GM_getValue('levelTc2Id', '{}').toString());
     // 英文
     let levelTe2Id = JSON.parse(GM_getValue('levelTe2Id', '{}').toString());
-    // 是否使用动态布局
-    let localVal = localStorage.getItem('used-dynamic-layout');
-    let isDynamic = localVal != null ? localVal.includes('true') : false;
+    // 是否使用动态布局, 现在的版本只剩下动态布局，没有之前的经典布局了，所以本地内存也没有了之前存储的kv值
+    let isDynamic = true;
 
     // 因为字符显示问题，暂时去除
     // <span class="layui-progress-text myfont">0%</span>
@@ -2268,7 +2269,6 @@
           console.log('color ele not found');
           return;
         }
-
         // 统计难度分数并且修改
         let nd = colorSpan.getAttribute('class');
         let nd2ch = {
@@ -2287,7 +2287,6 @@
             }
           }
         }
-
         // 逻辑，准备做周赛链接,如果已经不存在组件就执行操作
         let url = chContestUrl;
         let zhUrl = zhContestUrl;
@@ -2298,9 +2297,10 @@
         let tipsChildone = tipsPa.childNodes[1];
         // 题目内容, 插入后变成原tips栏目
         let pbDescription = tipsPa.childNodes[2];
-        if (pbDescription?.getAttribute('class') == null) {
+        if (pbDescription?.getAttribute('plugin') == null) {
           let divTips = document.createElement('div');
           divTips.setAttribute('class', 'flex gap-1');
+          divTips.setAttribute('plugin', 'leetcodeRating')
           let abody = document.createElement('a');
           abody.setAttribute('data-small-spacing', 'true');
           abody.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
@@ -2581,7 +2581,7 @@
       async function getScore() {
         let now = getCurrentDate(1);
         preDate = GM_getValue('preDate', '');
-        if (t2rate['tagVersion9'] == null || preDate == '' || preDate != now) {
+        if (t2rate[t2rateVersion] == null || preDate == '' || preDate != now) {
           // 每天重置为空
           GM_setValue('pbSubmissionInfo', '{}');
           let res = await new Promise((resolve, reject) => {
@@ -2615,7 +2615,7 @@
               pbName2Id[element.TitleZH] = element.ID;
               pbNamee2Id[element.Title] = element.ID;
             }
-            t2rate['tagVersion9'] = {};
+            t2rate[t2rateVersion] = {};
             console.log('everyday getdata once...');
             preDate = now;
             GM_setValue('preDate', preDate);
@@ -2630,7 +2630,7 @@
       // 更新level数据
       async function getPromiseLevel() {
         let week = new Date().getDay();
-        if (levelData['tagVersion24'] == null || week == 1) {
+        if (levelData[levelVersion] == null || week == 1) {
           let res = await new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
               method: 'get',
@@ -2662,7 +2662,7 @@
                 levelTe2Id[title] = element.ID;
               }
             }
-            levelData['tagVersion24'] = {};
+            levelData[levelVersion] = {};
             console.log('every Monday get level once...');
             GM_setValue('levelData', JSON.stringify(levelData));
             GM_setValue('levelTc2Id', JSON.stringify(levelTc2Id));
