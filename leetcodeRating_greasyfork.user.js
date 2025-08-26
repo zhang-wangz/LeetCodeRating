@@ -979,7 +979,6 @@
       // console.log("end...")
     }
 
-
     // 监听变化
     // 改变大小
     // style监听影响不大，所以不放到initfunction中，url变化重启流程
@@ -1620,15 +1619,15 @@
      * @param {number} padding 单位: px, 默认80
      */
     function renderLevel(nd, level, cls, hit, padding = 80) {
-      if (level && GM_getValue('switchlevel') ) {
+      if (level && GM_getValue('switchlevel')) {
         let text = document.createElement('span');
         text.classList.add(...cls);
         text.innerHTML = '算术评级: ' + level;
         text.style = nd.getAttribute('style');
         text.style.paddingRight = `${hit ? padding - 5 : padding}px`; // 命中之后宽度不一样
-        if (nd.parentNode.getAttribute("level") == null) {
+        if (nd.parentNode.getAttribute('level') == null) {
           nd.parentNode.insertBefore(text, nd);
-          nd.parentNode.setAttribute("level", "LeetcodeRating")
+          nd.parentNode.setAttribute('level', 'LeetcodeRating');
         } else {
           // 如果已经存在了就进行刷新
           nd.previousSibling.innerHTML = '算术评级: ' + level;
@@ -1687,7 +1686,7 @@
           let pbNameLabel = pb.querySelector('.truncate');
           if (pbNameLabel == null) continue;
           let pbName = pbNameLabel.textContent;
-          if (pb.getAttribute("study") != null ) continue;
+          if (pb.getAttribute('study') != null) continue;
           let nd = pb.childNodes[0].childNodes[1].childNodes[1];
           let pbhtml = pb?.childNodes[0]?.childNodes[1]?.childNodes[0]?.childNodes[0];
           pbName = pbName.trim();
@@ -1718,7 +1717,7 @@
 
           // render level
           renderLevel(nd, levelData[levelId]?.Level?.toString(), pbhtml.classList, hit, 130);
-          pb.setAttribute("study", "true");
+          pb.setAttribute('study', 'true');
         }
       }
       if (totArr.firstChild) studyf = totArr.firstChild?.textContent;
