@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.0.8
+// @version      3.0.9
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,7 +34,7 @@
   function userScript() {
     'use strict';
 
-    const version = '3.0.8';
+    const version = '3.0.9';
     let pbstatusVersion = 'version21';
     let t2rateVersion = 'Version12';
     let levelVersion = 'Version26';
@@ -522,10 +522,10 @@
       let menu_ALL = [
           ['switchvpn', 'vpn', '是否使用cdn访问数据', false, false],
           ['switchupdate', 'switchupdate', '是否每天最多只更新一次', true, true],
+          ['switchcopyright', 'pb function', '题解复制去除版权信息', true, true],
           ['switchTea', '0x3f tea', '题库页灵茶信息显示', true, true],
           ['switchpbRepo', 'pbRepo function', '题库页周赛难度评分(不包括灵茶)', true, false],
           ['switchpbscore', 'pb function', '题目页周赛难度评分', true, true],
-          ['switchcopyright', 'pb function', '题解复制去除版权信息', true, true],
           ['switchpbside', 'switchpbside function', '题目页侧边栏分数显示', true, true],
           ['switchpbsearch', 'switchpbsearch function', '题目页题目搜索框', true, true],
           ['switchsearch', 'search function', '题目搜索页周赛难度评分', true, false],
@@ -538,7 +538,6 @@
           ],
           ['switchpblistRateDisplay', 'pbList function', '题单页一直显示通过率', true, false],
           ['switchstudy', 'studyplan function', '学习计划周赛难度评分', true, false],
-          ['switchcontestpage', 'contestpage function', '竞赛页面双栏布局', true, false],
           [
             'switchlevel',
             'studyplan level function',
@@ -980,107 +979,6 @@
       // console.log("end...")
     }
 
-    // 竞赛页面双栏布局
-    // 来源 better contest page / author ExplodingKonjac
-    // 竞赛页面影响不大，会reload，所以不放到initfunction中，url变化重启流程
-    let switchcontestpage = GM_getValue('switchcontestpage');
-    if (location.href.match('https://leetcode.cn/contest/.*/problems/.*') && switchcontestpage) {
-      const CSS = `
-                body {
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                body .content-wrapper {
-                    height: 0;
-                    min-height: 0 !important;
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    padding-bottom: 0 !important;
-                }
-
-                .content-wrapper #base_content {
-                    display: flex;
-                    overflow: hidden;
-                    height: 0;
-                    flex: 1;
-                }
-
-                .content-wrapper #base_content > .container {
-                    width: 40%;
-                    overflow: scroll;
-                }
-
-                .content-wrapper #base_content > .container .question-content {
-                    overflow: unset !important;
-                }
-
-                .content-wrapper #base_content > .container .question-content > pre {
-                    white-space: break-spaces;
-                }
-
-                .content-wrapper #base_content > .editor-container {
-                    flex: 1;
-                    overflow: scroll;
-                }
-
-                .content-wrapper #base_content > .editor-container .container {
-                    width: 100% !important;
-                }
-
-                .content-wrapper #base_content > .custom-resize {
-                    width: 4px;
-                    height: 100%;
-                    background: #eee;
-                    cursor: ew-resize;
-                    margin: 0 2px;
-                }
-
-                .content-wrapper #base_content > .custom-resize:hover {
-                    background: #1a90ff;
-                }
-            `;
-      const storageKey = '--previous-editor-size';
-      (function () {
-        const $css = document.createElement('style');
-        $css.innerHTML = CSS;
-        document.head.append($css);
-        const $problem = document.querySelector('.content-wrapper #base_content > .container');
-        const $editor = document.querySelector(
-          '.content-wrapper #base_content > .editor-container'
-        );
-        const $resize = document.createElement('div');
-        if (localStorage.getItem(storageKey)) {
-          $problem.style.width = localStorage.getItem(storageKey);
-        }
-        $editor.parentElement.insertBefore($resize, $editor);
-        $resize.classList.add('custom-resize');
-        let currentSize,
-          startX,
-          resizing = false;
-        $resize.addEventListener('mousedown', e => {
-          currentSize = $problem.getBoundingClientRect().width;
-          startX = e.clientX;
-          resizing = true;
-          $resize.style.background = '#1a90ff';
-        });
-        window.addEventListener('mousemove', e => {
-          if (!resizing) return;
-          const deltaX = e.clientX - startX;
-          const newSize = Math.max(450, Math.min(1200, currentSize + deltaX));
-          $problem.style.width = `${newSize}px`;
-          e.preventDefault();
-        });
-        window.addEventListener('mouseup', e => {
-          if (!resizing) return;
-          e.preventDefault();
-          resizing = false;
-          $resize.style.background = '';
-          localStorage.setItem(storageKey, $problem.style.width);
-        });
-      })();
-    }
 
     // 监听变化
     // 改变大小
@@ -1694,18 +1592,19 @@
      * @returns {boolean} 是否命中
      */
     function renderRating(nd, ndRate, lightn2c, darkn2c) {
-      if (ndRate) {
-        nd.textContent = ndRate;
-        return true;
-      }
-
+      // 如果传入不是nd则直接返回
       let clr = nd.classList;
       if (clr.length === 0) return false;
-
       for (const [className, text] of Object.entries({ ...lightn2c, ...darkn2c })) {
         if (clr.contains(className)) {
+          // 如果难度分存在，则替换分数
+          if (ndRate) {
+            nd.textContent = ndRate;
+            return true;
+          }
+          // 如果难度分不存在，则恢复本身
           nd.innerText = text;
-          return true;
+          return false;
         }
       }
 
@@ -1721,13 +1620,19 @@
      * @param {number} padding 单位: px, 默认80
      */
     function renderLevel(nd, level, cls, hit, padding = 80) {
-      if (level && GM_getValue('switchlevel')) {
+      if (level && GM_getValue('switchlevel') ) {
         let text = document.createElement('span');
         text.classList.add(...cls);
         text.innerHTML = '算术评级: ' + level;
         text.style = nd.getAttribute('style');
         text.style.paddingRight = `${hit ? padding - 5 : padding}px`; // 命中之后宽度不一样
-        nd.parentNode.insertBefore(text, nd);
+        if (nd.parentNode.getAttribute("level") == null) {
+          nd.parentNode.insertBefore(text, nd);
+          nd.parentNode.setAttribute("level", "LeetcodeRating")
+        } else {
+          // 如果已经存在了就进行刷新
+          nd.previousSibling.innerHTML = '算术评级: ' + level;
+        }
       }
     }
 
@@ -1766,7 +1671,7 @@
         totArr = document.querySelector(css_selector);
       }
       if (totArr == null) return;
-      let first = totArr.firstChild?.childNodes[1]?.textContent;
+      let first = totArr.firstChild?.textContent;
       if (studyf && first && studyf == first) {
         // 到达次数之后删除定时防止卡顿
         if (studyCnt == shortCnt) {
@@ -1782,6 +1687,7 @@
           let pbNameLabel = pb.querySelector('.truncate');
           if (pbNameLabel == null) continue;
           let pbName = pbNameLabel.textContent;
+          if (pb.getAttribute("study") != null ) continue;
           let nd = pb.childNodes[0].childNodes[1].childNodes[1];
           let pbhtml = pb?.childNodes[0]?.childNodes[1]?.childNodes[0]?.childNodes[0];
           pbName = pbName.trim();
@@ -1812,9 +1718,10 @@
 
           // render level
           renderLevel(nd, levelData[levelId]?.Level?.toString(), pbhtml.classList, hit, 130);
+          pb.setAttribute("study", "true");
         }
       }
-      if (totArr.firstChild?.childNodes[1]) studyf = totArr.firstChild?.childNodes[1]?.textContent;
+      if (totArr.firstChild) studyf = totArr.firstChild?.textContent;
       console.log('has refreshed...');
     }
 
@@ -2296,8 +2203,8 @@
         // tips 一栏的父亲节点第一子元素的位置, 插入后变成竞赛信息位置
         let tipsChildone = tipsPa.childNodes[1];
         // 题目内容, 插入后变成原tips栏目
-        let pbDescription = tipsPa.childNodes[2];
-        if (pbDescription?.getAttribute('plugin') == null) {
+        // let pbDescription = tipsPa.childNodes[2];
+        if (tipsChildone?.getAttribute('plugin') == null) {
           let divTips = document.createElement('div');
           divTips.setAttribute('class', 'flex gap-1');
           divTips.setAttribute('plugin', 'leetcodeRating');
