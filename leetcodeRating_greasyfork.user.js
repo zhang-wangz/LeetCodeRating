@@ -34,7 +34,7 @@
   function userScript() {
     'use strict';
 
-    const version = '3.0.9';
+    const version = '3.1.0';
     let pbstatusVersion = 'version21';
     let t2rateVersion = 'Version12';
     let levelVersion = 'Version26';
