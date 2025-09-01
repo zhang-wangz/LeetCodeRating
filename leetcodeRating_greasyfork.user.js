@@ -2580,7 +2580,7 @@
             levelTe2Id = {};
             let dataStr = res.response;
             // 处理NaN字段, 把NaN改成null
-            dataStr = dataStr.replace(/\bNaN\b/g, "null");
+            dataStr = dataStr.replace(/\bNaN\b/g, 'null');
             let json = JSON.parse(dataStr);
             for (const element of json) {
               if (typeof element.TitleCn == 'string') {
