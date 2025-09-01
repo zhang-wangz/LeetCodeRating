@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.1.0
+// @version      3.1.1
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,10 +34,10 @@
   function userScript() {
     'use strict';
 
-    const version = '3.1.0';
-    let pbstatusVersion = 'version21';
-    let t2rateVersion = 'Version12';
-    let levelVersion = 'Version26';
+    const version = '3.1.1';
+    let pbstatusVersion = 'version22';
+    let t2rateVersion = 'Version13';
+    let levelVersion = 'Version27';
     // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -102,31 +102,32 @@
 
     // 因为字符显示问题，暂时去除
     // <span class="layui-progress-text myfont">0%</span>
+    // 同步文案
     const pbstatusContent = `
           <div class="layui-row layui-col-space15">
                 <div class="layui-card">
                     <div class="layui-card-header" style="text-align: center; background: linear-gradient(135deg, #5FB878, #009688);">
-                        <h3 style="color: white; margin: 0;"><i class="layui-icon layui-icon-refresh-3"></i> LeetCode Rating 数据重置</h3>
+                        <h3 style="color: white; margin: 0;"><i class="layui-icon layui-icon-refresh-3"></i> LeetCode Rating 数据同步</h3>
                     </div>
                     <div class="layui-card-body" style="padding: 30px; text-align: center;">
                         <div class="layui-text" style="margin-bottom: 20px;">
-                            <p style="font-size: 16px; color: #666;">🚀 准备重置您的数据，请稍候...</p>
+                            <p style="font-size: 16px; color: #666;">🚀 准备同步您的数据，请稍候...</p>
                         </div>
                         
-                        <div class="layui-progress layui-progress-big" lay-showPercent="true" lay-filter="demo-filter-progress1" style="margin: 25px 0;">
+                        <div class="layui-progress layui-progress-big" lay-showPercent="true" lay-filter="demo-filter-progress" style="margin: 25px 0;">
                             <div class="layui-progress-bar layui-bg-green" lay-percent="0%"></div>
                         </div>
                         
                         <div class="layui-btn-container">
-                            <button id="statusasyc1" class="layui-btn layui-btn-normal layui-btn-radius" lay-on="loading1">
-                                <i class="layui-icon layui-icon-refresh"></i> 开始重置
+                            <button id="statusasyc" class="layui-btn layui-btn-normal layui-btn-radius" lay-on="loading">
+                                <i class="layui-icon layui-icon-refresh"></i> 开始同步
                             </button>
                         </div>
                     </div>
                 </div>
         </div>
           `;
-
+    // 重置文案
     const pbstatusContent1 = `
           <div class="layui-row layui-col-space15">
                 <div class="layui-card">
@@ -170,7 +171,7 @@
       type: 1,
       content: pbstatusContent,
       title: '同步所有题目状态',
-      area: ['550px', '250px'],
+      area: ['560px', '284px'],
       shade: 0.6,
       shadeClose: true
     };
@@ -180,7 +181,7 @@
       type: 1,
       content: pbstatusContent1,
       title: '重置当前页面题目状态',
-      area: ['550px', '250px'],
+      area: ['560px', '284px'],
       shade: 0.6,
       shadeClose: true
     };
@@ -2578,6 +2579,8 @@
             levelTc2Id = {};
             levelTe2Id = {};
             let dataStr = res.response;
+            // 处理NaN字段, 把NaN改成null
+            dataStr = dataStr.replace(/\bNaN\b/g, "null");
             let json = JSON.parse(dataStr);
             for (const element of json) {
               if (typeof element.TitleCn == 'string') {
