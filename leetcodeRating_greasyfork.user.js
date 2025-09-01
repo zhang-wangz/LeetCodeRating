@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.0.9
+// @version      3.1.0
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,7 +34,7 @@
   function userScript() {
     'use strict';
 
-    const version = '3.0.9';
+    const version = '3.1.0';
     let pbstatusVersion = 'version21';
     let t2rateVersion = 'Version12';
     let levelVersion = 'Version26';
@@ -102,34 +102,54 @@
 
     // 因为字符显示问题，暂时去除
     // <span class="layui-progress-text myfont">0%</span>
-    const pbstatusContent = `
-          <div style="text-align: center; padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center;">
-              <strong class="myfont"> 希望有大佬可以美化这丑丑的界面～ =v= </strong>
-              <p style="padding-top: 10px;"></p>
-              <div class="layui-progress layui-progress-big" lay-showPercent="true" lay-filter="demo-filter-progress">
-                  <div class="layui-progress-bar" lay-percent="0%">
-                  </div>
-              </div>
-              <p style="padding-top: 20px;"></p>
-              <div class="layui-btn-container" style="">
-                  <button id="statusasyc" class="layui-btn layui-btn-radius" lay-on="loading">同步</button>
-              </div>
-          </div>
+        const pbstatusContent = `
+          <div class="layui-row layui-col-space15">
+                <div class="layui-card">
+                    <div class="layui-card-header" style="text-align: center; background: linear-gradient(135deg, #5FB878, #009688);">
+                        <h3 style="color: white; margin: 0;"><i class="layui-icon layui-icon-refresh-3"></i> LeetCode Rating 数据重置</h3>
+                    </div>
+                    <div class="layui-card-body" style="padding: 30px; text-align: center;">
+                        <div class="layui-text" style="margin-bottom: 20px;">
+                            <p style="font-size: 16px; color: #666;">🚀 准备重置您的数据，请稍候...</p>
+                        </div>
+                        
+                        <div class="layui-progress layui-progress-big" lay-showPercent="true" lay-filter="demo-filter-progress1" style="margin: 25px 0;">
+                            <div class="layui-progress-bar layui-bg-green" lay-percent="0%"></div>
+                        </div>
+                        
+                        <div class="layui-btn-container">
+                            <button id="statusasyc1" class="layui-btn layui-btn-normal layui-btn-radius" lay-on="loading1">
+                                <i class="layui-icon layui-icon-refresh"></i> 开始重置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+        </div>
           `;
 
     const pbstatusContent1 = `
-          <div style="text-align: center; padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center;">
-              <strong class="myfont"> 希望有大佬可以美化这丑丑的界面～ =v= </strong>
-              <p style="padding-top: 10px;"></p>
-              <div class="layui-progress layui-progress-big" lay-showPercent="true" lay-filter="demo-filter-progress1">
-                  <div class="layui-progress-bar" lay-percent="0%">
-                  </div>
-              </div>
-              <p style="padding-top: 20px;"></p>
-              <div class="layui-btn-container" style="">
-                  <button id="statusasyc1" class="layui-btn layui-btn-radius" lay-on="loading1">重置</button>
-              </div>
-          </div>
+          <div class="layui-row layui-col-space15">
+                <div class="layui-card">
+                    <div class="layui-card-header" style="text-align: center; background: linear-gradient(135deg, #5FB878, #009688);">
+                        <h3 style="color: white; margin: 0;"><i class="layui-icon layui-icon-refresh-3"></i> LeetCode Rating 数据重置</h3>
+                    </div>
+                    <div class="layui-card-body" style="padding: 30px; text-align: center;">
+                        <div class="layui-text" style="margin-bottom: 20px;">
+                            <p style="font-size: 16px; color: #666;">🚀 准备重置您的数据，请稍候...</p>
+                        </div>
+                        
+                        <div class="layui-progress layui-progress-big" lay-showPercent="true" lay-filter="demo-filter-progress1" style="margin: 25px 0;">
+                            <div class="layui-progress-bar layui-bg-green" lay-percent="0%"></div>
+                        </div>
+                        
+                        <div class="layui-btn-container">
+                            <button id="statusasyc1" class="layui-btn layui-btn-normal layui-btn-radius" lay-on="loading1">
+                                <i class="layui-icon layui-icon-refresh"></i> 开始重置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+        </div>
           `;
     const levelContent = `
           1      无算法要求
