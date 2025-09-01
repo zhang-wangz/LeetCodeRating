@@ -102,7 +102,7 @@
 
     // 因为字符显示问题，暂时去除
     // <span class="layui-progress-text myfont">0%</span>
-        const pbstatusContent = `
+    const pbstatusContent = `
           <div class="layui-row layui-col-space15">
                 <div class="layui-card">
                     <div class="layui-card-header" style="text-align: center; background: linear-gradient(135deg, #5FB878, #009688);">
