@@ -75,7 +75,8 @@ tips: 2025/6/10 最大小版本号修改为9
 
 LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org/version/1/3/0/code-of-conduct/) 行为规范。
 
-### :heart: [捐助](https://www.showdoc.com.cn/2069209189620830)特别鸣谢
+### :heart: [捐助](https://www.showdoc.com.cn/2069209189620830) 
+#### 特别鸣谢
 #### 最大捐助, 折价200块, 单独名单！
 | 捐助者 | 金额   | 渠道   | 时间         | 作者寄语    |
 |-----|------|------|------------|---------|
