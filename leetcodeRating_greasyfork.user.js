@@ -924,19 +924,25 @@
         console.log(getSlug(link.href) + '已经替换..., 略过');
         return;
       }
-      let [status, score, paid] = getpbRelation(link.href);
-      if (!status) {
-        link.setAttribute('linkId', 'leetcodeRating');
-        return;
-      }
-      // console.log(status);
-      // 1 SOLVED 2 ATTEMPTED 3 TO_DO
-      let code = status == 'TO_DO' ? 3 : status == 'SOLVED' ? 1 : 2;
-      // console.log(code);
-      let iconStr = getPbstatusIcon(code, score, paid);
       let iconEle = document.createElement('span');
-      iconEle.innerHTML = iconStr;
+      const setEleIcon = () => {
+        let [status, score, paid] = getpbRelation(link.href);
+        if (!status) {
+          link.setAttribute('linkId', 'leetcodeRating');
+          return;
+        }
+        // console.log(status);
+        // 1 SOLVED 2 ATTEMPTED 3 TO_DO
+        let code = status == 'TO_DO' ? 3 : status == 'SOLVED' ? 1 : 2;
+        // console.log(code);
+        let iconStr = getPbstatusIcon(code, score, paid);
+        iconEle.innerHTML = iconStr;
+      };
+      setEleIcon();
       // console.log(iconEle);
+      // 在其他页面提交通过后，点击图标可以不刷新页面更新状态
+      iconEle.addEventListener('click', setEleIcon);
+
       // 获取元素的父节点
       link.setAttribute('linkId', 'leetcodeRating');
       const parent = link.parentNode;
