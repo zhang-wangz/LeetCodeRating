@@ -59,12 +59,6 @@
   const problemUrl = "https://leetcode.com/problems" // the specific problem page, such as "https://leetcode.com/problems/two-sum/description/"
   GM_addStyle(GM_getResourceText("css"))
 
-  // 深拷贝 deep clone
-  function deepclone(obj) {
-    const str = JSON.stringify(obj)
-    return JSON.parse(str)
-  }
-
   // 获取时间
   function getCurrentDate(format) {
     const now = new Date()
@@ -158,33 +152,31 @@
         new Date().toLocaleTimeString()
     )
     try {
-      const problemTitle = document.querySelector(
-        "#qd-content > div > div.flexlayout__tab > div > div > div > div > div > a"
-      )
+      // 从 URL 提取题目 slug，再从页面标题链接中提取题号
+      const problemLinks = document.querySelectorAll('a[href^="/problems/"]')
+      let problemIndex = null
+      for (const link of problemLinks) {
+        const match = (link.textContent || "").match(/^(\d+)\.\s/)
+        if (match) {
+          problemIndex = match[1]
+          break
+        }
+      }
 
-      console.log(
-        "[LeetCodeRating] problemTitle:",
-        problemTitle ? "Found" : "Not found"
-      )
-      if (problemTitle == undefined) {
+      if (problemIndex == null) {
         lastProcessedProblemId = "unknown"
         return
       }
 
-      const problemIndex = problemTitle.innerText.split(".")[0].trim()
-
-      if (
-        lastProcessedProblemId != undefined &&
-        lastProcessedProblemId == problemIndex
-      ) {
+      if (lastProcessedProblemId == problemIndex) {
         return
       }
 
       const colorSpan = document.querySelector(
-        "#qd-content > div > div.flexlayout__tab > div > div > div.flex.gap-1 > div"
+        '[class*="text-difficulty-easy"], [class*="text-difficulty-medium"], [class*="text-difficulty-hard"]'
       )
+      if (!colorSpan) return
 
-      // 新版统计难度分数并且修改
       if (t2rate[problemIndex] != undefined) {
         console.log(
           `[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex].Rating}`
@@ -194,26 +186,13 @@
         console.log(
           `[LeetCodeRating] No rating found for problem ${problemIndex}, restoring original difficulty`
         )
-        // 恢复原始难度显示
-        const problemDifficulty = colorSpan.getAttribute("class")
-        const difficultyMap = {
-          "text-difficulty-easy": "Easy",
-          "text-difficulty-medium": "Medium",
-          "text-difficulty-hard": "Hard",
-        }
-
-        // 检查class中包含哪种难度
-        let originalDifficulty = "Unknown"
-        for (const diffClass in difficultyMap) {
-          if (problemDifficulty && problemDifficulty.includes(diffClass)) {
-            originalDifficulty = difficultyMap[diffClass]
-            break
-          }
-        }
-        colorSpan.innerHTML = originalDifficulty
+        const classList = colorSpan.getAttribute("class") || ""
+        if (classList.includes("text-difficulty-easy")) colorSpan.innerHTML = "Easy"
+        else if (classList.includes("text-difficulty-medium")) colorSpan.innerHTML = "Medium"
+        else if (classList.includes("text-difficulty-hard")) colorSpan.innerHTML = "Hard"
       }
 
-      lastProcessedProblemId = deepclone(problemIndex)
+      lastProcessedProblemId = problemIndex
     } catch (e) {
       return
     }
