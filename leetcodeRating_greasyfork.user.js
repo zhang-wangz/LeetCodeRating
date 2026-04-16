@@ -65,7 +65,7 @@
     if (!match) return
     const problemIndex = match[1]
     if (t2rate[problemIndex] !== undefined) {
-      difficultyLabel.innerHTML = t2rate[problemIndex].Rating
+      difficultyLabel.textContent = t2rate[problemIndex].Rating
     }
   }
 
@@ -128,7 +128,6 @@
       }
 
       if (problemIndex == null) {
-        lastProcessedProblemId = "unknown"
         return
       }
 
@@ -145,15 +144,15 @@
         console.log(
           `[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex].Rating}`
         )
-        colorSpan.innerHTML = t2rate[problemIndex].Rating
+        colorSpan.textContent = t2rate[problemIndex].Rating
       } else {
         console.log(
           `[LeetCodeRating] No rating found for problem ${problemIndex}, restoring original difficulty`
         )
         const classList = colorSpan.getAttribute("class") || ""
-        if (classList.includes("text-difficulty-easy")) colorSpan.innerHTML = "Easy"
-        else if (classList.includes("text-difficulty-medium")) colorSpan.innerHTML = "Medium"
-        else if (classList.includes("text-difficulty-hard")) colorSpan.innerHTML = "Hard"
+        if (classList.includes("text-difficulty-easy")) colorSpan.textContent = "Easy"
+        else if (classList.includes("text-difficulty-medium")) colorSpan.textContent = "Medium"
+        else if (classList.includes("text-difficulty-hard")) colorSpan.textContent = "Hard"
       }
 
       lastProcessedProblemId = problemIndex
@@ -213,7 +212,11 @@
           GM_setValue("preDate", preDate)
           GM_setValue("t2ratedb", JSON.stringify(t2rate))
           GM_setValue("t2rateInitialized", "1")
-          // 数据加载完成后立即尝试处理当前页面
+          // 重置状态，确保当前页面用新数据重新处理
+          lastProcessedProblemId = undefined
+          document.querySelectorAll('[data-lc-rating-processed]').forEach(el => {
+            delete el.dataset.lcRatingProcessed
+          })
           tryProcess()
         } else {
           console.log(`[Data Init] Failed to fetch data, status: ${res.status}`)
@@ -296,11 +299,7 @@
 
   // ==================== 其他初始化 ====================
 
-  ;[...document.querySelectorAll("*")].forEach((item) => {
-    item.oncopy = function (e) {
-      e.stopPropagation()
-    }
-  })
+  document.addEventListener('copy', e => e.stopPropagation(), true)
 
   // 版本更新机制 (仅在主页检查)
   if (window.location.href.startsWith(allProblemsUrl)) {
