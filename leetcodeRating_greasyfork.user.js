@@ -40,17 +40,8 @@
   const version = "2.0.0"
   const DEBUG_MODE = false
 
-  const originalConsoleLog = console.log
   if (!DEBUG_MODE) {
-    try {
-      console.log = function(...args) {
-      }
-    } catch (e) {
-      window.console = Object.assign({}, console, {
-        log: function(...args) {
-        }
-      })
-    }
+    console.log = () => {}
   }
 
   let preDate
@@ -58,34 +49,6 @@
   const problemListUrl = "https://leetcode.com/problem-list" // the problem list page, such as "https://leetcode.com/problem-list/array/"
   const problemUrl = "https://leetcode.com/problems/" // the specific problem page, such as "https://leetcode.com/problems/two-sum/description/"
   GM_addStyle(GM_getResourceText("css"))
-
-  // 获取时间
-  function getCurrentDate(format) {
-    const now = new Date()
-    const year = now.getFullYear() //得到年份
-    let month = now.getMonth() //得到月份
-    let date = now.getDate() //得到日期
-    let hour = now.getHours() //得到小时
-    let minu = now.getMinutes() //得到分钟
-    let sec = now.getSeconds() //得到秒
-    month = month + 1
-    if (month < 10) month = "0" + month
-    if (date < 10) date = "0" + date
-    if (hour < 10) hour = "0" + hour
-    if (minu < 10) minu = "0" + minu
-    if (sec < 10) sec = "0" + sec
-    let time = ""
-    // 精确到天
-    if (format == 1) {
-      time = year + "年" + month + "月" + date + "日"
-    }
-    // 精确到分
-    else if (format == 2) {
-      time =
-        year + "-" + month + "-" + date + " " + hour + ":" + minu + ":" + sec
-    }
-    return time
-  }
 
   let lastProcessedProblemId
 
@@ -101,7 +64,7 @@
     const match = (titleEl.textContent || "").match(/^(\d+)\.\s/)
     if (!match) return
     const problemIndex = match[1]
-    if (t2rate[problemIndex] != undefined) {
+    if (t2rate[problemIndex] !== undefined) {
       difficultyLabel.innerHTML = t2rate[problemIndex].Rating
     }
   }
@@ -169,7 +132,7 @@
         return
       }
 
-      if (lastProcessedProblemId == problemIndex) {
+      if (lastProcessedProblemId === problemIndex) {
         return
       }
 
@@ -178,7 +141,7 @@
       )
       if (!colorSpan) return
 
-      if (t2rate[problemIndex] != undefined) {
+      if (t2rate[problemIndex] !== undefined) {
         console.log(
           `[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex].Rating}`
         )
@@ -207,9 +170,8 @@
     }`
   )
 
-  //   latestpb = JSON.parse(GM_getValue("latestpb", "{}").toString())
   preDate = GM_getValue("preDate", "")
-  const now = getCurrentDate(1)
+  const now = new Date().toISOString().slice(0, 10)
 
   const t2rateInitialized = GM_getValue("t2rateInitialized", "")
 
@@ -217,7 +179,7 @@
     `[Data Init] preDate: ${preDate}, now: ${now}, initialized: ${t2rateInitialized !== ""}`
   )
 
-  if (t2rateInitialized === "" || preDate === "" || preDate !== now) {
+  if (t2rateInitialized === "" || preDate !== now) {
     console.log(`[Data Init] Need to fetch new data from server`)
 
     GM_xmlhttpRequest({
@@ -240,16 +202,13 @@
 
           for (const element of json) {
             t2rate[element.ID] = element
-            t2rate[element.ID].Rating = Number.parseInt(
-              Number.parseFloat(element.Rating) + 0.5
-            )
+            t2rate[element.ID].Rating = Math.round(parseFloat(element.Rating))
           }
           console.log(
             `[Data Init] Processed t2rate, final keys count: ${
               Object.keys(t2rate).length
             }`
           )
-          console.log("everyday getdate once...")
           preDate = now
           GM_setValue("preDate", preDate)
           GM_setValue("t2ratedb", JSON.stringify(t2rate))
@@ -261,8 +220,7 @@
         }
       },
       onerror: function (err) {
-        console.log("error")
-        console.log(err)
+        console.error("[Data Init] Failed to fetch data:", err)
       },
     })
   }
@@ -361,15 +319,15 @@
           const dataStr = res.response
           const json = JSON.parse(dataStr)
           const v = json.version
-          const upcontent = json.content
-          if (v != version) {
+          const updateContent = json.content
+          if (v !== version) {
             layer.open({
               content:
                 '<div style="color:#000; padding: 8px;">' +
                 '<p><strong>LeetCodeRating</strong> has a new version!</p>' +
                 '<p><strong>Update content:</strong></p>' +
                 '<div style="background: #f5f5f5; padding: 8px; border-radius: 4px; margin: 8px 0;">' +
-                upcontent +
+                updateContent +
                 '</div>' +
                 '</div>',
               btn: ['Install Update', 'Later'],
@@ -395,8 +353,7 @@
         }
       },
       onerror: function (err) {
-        console.log("error")
-        console.log(err)
+        console.error("[Version Check] Failed to fetch version:", err)
       },
     })
   }
