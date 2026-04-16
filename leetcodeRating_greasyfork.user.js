@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜English
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.0
+// @version      2.0.1
 // @license      MIT
 // @description  LeetCodeRating The score of the weekly competition is displayed, and currently supports the tag page, question bank page, problem_list page and question page
 // @author       小东是个阳光蛋(Leetcode Nickname of chinese site
@@ -32,12 +32,13 @@
 // @note         2023-09-20 1.1.4 fix the error that scores are not displayed properly due to ui changes in problem page
 // @note         2023-12-14 1.1.5 fix the error that scores are not displayed properly due to ui changes in problem set page
 // @note         2025-08-21 2.0.0 refactor the plugin, change the refresh and update logic
+// @note         2026-04-15 2.0.1 fix problem page rating display after LeetCode UI update; fix rating not shown on first install or daily first data fetch
 // ==/UserScript==
 
 (function () {
   "use strict"
   let t2rate = {}
-  const version = "2.0.0"
+  const version = "2.0.1"
   const DEBUG_MODE = false
 
   if (!DEBUG_MODE) {

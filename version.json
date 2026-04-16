@@ -1,4 +1,4 @@
 {
-  "version": "2.0.0",
-  "content": "Refactor the plugin, change the refresh and update logic"
+  "version": "2.0.1",
+  "content": "fix problem page rating display after LeetCode UI update; fix rating not shown on first install or daily first data fetch"
 }
