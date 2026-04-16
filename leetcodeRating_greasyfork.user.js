@@ -56,7 +56,7 @@
   let preDate
   const allProblemsUrl = "https://leetcode.com/problemset" // the problems page, contains all problems
   const problemListUrl = "https://leetcode.com/problem-list" // the problem list page, such as "https://leetcode.com/problem-list/array/"
-  const problemUrl = "https://leetcode.com/problems" // the specific problem page, such as "https://leetcode.com/problems/two-sum/description/"
+  const problemUrl = "https://leetcode.com/problems/" // the specific problem page, such as "https://leetcode.com/problems/two-sum/description/"
   GM_addStyle(GM_getResourceText("css"))
 
   // 获取时间
@@ -133,6 +133,7 @@
         label.dataset.lcRatingProcessed = "1"
       }
     } catch (e) {
+      console.error("[LeetCodeRating] getAllProblemsData error:", e)
       return
     }
   }
@@ -194,6 +195,7 @@
 
       lastProcessedProblemId = problemIndex
     } catch (e) {
+      console.error("[LeetCodeRating] getProblemData error:", e)
       return
     }
   }
@@ -209,13 +211,13 @@
   preDate = GM_getValue("preDate", "")
   const now = getCurrentDate(1)
 
+  const t2rateInitialized = GM_getValue("t2rateInitialized", "")
+
   console.log(
-    `[Data Init] preDate: ${preDate}, now: ${now}, tagVersion exists: ${
-      t2rate.tagVersion != undefined
-    }`
+    `[Data Init] preDate: ${preDate}, now: ${now}, initialized: ${t2rateInitialized !== ""}`
   )
 
-  if (t2rate.tagVersion == undefined || preDate == "" || preDate != now) {
+  if (t2rateInitialized === "" || preDate === "" || preDate !== now) {
     console.log(`[Data Init] Need to fetch new data from server`)
 
     GM_xmlhttpRequest({
@@ -242,7 +244,6 @@
               Number.parseFloat(element.Rating) + 0.5
             )
           }
-          t2rate.tagVersion = {}
           console.log(
             `[Data Init] Processed t2rate, final keys count: ${
               Object.keys(t2rate).length
@@ -252,6 +253,7 @@
           preDate = now
           GM_setValue("preDate", preDate)
           GM_setValue("t2ratedb", JSON.stringify(t2rate))
+          GM_setValue("t2rateInitialized", "1")
           // 数据加载完成后立即尝试处理当前页面
           tryProcess()
         } else {
@@ -270,7 +272,6 @@
   // 根据当前 URL 判断页面类型
   function getPageType() {
     const url = location.href
-    // 注意：/problemset 以 /problems 开头，必须先匹配 problemset 再匹配 problems
     if (url.startsWith(allProblemsUrl)) return "allProblems"
     if (url.startsWith(problemListUrl)) return "problemList"
     if (url.startsWith(problemUrl)) return "problem"
