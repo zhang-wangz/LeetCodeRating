@@ -42,7 +42,9 @@
   const DEBUG_MODE = false
 
   if (!DEBUG_MODE) {
-    console.log = () => {}
+    try {
+      console.log = () => {}
+    } catch (e) {}
   }
 
   let preDate
@@ -58,16 +60,18 @@
     let row = difficultyLabel.parentElement
     while (row && !row.querySelector(".text-body .ellipsis")) {
       row = row.parentElement
-      if (!row || row === document.body) return
+      if (!row || row === document.body) return false
     }
     const titleEl = row.querySelector(".text-body .ellipsis")
-    if (!titleEl) return
+    if (!titleEl) return false
     const match = (titleEl.textContent || "").match(/^(\d+)\.\s/)
-    if (!match) return
+    if (!match) return false
     const problemIndex = match[1]
     if (t2rate[problemIndex] !== undefined) {
       difficultyLabel.textContent = t2rate[problemIndex].Rating
+      return true
     }
+    return false
   }
 
   function getAllProblemsData() {
@@ -93,8 +97,9 @@
       )
       for (const label of difficultyLabels) {
         if (label.dataset.lcRatingProcessed) continue
-        replaceDifficultyWithRating(label)
-        label.dataset.lcRatingProcessed = "1"
+        if (replaceDifficultyWithRating(label)) {
+          label.dataset.lcRatingProcessed = "1"
+        }
       }
     } catch (e) {
       console.error("[LeetCodeRating] getAllProblemsData error:", e)
@@ -192,18 +197,23 @@
         "Content-Type": "application/x-www-form-urlencoded",
       },
       onload: function (res) {
-        if (res.status === 200) {
-          console.log(`[Data Init] Successfully fetched data from server`)
-          // 保留唯一标识
-          t2rate = {}
+        if (res.status !== 200) {
+          console.log(`[Data Init] Failed to fetch data, status: ${res.status}`)
+          return
+        }
+        console.log(`[Data Init] Successfully fetched data from server`)
+        try {
           const dataStr = res.response
           const json = JSON.parse(dataStr)
           console.log(`[Data Init] Parsed ${json.length} problem records`)
 
+          // 暂存到 newRate，解析或处理失败时不破坏已有缓存
+          const newRate = {}
           for (const element of json) {
-            t2rate[element.ID] = element
-            t2rate[element.ID].Rating = Math.round(parseFloat(element.Rating))
+            newRate[element.ID] = element
+            newRate[element.ID].Rating = Math.round(parseFloat(element.Rating))
           }
+          t2rate = newRate
           console.log(
             `[Data Init] Processed t2rate, final keys count: ${
               Object.keys(t2rate).length
@@ -219,8 +229,12 @@
             delete el.dataset.lcRatingProcessed
           })
           tryProcess()
-        } else {
-          console.log(`[Data Init] Failed to fetch data, status: ${res.status}`)
+        } catch (e) {
+          console.error("[Data Init] Failed to parse/process data:", e)
+          console.error(
+            "[Data Init] Response snippet:",
+            (res.response || "").slice(0, 200)
+          )
         }
       },
       onerror: function (err) {
