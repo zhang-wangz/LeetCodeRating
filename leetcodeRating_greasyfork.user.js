@@ -60,18 +60,16 @@
     let row = difficultyLabel.parentElement
     while (row && !row.querySelector(".text-body .ellipsis")) {
       row = row.parentElement
-      if (!row || row === document.body) return false
+      if (!row || row === document.body) return
     }
     const titleEl = row.querySelector(".text-body .ellipsis")
-    if (!titleEl) return false
+    if (!titleEl) return
     const match = (titleEl.textContent || "").match(/^(\d+)\.\s/)
-    if (!match) return false
+    if (!match) return
     const problemIndex = match[1]
     if (t2rate[problemIndex] !== undefined) {
       difficultyLabel.textContent = t2rate[problemIndex].Rating
-      return true
     }
-    return false
   }
 
   function getAllProblemsData() {
@@ -97,9 +95,8 @@
       )
       for (const label of difficultyLabels) {
         if (label.dataset.lcRatingProcessed) continue
-        if (replaceDifficultyWithRating(label)) {
-          label.dataset.lcRatingProcessed = "1"
-        }
+        replaceDifficultyWithRating(label)
+        label.dataset.lcRatingProcessed = "1"
       }
     } catch (e) {
       console.error("[LeetCodeRating] getAllProblemsData error:", e)
