@@ -745,54 +745,55 @@
 
     function allPbPostData(skip, limit) {
       let reqs = {
-        query: "\n    query problemsetQuestionListV2($filters: QuestionFilterInput, $limit: Int, $searchKeyword: String, $skip: Int, $sortBy: QuestionSortByInput, $categorySlug: String) {\n  problemsetQuestionListV2(\n    filters: $filters\n    limit: $limit\n    searchKeyword: $searchKeyword\n    skip: $skip\n    sortBy: $sortBy\n    categorySlug: $categorySlug\n  ) {\n    questions {\n      id\n      titleSlug\n      title\n      translatedTitle\n      questionFrontendId\n      paidOnly\n      difficulty\n      topicTags {\n        name\n        slug\n        nameTranslated\n      }\n      status\n      isInMyFavorites\n      frequency\n      acRate\n      contestPoint\n    }\n    totalLength\n    finishedLength\n    hasMore\n  }\n}\n    ",
+        query:
+          '\n    query problemsetQuestionListV2($filters: QuestionFilterInput, $limit: Int, $searchKeyword: String, $skip: Int, $sortBy: QuestionSortByInput, $categorySlug: String) {\n  problemsetQuestionListV2(\n    filters: $filters\n    limit: $limit\n    searchKeyword: $searchKeyword\n    skip: $skip\n    sortBy: $sortBy\n    categorySlug: $categorySlug\n  ) {\n    questions {\n      id\n      titleSlug\n      title\n      translatedTitle\n      questionFrontendId\n      paidOnly\n      difficulty\n      topicTags {\n        name\n        slug\n        nameTranslated\n      }\n      status\n      isInMyFavorites\n      frequency\n      acRate\n      contestPoint\n    }\n    totalLength\n    finishedLength\n    hasMore\n  }\n}\n    ',
         variables: {
           skip: skip,
           limit: limit,
-          categorySlug: "all-code-essentials",
+          categorySlug: 'all-code-essentials',
           filters: {
-              filterCombineType: "ALL",
-              statusFilter: {
-                  questionStatuses: [],
-                  operator: "IS"
-              },
-              difficultyFilter: {
-                  difficulties: [],
-                  operator: "IS"
-              },
-              languageFilter: {
-                  languageSlugs: [],
-                  operator: "IS"
-              },
-              topicFilter: {
-                  topicSlugs: [],
-                  operator: "IS"
-              },
-              acceptanceFilter: {},
-              frequencyFilter: {},
-              frontendIdFilter: {},
-              lastSubmittedFilter: {},
-              publishedFilter: {},
-              companyFilter: {
-                  companySlugs: [],
-                  operator: "IS"
-              },
-              positionFilter: {
-                  positionSlugs: [],
-                  operator: "IS"
-              },
-              positionLevelFilter: {
-                  positionLevelSlugs: [],
-                  operator: "IS"
-              },
-              contestPointFilter: {
-                  contestPoints: [],
-                  operator: "IS"
-              },
-              premiumFilter: {
-                  premiumStatus: [],
-                  operator: "IS"
-              }
+            filterCombineType: 'ALL',
+            statusFilter: {
+              questionStatuses: [],
+              operator: 'IS'
+            },
+            difficultyFilter: {
+              difficulties: [],
+              operator: 'IS'
+            },
+            languageFilter: {
+              languageSlugs: [],
+              operator: 'IS'
+            },
+            topicFilter: {
+              topicSlugs: [],
+              operator: 'IS'
+            },
+            acceptanceFilter: {},
+            frequencyFilter: {},
+            frontendIdFilter: {},
+            lastSubmittedFilter: {},
+            publishedFilter: {},
+            companyFilter: {
+              companySlugs: [],
+              operator: 'IS'
+            },
+            positionFilter: {
+              positionSlugs: [],
+              operator: 'IS'
+            },
+            positionLevelFilter: {
+              positionLevelSlugs: [],
+              operator: 'IS'
+            },
+            contestPointFilter: {
+              contestPoints: [],
+              operator: 'IS'
+            },
+            premiumFilter: {
+              premiumStatus: [],
+              operator: 'IS'
+            }
           }
         },
         operationName: 'problemsetQuestionListV2'
@@ -1985,7 +1986,7 @@
             const cnt = Math.ceil(getpbCnt() / 100);
             const headers = {
               'Content-Type': 'application/json',
-              'x-operation-name': 'problemsetQuestionListV2', 
+              'x-operation-name': 'problemsetQuestionListV2'
             };
             let loaded = 0;
             const promises = [];
@@ -2021,7 +2022,7 @@
             Promise.all(promises).then(async () => {
               pbstatus[pbstatusVersion] = {};
               GM_setValue('pbstatus', JSON.stringify(pbstatus));
-              console.log(JSON.stringify(pbstatus))
+              console.log(JSON.stringify(pbstatus));
               layer.msg('同步所有题目状态完成!');
               await sleep(1000);
               layer.closeAll();
@@ -2794,7 +2795,6 @@
         $('#level').text('请登录后再尝试获取level');
       }
 
-      
       function addListener2() {
         var originalFetch = fetch;
         window.unsafeWindow.fetch = function () {
@@ -2807,22 +2807,22 @@
                 clonedResponse.ok
               ) {
                 let resp = JSON.parse(bodyText);
-                console.log("主人提交回应:" + resp);
+                console.log('主人提交回应:' + resp);
                 if (resp?.status_msg?.includes('Accepted')) {
                   showMessage(
-                  '恭喜主人成功提交， 当前分数为: ' +
-                    score +
-                    ', 当前等级为: ' +
-                    Math.trunc(level).toString()
-                );
-                console.log(
-                  '恭喜主人成功提交， 当前分数为: ' +
-                    score +
-                    ', 当前等级为: ' +
-                    Math.trunc(level).toString()
-                );
+                    '恭喜主人成功提交， 当前分数为: ' +
+                      score +
+                      ', 当前等级为: ' +
+                      Math.trunc(level).toString()
+                  );
+                  console.log(
+                    '恭喜主人成功提交， 当前分数为: ' +
+                      score +
+                      ', 当前等级为: ' +
+                      Math.trunc(level).toString()
+                  );
                 } else if (resp?.status_msg && !resp.status_msg.includes('Accepted')) {
-                  console.log("主人提交回应:" + resp);
+                  console.log('主人提交回应:' + resp);
                   showMessage(
                     '很遗憾，主人提交失败，不过也不要气馁呀，加油! <br/> 当前分数为: ' +
                       score +
@@ -2843,7 +2843,7 @@
         };
       }
 
-      console.log("已添加纸片人提交监听~")
+      console.log('已添加纸片人提交监听~');
       addListener2();
 
       // 鼠标在消息上时
