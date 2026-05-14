@@ -70,7 +70,7 @@
     const chContestUrl = 'https://leetcode.cn/contest/';
     const zhContestUrl = 'https://leetcode.com/contest/';
 
-    // 灵茶相关url
+    // 灵茶相关url 
     const teaSheetUrl = 'https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz';
     // 因为ui更新，暂时去除，没有位置存放当前位置了
     // const lc0x3fsolveUrl = "https://huxulm.github.io/lc-rating/search"
@@ -80,7 +80,7 @@
     // 制片人url, 通过接口从version.json拿取
     let papermanpic = '';
 
-    // rank 相关数据
+    // rank 相关数据.
     let t2rate = JSON.parse(GM_getValue('t2ratedb', '{}').toString());
     // pbstatus数据
     let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
