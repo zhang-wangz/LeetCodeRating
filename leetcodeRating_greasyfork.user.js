@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.1.1
+// @version      3.1.2
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,10 +34,10 @@
   function userScript() {
     'use strict';
 
-    const version = '3.1.1';
-    let pbstatusVersion = 'version22';
-    let t2rateVersion = 'Version13';
-    let levelVersion = 'Version27';
+    const version = '3.1.2';
+    let pbstatusVersion = 'version23';
+    let t2rateVersion = 'Version14';
+    let levelVersion = 'Version28';
     // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -57,6 +57,7 @@
     // 限定pbstatus使用, 不匹配题解链接
     const pbSolutionUrl = 'https://leetcode.{2,7}/problems/.*/solution.*';
     const pbSubmissionsUrl = 'https://leetcode.{2,7}/problems/.*/submissions.*';
+    const checkUrl = 'https://leetcode.cn/submissions/detail/[0-9]*/v2/check/.*';
 
     const searchUrl = 'https://leetcode.cn/search/.*';
     const studyUrl = 'https://leetcode.cn/studyplan/.*';
@@ -664,7 +665,7 @@
     }
 
     function copyNoRight() {
-      new ElementGetter().each('.WRmCx > div:has(code)', document, item => {
+      new ElementGetter().each('code[class*="language-"]', document, item => {
         addCopy(item);
         let observer = new MutationObserver(function (mutationsList, observer) {
           // 检查每个变化
@@ -679,13 +680,13 @@
       });
 
       function addCopy(item) {
-        let nowShow = item.querySelector('div:not(.hidden) > div.group.relative > pre > code');
+        let nowShow = item;
         // console.log(nowShow);
         let copyNode = nowShow.parentElement.nextElementSibling.cloneNode(true);
         nowShow.parentElement.nextElementSibling.setAttribute('hidden', true);
         copyNode.classList.add('copyNode');
         copyNode.onclick = function () {
-          let nowShow = item.querySelector('div:not(.hidden) > div.group.relative > pre > code');
+          let nowShow = item;
           navigator.clipboard.writeText(nowShow.textContent).then(() => {
             layer.msg('复制成功');
           });
@@ -744,94 +745,59 @@
 
     function allPbPostData(skip, limit) {
       let reqs = {
-        query: `
-    query problemsetQuestionListV2($filters: QuestionFilterInput, $limit: Int, $searchKeyword: String, $skip: Int, $sortBy: QuestionSortByInput, $categorySlug: String) {
-  problemsetQuestionListV2(
-    filters: $filters
-    limit: $limit
-    searchKeyword: $searchKeyword
-    skip: $skip
-    sortBy: $sortBy
-    categorySlug: $categorySlug
-  ) {
-    questions {
-      id
-      titleSlug
-      title
-      translatedTitle
-      questionFrontendId
-      paidOnly
-      difficulty
-      topicTags {
-        name
-        slug
-        nameTranslated
-      }
-      status
-      isInMyFavorites
-      frequency
-      acRate
-      contestPoint
-    }
-    totalLength
-    finishedLength
-    hasMore
-  }
-}
-    `,
+        query: "\n    query problemsetQuestionListV2($filters: QuestionFilterInput, $limit: Int, $searchKeyword: String, $skip: Int, $sortBy: QuestionSortByInput, $categorySlug: String) {\n  problemsetQuestionListV2(\n    filters: $filters\n    limit: $limit\n    searchKeyword: $searchKeyword\n    skip: $skip\n    sortBy: $sortBy\n    categorySlug: $categorySlug\n  ) {\n    questions {\n      id\n      titleSlug\n      title\n      translatedTitle\n      questionFrontendId\n      paidOnly\n      difficulty\n      topicTags {\n        name\n        slug\n        nameTranslated\n      }\n      status\n      isInMyFavorites\n      frequency\n      acRate\n      contestPoint\n    }\n    totalLength\n    finishedLength\n    hasMore\n  }\n}\n    ",
         variables: {
-          categorySlug: 'all-code-essentials',
-          searchKeyword: '',
           skip: skip,
           limit: limit,
+          categorySlug: "all-code-essentials",
           filters: {
-            filterCombineType: 'ALL',
-            statusFilter: {
-              questionStatuses: [],
-              operator: 'IS'
-            },
-            difficultyFilter: {
-              difficulties: [],
-              operator: 'IS'
-            },
-            languageFilter: {
-              languageSlugs: [],
-              operator: 'IS'
-            },
-            topicFilter: {
-              topicSlugs: [],
-              operator: 'IS'
-            },
-            acceptanceFilter: {},
-            frequencyFilter: {},
-            frontendIdFilter: {},
-            lastSubmittedFilter: {},
-            publishedFilter: {},
-            companyFilter: {
-              companySlugs: [],
-              operator: 'IS'
-            },
-            positionFilter: {
-              positionSlugs: [],
-              operator: 'IS'
-            },
-            contestPointFilter: {
-              contestPoints: [],
-              operator: 'IS'
-            },
-            premiumFilter: {
-              premiumStatus: [],
-              operator: 'IS'
-            }
-          },
-          sortBy: {
-            sortField: 'CUSTOM',
-            sortOrder: 'ASCENDING'
+              filterCombineType: "ALL",
+              statusFilter: {
+                  questionStatuses: [],
+                  operator: "IS"
+              },
+              difficultyFilter: {
+                  difficulties: [],
+                  operator: "IS"
+              },
+              languageFilter: {
+                  languageSlugs: [],
+                  operator: "IS"
+              },
+              topicFilter: {
+                  topicSlugs: [],
+                  operator: "IS"
+              },
+              acceptanceFilter: {},
+              frequencyFilter: {},
+              frontendIdFilter: {},
+              lastSubmittedFilter: {},
+              publishedFilter: {},
+              companyFilter: {
+                  companySlugs: [],
+                  operator: "IS"
+              },
+              positionFilter: {
+                  positionSlugs: [],
+                  operator: "IS"
+              },
+              positionLevelFilter: {
+                  positionLevelSlugs: [],
+                  operator: "IS"
+              },
+              contestPointFilter: {
+                  contestPoints: [],
+                  operator: "IS"
+              },
+              premiumFilter: {
+                  premiumStatus: [],
+                  operator: "IS"
+              }
           }
         },
         operationName: 'problemsetQuestionListV2'
       };
-      reqs.key = 'LeetcodeRating';
+      // reqs.key = 'LeetcodeRating';
       return reqs;
     }
 
@@ -1105,7 +1071,6 @@
       var originalFetch = fetch;
       window.unsafeWindow.fetch = function () {
         return originalFetch.apply(this, arguments).then(function (response) {
-          let checkUrl = 'https://leetcode.cn/submissions/detail/[0-9]*/check/.*';
           let clonedResponse = response.clone();
           clonedResponse.text().then(function (bodyText) {
             if (
@@ -1565,40 +1530,31 @@
 
     function getSearch() {
       if (!GM_getValue('switchsearch')) return;
-      let arr = $("div[role='table']");
+      let arr = document.querySelector("div[role='tabpanel']");
       if (arr.length == 0) return;
-      arr = arr[0].childNodes[1];
-
-      let head = document.querySelector("div[role='row']");
-      if (!head) rerurn;
-      // 确认难度序列
-      let rateRefresh = false;
-      let headndidx;
-      for (let i = 0; i < head.childNodes.length; i++) {
-        let headEle = head.childNodes[i];
-        if (headEle.textContent.includes('难度')) {
-          headndidx = i;
-        }
-        if (headEle.textContent.includes('题目评分')) {
-          rateRefresh = true;
-        }
-      }
+      arr = arr.childNodes[0].childNodes[0];
       if (!arr) return;
       let childs = arr.childNodes;
       for (const element of childs) {
         let v = element;
-        if (!v.childNodes[1]) return;
-        let t = v.childNodes[1].textContent;
+        if (!v.childNodes[0]) return;
+        let t = v.childNodes[0].textContent;
         let data = t.split('.');
         let id = data[0].trim();
-        let nd = v.childNodes[headndidx].childNodes[0].innerHTML;
-        if (t2rate[id] != null && !rateRefresh) {
+        let nd = v.childNodes[0].childNodes[0].childNodes[1].childNodes[2].textContent;
+        if (t2rate[id] != null) {
           nd = t2rate[id]['Rating'];
-          v.childNodes[headndidx].childNodes[0].innerHTML = nd;
+          v.childNodes[0].childNodes[0].childNodes[1].childNodes[2].textContent = nd;
         } else {
-          let nd2ch = { 'text-green-s': '简单', 'text-yellow': '中等', 'text-red-s': '困难' };
-          let clr = v.childNodes[headndidx].childNodes[0].getAttribute('class');
-          v.childNodes[headndidx].childNodes[0].innerHTML = nd2ch[clr];
+          let nd2ch = { 'text-sd-easy': '简单', 'text-sd-medium': '中等', 'text-sd-hard': '困难' };
+          let clr = v.childNodes[0].childNodes[0].childNodes[1].childNodes[2].getAttribute('class');
+          // 遍历所有key，判断class是否包含这个key
+          for (const key in nd2ch) {
+            if (clr.includes(key)) {
+              v.childNodes[0].childNodes[0].childNodes[1].childNodes[2].textContent = nd2ch[key];
+              break;
+            }
+          }
         }
       }
     }
@@ -2028,7 +1984,8 @@
             othis.addClass(DISABLED);
             const cnt = Math.ceil(getpbCnt() / 100);
             const headers = {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'x-operation-name': 'problemsetQuestionListV2', 
             };
             let loaded = 0;
             const promises = [];
@@ -2053,7 +2010,6 @@
                       };
                     }
                     loaded += 1;
-
                     const showval = Math.trunc((loaded / cnt) * 100);
                     element.progress('demo-filter-progress', `${showval}%`);
                   },
@@ -2065,12 +2021,13 @@
             Promise.all(promises).then(async () => {
               pbstatus[pbstatusVersion] = {};
               GM_setValue('pbstatus', JSON.stringify(pbstatus));
+              console.log(JSON.stringify(pbstatus))
               layer.msg('同步所有题目状态完成!');
               await sleep(1000);
               layer.closeAll();
-              layer.msg('重新加载页面中!');
-              await sleep(1000);
-              location.reload();
+              // layer.msg('重新加载页面中!');
+              // await sleep(1000);
+              // location.reload();
             });
           }
         });
@@ -2836,17 +2793,23 @@
         // console.log(userTag)
         $('#level').text('请登录后再尝试获取level');
       }
-      // 监听分数提交
-      let addListener2 = () => {
-        let checkUrl = 'https://leetcode.cn/submissions/detail/[0-9]*/check/.*';
-        XMLHttpRequest.prototype.send = function (str) {
-          const _onreadystatechange = this.onreadystatechange;
-          this.onreadystatechange = (...args) => {
-            if (this.readyState == this.DONE && this.responseURL.match(checkUrl)) {
-              let resp = JSON.parse(this.response);
-              // console.log(resp)
-              if (resp && resp.status_msg && resp.status_msg.includes('Accepted')) {
-                showMessage(
+
+      
+      function addListener2() {
+        var originalFetch = fetch;
+        window.unsafeWindow.fetch = function () {
+          return originalFetch.apply(this, arguments).then(function (response) {
+            let clonedResponse = response.clone();
+            clonedResponse.text().then(function (bodyText) {
+              if (
+                clonedResponse.url.match(checkUrl) &&
+                clonedResponse.status == 200 &&
+                clonedResponse.ok
+              ) {
+                let resp = JSON.parse(bodyText);
+                console.log("主人提交回应:" + resp);
+                if (resp?.status_msg?.includes('Accepted')) {
+                  showMessage(
                   '恭喜主人成功提交， 当前分数为: ' +
                     score +
                     ', 当前等级为: ' +
@@ -2858,28 +2821,29 @@
                     ', 当前等级为: ' +
                     Math.trunc(level).toString()
                 );
-              } else if (resp && resp.status_msg && !resp.status_msg.includes('Accepted')) {
-                showMessage(
-                  '很遗憾，主人提交失败，不过也不要气馁呀，加油! <br/> 当前分数为: ' +
-                    score +
-                    ', 当前等级为: ' +
-                    Math.trunc(level).toString()
-                );
-                console.log(
-                  '很遗憾，主人提交失败，不过也不要气馁呀，加油! 当前分数为: ' +
-                    score +
-                    ', 当前等级为: ' +
-                    Math.trunc(level).toString()
-                );
+                } else if (resp?.status_msg && !resp.status_msg.includes('Accepted')) {
+                  console.log("主人提交回应:" + resp);
+                  showMessage(
+                    '很遗憾，主人提交失败，不过也不要气馁呀，加油! <br/> 当前分数为: ' +
+                      score +
+                      ', 当前等级为: ' +
+                      Math.trunc(level).toString()
+                  );
+                  console.log(
+                    '很遗憾，主人提交失败，不过也不要气馁呀，加油! 当前分数为: ' +
+                      score +
+                      ', 当前等级为: ' +
+                      Math.trunc(level).toString()
+                  );
+                }
               }
-            }
-            if (_onreadystatechange) {
-              _onreadystatechange.apply(this, args);
-            }
-          };
-          return dummySend.call(this, str);
+            });
+            return response;
+          });
         };
-      };
+      }
+
+      console.log("已添加纸片人提交监听~")
       addListener2();
 
       // 鼠标在消息上时
