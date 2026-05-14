@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.1.2
+// @version      3.1.3
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,10 +34,10 @@
   function userScript() {
     'use strict';
 
-    const version = '3.1.2';
-    let pbstatusVersion = 'version23';
-    let t2rateVersion = 'Version14';
-    let levelVersion = 'Version28';
+    const version = '3.1.3';
+    let pbstatusVersion = 'version24';
+    let t2rateVersion = 'Version15';
+    let levelVersion = 'Version29';
     // xhr劫持时使用，保留原始
     const dummySend = XMLHttpRequest.prototype.send;
     const originalOpen = XMLHttpRequest.prototype.open;
@@ -2026,9 +2026,9 @@
               layer.msg('同步所有题目状态完成!');
               await sleep(1000);
               layer.closeAll();
-              // layer.msg('重新加载页面中!');
-              // await sleep(1000);
-              // location.reload();
+              layer.msg('重新加载页面中!');
+              await sleep(1000);
+              location.reload();
             });
           }
         });
