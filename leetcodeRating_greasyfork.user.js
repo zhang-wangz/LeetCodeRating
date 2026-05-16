@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.1.3
+// @version      3.1.4
 // @license      MIT
 // @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
@@ -34,7 +34,7 @@
   function userScript() {
     'use strict';
 
-    const version = '3.1.3';
+    const version = '3.1.4';
     let pbstatusVersion = 'version24';
     let t2rateVersion = 'Version15';
     let levelVersion = 'Version29';
@@ -80,7 +80,7 @@
     // 制片人url, 通过接口从version.json拿取
     let papermanpic = '';
 
-    // rank 相关数据.
+    // rank 相关数据
     let t2rate = JSON.parse(GM_getValue('t2ratedb', '{}').toString());
     // pbstatus数据
     let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
@@ -680,6 +680,8 @@
       });
 
       function addCopy(item) {
+        let url = window.location.href;
+        if (!url.match(pbSolutionUrl)) return;
         let nowShow = item;
         // console.log(nowShow);
         let copyNode = nowShow.parentElement.nextElementSibling.cloneNode(true);
