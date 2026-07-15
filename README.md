@@ -89,6 +89,7 @@ LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org
 | Toddz1 | 20.0元 | 微信   | 2024-06-06 | 谢谢大佬赞助！|
 | 古希腊掌管老鼠药的🐭！ | 10.0元 | QQ   | 2024-10-17 | 谢谢老板红包！|
 | L*r | 6.6元 | 微信   | 2025-09-12 | 谢谢老板红包！|
+| (https://avatars.githubusercontent.com/u/47638394) | 20元 | 微信  | 2026-07-14 | 大力感谢支持～ |
 
 ### 🍬最后
 **如果有帮助到你，请给repo点个star，让更多的人看到 ~ ("▔□▔)/**
