@@ -1,4 +1,4 @@
 {
-  "version": "2.0.1",
-  "content": "fix problem page rating display after LeetCode UI update; fix rating not shown on first install or daily first data fetch"
+  "version": "2.0.2",
+  "content": "add an optional Chinese problem link with automatic light and dark theme support"
 }

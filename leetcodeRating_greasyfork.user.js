@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜English
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.1
+// @version      2.0.2
 // @license      MIT
 // @description  LeetCodeRating The score of the weekly competition is displayed, and currently supports the tag page, question bank page, problem_list page and question page
 // @author       小东是个阳光蛋(Leetcode Nickname of chinese site
@@ -12,6 +12,8 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_unregisterMenuCommand
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @connect      zerotrac.github.io
@@ -33,13 +35,18 @@
 // @note         2023-12-14 1.1.5 fix the error that scores are not displayed properly due to ui changes in problem set page
 // @note         2025-08-21 2.0.0 refactor the plugin, change the refresh and update logic
 // @note         2026-04-15 2.0.1 fix problem page rating display after LeetCode UI update; fix rating not shown on first install or daily first data fetch
+// @note         2026-08-03 2.0.2 add an optional Chinese problem link with automatic light and dark theme support
 // ==/UserScript==
 
 (function () {
   "use strict"
   let t2rate = {}
-  const version = "2.0.1"
+  const version = "2.0.2"
   const DEBUG_MODE = false
+  const chineseLinkId = "leetcode-rating-chinese-link"
+  const chineseLinkEnabledKey = "chineseProblemLinkEnabled"
+  let chineseLinkEnabled = GM_getValue(chineseLinkEnabledKey, true)
+  let chineseLinkMenuId = null
 
   if (!DEBUG_MODE) {
     try {
@@ -54,6 +61,102 @@
   GM_addStyle(GM_getResourceText("css"))
 
   let lastProcessedProblemId
+
+  function getChineseProblemUrl() {
+    const chineseUrl = new URL(location.href)
+    chineseUrl.protocol = "https:"
+    chineseUrl.hostname = "leetcode.cn"
+    return chineseUrl.toString()
+  }
+
+  function createGlobeIcon() {
+    const svgNamespace = "http://www.w3.org/2000/svg"
+    const icon = document.createElementNS(svgNamespace, "svg")
+    icon.setAttribute("aria-hidden", "true")
+    icon.setAttribute("viewBox", "0 0 24 24")
+    icon.setAttribute("fill", "none")
+    icon.setAttribute("stroke", "currentColor")
+    icon.setAttribute("stroke-width", "2")
+    icon.setAttribute("class", "h-3.5 w-3.5")
+
+    const circle = document.createElementNS(svgNamespace, "circle")
+    circle.setAttribute("cx", "12")
+    circle.setAttribute("cy", "12")
+    circle.setAttribute("r", "9")
+
+    const latitude = document.createElementNS(svgNamespace, "path")
+    latitude.setAttribute("d", "M3 12h18")
+
+    const longitude = document.createElementNS(svgNamespace, "path")
+    longitude.setAttribute("d", "M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18")
+
+    icon.append(circle, latitude, longitude)
+    return icon
+  }
+
+  function syncChineseProblemLink(pageType) {
+    const existingLink = document.getElementById(chineseLinkId)
+    if (!chineseLinkEnabled || pageType !== "problem") {
+      if (existingLink) existingLink.remove()
+      return
+    }
+
+    const difficultyLabel = document.querySelector(
+      '[class*="text-difficulty-easy"], [class*="text-difficulty-medium"], [class*="text-difficulty-hard"]'
+    )
+    const metadataRow = difficultyLabel && difficultyLabel.parentElement
+    if (!metadataRow) return
+
+    const metadataButtons = Array.from(metadataRow.children)
+    const nativeButton = metadataButtons.find(
+      element =>
+        element !== existingLink &&
+        element.classList.contains("cursor-pointer")
+    )
+    const hintButton = metadataButtons.find(
+      element =>
+        element !== existingLink &&
+        (element.textContent || "").trim() === "Hint"
+    )
+    const link = existingLink || document.createElement("a")
+    link.id = chineseLinkId
+    link.href = getChineseProblemUrl()
+    link.target = "_blank"
+    link.rel = "noopener noreferrer"
+    link.title = "Open this problem on LeetCode China"
+    link.setAttribute("aria-label", link.title)
+    link.className = nativeButton
+      ? nativeButton.className
+      : "relative inline-flex items-center justify-center text-caption px-2 py-1 gap-1 rounded-full bg-fill-secondary cursor-pointer transition-colors hover:bg-fill-primary hover:text-text-primary text-sd-secondary-foreground hover:opacity-80"
+    link.style.textDecoration = "none"
+
+    if (!existingLink) {
+      link.append(createGlobeIcon(), document.createTextNode("Chinese"))
+    }
+    if (hintButton && link.previousElementSibling !== hintButton) {
+      hintButton.insertAdjacentElement("afterend", link)
+    } else if (
+      !hintButton &&
+      (link.parentElement !== metadataRow || link !== metadataRow.lastElementChild)
+    ) {
+      metadataRow.append(link)
+    }
+  }
+
+  function registerChineseLinkMenu() {
+    if (chineseLinkMenuId !== null) {
+      GM_unregisterMenuCommand(chineseLinkMenuId)
+    }
+    const menuLabel = chineseLinkEnabled
+      ? "Hide Chinese problem link"
+      : "Show Chinese problem link"
+    chineseLinkMenuId = GM_registerMenuCommand(menuLabel, () => {
+      chineseLinkEnabled = !chineseLinkEnabled
+      GM_setValue(chineseLinkEnabledKey, chineseLinkEnabled)
+      registerChineseLinkMenu()
+      tryProcess()
+    })
+  }
 
   function replaceDifficultyWithRating(difficultyLabel) {
     // 从难度标签向上遍历，找到包含题号的祖先行
@@ -259,6 +362,7 @@
 
   function tryProcess() {
     const pageType = getPageType()
+    syncChineseProblemLink(pageType)
     if (pageType && pageFuncs[pageType]) {
       pageFuncs[pageType]()
     }
@@ -311,6 +415,7 @@
 
   // ==================== 其他初始化 ====================
 
+  registerChineseLinkMenu()
   document.addEventListener('copy', e => e.stopPropagation(), true)
 
   // 版本更新机制 (仅在主页检查)
