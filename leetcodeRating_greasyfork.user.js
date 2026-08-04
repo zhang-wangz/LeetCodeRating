@@ -107,8 +107,16 @@
     const metadataRow = difficultyLabel && difficultyLabel.parentElement
     if (!metadataRow) return
 
-    const nativeButton = Array.from(metadataRow.children).find(element =>
-      element.classList.contains("cursor-pointer")
+    const metadataButtons = Array.from(metadataRow.children)
+    const nativeButton = metadataButtons.find(
+      element =>
+        element !== existingLink &&
+        element.classList.contains("cursor-pointer")
+    )
+    const hintButton = metadataButtons.find(
+      element =>
+        element !== existingLink &&
+        (element.textContent || "").trim() === "Hint"
     )
     const link = existingLink || document.createElement("a")
     link.id = chineseLinkId
@@ -125,7 +133,12 @@
     if (!existingLink) {
       link.append(createGlobeIcon(), document.createTextNode("Chinese"))
     }
-    if (link.parentElement !== metadataRow || link !== metadataRow.lastElementChild) {
+    if (hintButton && link.previousElementSibling !== hintButton) {
+      hintButton.insertAdjacentElement("afterend", link)
+    } else if (
+      !hintButton &&
+      (link.parentElement !== metadataRow || link !== metadataRow.lastElementChild)
+    ) {
       metadataRow.append(link)
     }
   }
