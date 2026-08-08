@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜English
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.2
+// @version      2.0.3
 // @license      MIT
 // @description  LeetCodeRating The score of the weekly competition is displayed, and currently supports the tag page, question bank page, problem_list page and question page
 // @author       小东是个阳光蛋(Leetcode Nickname of chinese site
@@ -36,15 +36,18 @@
 // @note         2025-08-21 2.0.0 refactor the plugin, change the refresh and update logic
 // @note         2026-04-15 2.0.1 fix problem page rating display after LeetCode UI update; fix rating not shown on first install or daily first data fetch
 // @note         2026-08-03 2.0.2 add an optional Chinese problem link with automatic light and dark theme support
+// @note         2026-08-07 2.0.3 fix problem page rating being restored to difficulty after refresh
 // ==/UserScript==
 
 (function () {
   "use strict"
   let t2rate = {}
-  const version = "2.0.2"
+  const version = "2.0.3"
   const DEBUG_MODE = false
   const chineseLinkId = "leetcode-rating-chinese-link"
   const chineseLinkEnabledKey = "chineseProblemLinkEnabled"
+  const problemDifficultySelector =
+    '[class*="text-difficulty-easy"], [class*="text-difficulty-medium"], [class*="text-difficulty-hard"]'
   let chineseLinkEnabled = GM_getValue(chineseLinkEnabledKey, true)
   let chineseLinkMenuId = null
 
@@ -61,6 +64,35 @@
   GM_addStyle(GM_getResourceText("css"))
 
   let lastProcessedProblemId
+  let observedDifficultyElement = null
+  let difficultyObserver = null
+  let difficultyDebounceTimer = null
+
+  function scheduleDifficultyProcess() {
+    if (difficultyDebounceTimer) clearTimeout(difficultyDebounceTimer)
+    difficultyDebounceTimer = setTimeout(tryProcess, 100)
+  }
+
+  function disconnectDifficultyObserver() {
+    if (difficultyObserver) difficultyObserver.disconnect()
+    if (difficultyDebounceTimer) clearTimeout(difficultyDebounceTimer)
+    observedDifficultyElement = null
+    difficultyObserver = null
+    difficultyDebounceTimer = null
+  }
+
+  function observeDifficultyElement(element) {
+    if (element === observedDifficultyElement) return
+
+    disconnectDifficultyObserver()
+    observedDifficultyElement = element
+    difficultyObserver = new MutationObserver(scheduleDifficultyProcess)
+    difficultyObserver.observe(element, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    })
+  }
 
   function getChineseProblemUrl() {
     const chineseUrl = new URL(location.href)
@@ -101,9 +133,7 @@
       return
     }
 
-    const difficultyLabel = document.querySelector(
-      '[class*="text-difficulty-easy"], [class*="text-difficulty-medium"], [class*="text-difficulty-hard"]'
-    )
+    const difficultyLabel = document.querySelector(problemDifficultySelector)
     const metadataRow = difficultyLabel && difficultyLabel.parentElement
     if (!metadataRow) return
 
@@ -237,30 +267,40 @@
         return
       }
 
-      if (lastProcessedProblemId === problemIndex) {
-        return
-      }
-
-      const colorSpan = document.querySelector(
-        '[class*="text-difficulty-easy"], [class*="text-difficulty-medium"], [class*="text-difficulty-hard"]'
-      )
+      const colorSpan = document.querySelector(problemDifficultySelector)
       if (!colorSpan) return
 
+      observeDifficultyElement(colorSpan)
+
+      let expectedText
       if (t2rate[problemIndex] !== undefined) {
         console.log(
           `[LeetCodeRating] Found rating for problem ${problemIndex}: ${t2rate[problemIndex].Rating}`
         )
-        colorSpan.textContent = t2rate[problemIndex].Rating
+        expectedText = String(t2rate[problemIndex].Rating)
       } else {
         console.log(
           `[LeetCodeRating] No rating found for problem ${problemIndex}, restoring original difficulty`
         )
         const classList = colorSpan.getAttribute("class") || ""
-        if (classList.includes("text-difficulty-easy")) colorSpan.textContent = "Easy"
-        else if (classList.includes("text-difficulty-medium")) colorSpan.textContent = "Medium"
-        else if (classList.includes("text-difficulty-hard")) colorSpan.textContent = "Hard"
+        if (classList.includes("text-difficulty-easy")) expectedText = "Easy"
+        else if (classList.includes("text-difficulty-medium")) expectedText = "Medium"
+        else if (classList.includes("text-difficulty-hard")) expectedText = "Hard"
       }
 
+      if (expectedText === undefined) return
+
+      const currentText = (colorSpan.textContent || "").trim()
+      if (
+        lastProcessedProblemId === problemIndex &&
+        currentText === expectedText
+      ) {
+        return
+      }
+
+      if (currentText !== expectedText) {
+        colorSpan.textContent = expectedText
+      }
       lastProcessedProblemId = problemIndex
     } catch (e) {
       console.error("[LeetCodeRating] getProblemData error:", e)
@@ -362,6 +402,7 @@
 
   function tryProcess() {
     const pageType = getPageType()
+    if (pageType !== "problem") disconnectDifficultyObserver()
     syncChineseProblemLink(pageType)
     if (pageType && pageFuncs[pageType]) {
       pageFuncs[pageType]()
@@ -406,10 +447,10 @@
   // ==================== MutationObserver ====================
   // 监听 DOM 变化，debounce 后处理（处理 URL 变化后 React 异步渲染的情况）
 
-  let debounceTimer = null
+  let pageDebounceTimer = null
   const observer = new MutationObserver(() => {
-    if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(tryProcess, 300)
+    if (pageDebounceTimer) clearTimeout(pageDebounceTimer)
+    pageDebounceTimer = setTimeout(tryProcess, 300)
   })
   observer.observe(document.body, { childList: true, subtree: true })
 
