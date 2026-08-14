@@ -95,7 +95,7 @@ LeetCodeRating遵循 [Contributor Covenant](https://www.contributor-covenant.org
 **如果有帮助到你，请给repo点个star，让更多的人看到 ~ ("▔□▔)/**
 
 #### Star History
-[![Star History Chart](https://api.star-history.com/svg?repos=zhang-wangz/LeetCodeRating&type=Date)](https://www.star-history.com/#zhang-wangz/LeetCodeRating&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=zhang-wangz/LeetCodeRating&type=Date)](https://star-history.dera.page/#zhang-wangz/LeetCodeRating&Date)
 
 ### License
 [License](https://github.com/zhang-wangz/LeetCodeRating/blob/main/LICENSE)
