@@ -1,9 +1,17 @@
 from datetime import datetime, timedelta
 import json
 from openpyxl import Workbook
+import os
 import sys
 import time
+from urllib.parse import urlparse
 import download 
+
+ALLOWED_HOSTS = {"docs.qq.com"}
+
+def is_allowed_url(url):
+    parsed = urlparse(url)
+    return parsed.scheme == "https" and parsed.hostname in ALLOWED_HOSTS
 
 def todate(day): 
     theDay = datetime.strptime("1899-12-31", "%Y-%m-%d").date()
@@ -43,6 +51,11 @@ if __name__ == '__main__':
     else:
         # url = input("url: ")
         url = "https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz"
+
+    if not is_allowed_url(url):
+        print("非法的url，仅允许docs.qq.com域名下的链接")
+        sys.exit(1)
+
     title, tabs, opendoc_params = download.initial_fetch(url,cookie_data=cookie_data)
     print("文档名称: %s" % title)
     wb = Workbook()
@@ -87,7 +100,7 @@ if __name__ == '__main__':
         json.dump(obj, file, cls=MyEncoder)
         print("save tea.json...")
     day = obj["🎈算法趣题"][1][0].s
-    with open("./tencentdoc/tea/"+day+"-tea.json", 'w') as file:
+    with open(os.path.join("./tencentdoc/tea", os.path.basename(day)+"-tea.json"), 'w') as file:
         json.dump(obj, file, cls=MyEncoder)
         print("save"+day+"-tea.json...")
     with open("./tencentdoc/exist.txt", 'w', encoding = "utf-8") as file:
