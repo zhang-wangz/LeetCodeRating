@@ -564,7 +564,12 @@
     })();
 
     // 监听相关, 监听之后提出变化并且重启插件
-    let debounceTimer = null;
+    // The list container is watched for changes made by the site (rows added by infinite scroll, a
+    // re-sorted or filtered list). The restart waits until the changes settle, so every batch gets
+    // processed. The previous "ignore everything for 5 s after a restart" lockout dropped batches
+    // that arrived after the page interval had already stopped, leaving rows without level / alignment
+    // until the next change.
+    let restartTimer = null;
     let isSelfChanging = false;
     const observedElements = new WeakMap();
 
@@ -572,14 +577,15 @@
       if (!target || !(target instanceof Node)) return;
       if (observedElements.has(target)) return;
 
-      const observer = new MutationObserver(mutationsList => {
+      const observer = new MutationObserver(() => {
+        // Changes made by this script are ignored (the flag is cleared only after this callback ran)
         if (isSelfChanging) return;
-        if (debounceTimer) return;
-        console.log('内容变化，执行 clearAndStart');
-        clearAndStart(location.href, 500, false);
-        debounceTimer = setTimeout(() => {
-          debounceTimer = null;
-        }, 5000); // 连续变化时只触发一次
+        if (restartTimer) clearTimeout(restartTimer);
+        restartTimer = setTimeout(() => {
+          restartTimer = null;
+          console.log('内容变化，执行 clearAndStart');
+          clearAndStart(location.href, 500, false);
+        }, 300);
       });
 
       observer.observe(target, {
@@ -589,6 +595,23 @@
       });
 
       observedElements.set(target, observer);
+    }
+
+    // Clears the self-change flag after the pending MutationObserver callbacks have run: they are
+    // delivered as microtasks, so a microtask queued afterwards runs once our own changes were seen.
+    // Clearing the flag synchronously (as before) never hid the script's own changes.
+    function endSelfChange() {
+      Promise.resolve().then(() => {
+        isSelfChanging = false;
+      });
+    }
+
+    // Signature of a list container: row count plus the leading text of the first and last rows, so
+    // that a re-sorted or filtered list with the same row count is still detected as a change
+    function listSignature(arr) {
+      const head = (arr.firstElementChild?.textContent || '').slice(0, 40);
+      const tail = (arr.lastElementChild?.textContent || '').slice(0, 40);
+      return arr.childNodes.length + '|' + head + '|' + tail;
     }
 
     function getPbNameId(pbName) {
@@ -1541,7 +1564,7 @@
       observeIfNeeded(arr);
       isSelfChanging = true;
       try {
-        if (pbSetCnt && pbSetCnt == arr.childNodes.length) {
+        if (pbSetCnt && pbSetCnt == listSignature(arr)) {
           console.log('第' + lcCnt + '次刷新插件...');
           // 到达次数之后删除定时防止卡顿
           if (lcCnt == shortCnt) {
@@ -1639,9 +1662,9 @@
           }
           console.log('has refreshed problemlist...');
         }
-        pbSetCnt = arr.childNodes.length;
+        pbSetCnt = listSignature(arr);
       } finally {
-        isSelfChanging = false;
+        endSelfChange();
       }
     }
 
@@ -1664,7 +1687,7 @@
         // console.log(arr)
         // console.log(pbListpbCnt)
         // console.log(arr.childNodes.length)
-        if (pbListpbCnt && pbListpbCnt == arr.childNodes.length) {
+        if (pbListpbCnt && pbListpbCnt == listSignature(arr)) {
           console.log('第' + pbListCnt + '次刷新插件...');
           // 到达次数之后删除定时防止卡顿
           if (pbListCnt == shortCnt) {
@@ -1743,9 +1766,9 @@
           }
         }
         console.log('has refreshed...');
-        pbListpbCnt = arr.childNodes.length;
+        pbListpbCnt = listSignature(arr);
       } finally {
-        isSelfChanging = false;
+        endSelfChange();
       }
     }
 

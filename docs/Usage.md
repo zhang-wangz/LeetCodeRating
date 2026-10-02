@@ -15,6 +15,7 @@ Since 3.2.0 the same script runs on both leetcode.cn and leetcode.com (`@match *
 - The automatic light / dark switch toggles the theme locally on leetcode.com (there is no server-side theme API on the international site).
 - Problem page: the 算术评级, contest, contest problem index and 同步题目状态 items are now chips in the native chip row (after the difficulty / Topics / Companies / Hint / 中文站 chips). They copy the native chip style; the sync action is styled as a green outlined button and always stays at the end of the row, even when the site adds chips later (for example the translation toggle).
 - List pages: the difficulty column has a fixed minimum width so that the 算术评级 / pass-rate / difficulty columns line up across rows, and the site's own label text (for example `Med.`) is remembered and restored when a problem has no rating.
+- List pages: rows added later by infinite scrolling (or a re-sorted / filtered list) are now always processed. Previously a batch that arrived within 5 seconds of the last restart was skipped until the next change, which left rows without 算术评级 and misaligned.
 
 ##### 3.0.6 小版本更新说明
 3.0.6 讨论区新增重置当前页面下题目的状态按钮
