@@ -3,6 +3,17 @@
 #### 🐒 插件重要版本说明
 
 
+##### 3.2.0 major update: leetcode.com support
+
+Since 3.2.0 the same script runs on both leetcode.cn and leetcode.com (`@match *://*leetcode.com/*`). Every feature is available on the international site; the per-site differences are:
+
+- Difficulty labels restored for problems without a rating follow the site language (`Easy / Medium / Hard` on leetcode.com, `简单 / 中等 / 困难` on leetcode.cn).
+- The problem status cache behind the discuss / problem page status icons is stored separately per site (a user's solved set differs between the two accounts). The first visit on leetcode.com asks to sync once, exactly like leetcode.cn did.
+- Contest links on the problem page point to `leetcode.com/contest/...` and show the English contest name.
+- leetcode.com has no global `/search/` page, so the "题目搜索页周赛难度评分" switch is hidden there.
+- New switch "题目页显示跳转中文站按钮(仅国际站)" (on by default): a small "中文站" chip next to the difficulty label on leetcode.com problem pages opens the same problem on leetcode.cn.
+- The automatic light / dark switch toggles the theme locally on leetcode.com (there is no server-side theme API on the international site).
+
 ##### 3.0.6 小版本更新说明
 3.0.6 讨论区新增重置当前页面下题目的状态按钮
 

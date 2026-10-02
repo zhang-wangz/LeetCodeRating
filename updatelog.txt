@@ -185,4 +185,5 @@
 // @note         2026-05-14 3.1.3 3.1.2的小补丁,同步题单之后忘记刷新页面了~
 // @note         2026-05-16 3.1.4 限制版权去除的复制功能只在题解页面生效
 // @note         2026-05-24 3.1.5 @kkzxak47合并，增加题单页面点击题目完成状态自动更新状态的功能
+// @note         2026-10-02 3.2.0 Add leetcode.com support: the same script now runs every feature on both sites (site adapter for URLs / GraphQL / contest links, per-site problem status cache, difficulty labels restored in the site language), plus a "中文站" button on leetcode.com problem pages
 
