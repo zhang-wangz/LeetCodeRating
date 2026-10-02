@@ -1,15 +1,16 @@
 // ==UserScript==
 // @name         LeetCodeRating｜显示力扣周赛难度分
 // @namespace    https://github.com/zhang-wangz
-// @version      3.1.5
+// @version      3.2.0
 // @license      MIT
-// @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
+// @description  LeetCodeRating 力扣周赛分数显现和相关力扣小功能，支持 leetcode.cn 与 leetcode.com 双站点，目前浏览器更新规则，使用该插件前请手动打开浏览器开发者模式再食用～
 // @author       小东是个阳光蛋(力扣名)
 // @leetcodehomepage   https://leetcode.cn/u/runonline/
 // @homepageURL  https://github.com/zhang-wangz/LeetCodeRating
 // @contributionURL https://www.showdoc.com.cn/2069209189620830
 // @run-at       document-end
 // @match        *://*leetcode.cn/*
+// @match        *://*leetcode.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
@@ -34,7 +35,200 @@
   function userScript() {
     'use strict';
 
-    const version = '3.1.5';
+    const version = '3.2.0';
+
+    // ---------------------------------------------------------------------------------------
+    // Site adapter: every difference between leetcode.cn and leetcode.com lives in SITE.
+    // The rest of the script reads SITE.* instead of hard-coded hosts, endpoints and queries.
+    // ---------------------------------------------------------------------------------------
+    const IS_COM = /(^|\.)leetcode\.com$/.test(location.hostname);
+
+    // leetcode.com: legacy problem list query (stable for years, used by many public tools).
+    // It serves both the full status sync (filters: {}) and the navbar search (filters.searchKeywords).
+    const COM_LIST_QUERY =
+      'query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) { problemsetQuestionList: questionList(categorySlug: $categorySlug, limit: $limit, skip: $skip, filters: $filters) { total: totalNum questions: data { questionFrontendId title titleSlug difficulty isPaidOnly status } } }';
+    // leetcode.com question status values -> the SOLVED / ATTEMPTED / TO_DO values used by leetcode.cn
+    const COM_STATUS_MAP = { ac: 'SOLVED', notac: 'ATTEMPTED' };
+
+    // Class -> difficulty text maps used when a problem has no rating and the site label is restored
+    function difficultyMaps(text) {
+      return {
+        // problemset / problem list / problem sidebar
+        sdDiffMap: {
+          'text-sd-easy': text.easy,
+          'text-sd-medium': text.medium,
+          'text-sd-hard': text.hard
+        },
+        // study plan pages and the study plan sidebar
+        lcDiffMap: {
+          'text-lc-green-60': text.easy,
+          'text-lc-yellow-60': text.medium,
+          'text-lc-red-60': text.hard
+        },
+        // problem page difficulty chip
+        pbDiffMap: {
+          'text-difficulty-easy': text.easy,
+          'text-difficulty-medium': text.medium,
+          'text-difficulty-hard': text.hard
+        }
+      };
+    }
+
+    const SITE_CN = {
+      key: 'cn',
+      origin: 'https://leetcode.cn',
+      graphql: 'https://leetcode.cn/graphql/',
+      nojgo: 'https://leetcode.cn/graphql/noj-go/',
+      searchEndpoint: 'https://leetcode.cn/graphql/noj-go/',
+      contestIdField: 'ContestID_zh',
+      // Contests before weekly contest 83 only exist on leetcode.com
+      contestBase: num =>
+        num < 83 ? 'https://leetcode.com/contest/' : 'https://leetcode.cn/contest/',
+      hasSearchPage: true,
+      hiddenMenu: [],
+      pbstatusKey: 'pbstatus',
+      problemPrefixes: ['https://leetcode-cn.com/problems/', 'https://leetcode.cn/problems/'],
+      sendCsrf: false,
+      applyThemeLocally: false,
+      countLimit: 0,
+      listOperationName: 'problemsetQuestionListV2',
+      difficultyText: { easy: '简单', medium: '中等', hard: '困难' },
+      // List pages: minimum width of the difficulty column (fits "困难" and a 4-digit rating)
+      listDifficultyMinWidth: '36px',
+      // List pages: the daily question row needs the level column shifted to line up
+      dailyLevelShift: 'translateX(-8px)',
+      // Post meta row of a discuss page (author / posted time), where the sync buttons are appended
+      discussMetaMatches: text => text.includes('发布于'),
+      navSearchAnchor: () => document.querySelector('nav > div > ul'),
+      findProblemTitle: () => null,
+      queries: {
+        problemList: (skip, limit) => allPbPostData(skip, limit),
+        navSearch: keyword => ({
+          query:
+            'query problemsetQuestions($in: ProblemsetQuestionsInput!) { problemsetQuestions(in: $in) { hasMore questions { titleCn titleSlug title frontendId acRate solutionNum difficulty userQuestionStatus } } }',
+          operationName: 'problemsetQuestions',
+          variables: { in: { query: keyword, limit: 10, offset: 0 } }
+        }),
+        user: () => ({
+          query:
+            '\n    query globalData {\n  userStatus {\n    isSignedIn\n    isPremium\n    username\n    realName\n    avatar\n    userSlug\n    isAdmin\n    checkedInToday\n    useTranslation\n    premiumExpiredAt\n    isTranslator\n    isSuperuser\n    isPhoneVerified\n    isVerified\n  }\n  jobsMyCompany {\n    nameSlug\n  }\n  commonNojPermissionTypes\n}\n    ',
+          variables: {}
+        }),
+        progress: userSlug => ({
+          query:
+            '\n    query userQuestionProgress($userSlug: String!) {\n  userProfileUserQuestionProgress(userSlug: $userSlug) {\n    numAcceptedQuestions {\n      difficulty\n      count\n    }\n    numFailedQuestions {\n      difficulty\n      count\n    }\n    numUntouchedQuestions {\n      difficulty\n      count\n    }\n  }\n}\n    ',
+          variables: { userSlug: userSlug }
+        })
+      },
+      problemListTotal: res => res.data.problemsetQuestionListV2.totalLength,
+      problemListRows: res =>
+        res.data.problemsetQuestionListV2.questions.map(pb => ({
+          titleSlug: pb.titleSlug,
+          id: pb.questionFrontendId,
+          status: pb.status,
+          title: pb.title,
+          titleCn: pb.translatedTitle,
+          difficulty: pb.difficulty,
+          paidOnly: pb.paidOnly
+        })),
+      navSearchRows: res =>
+        res.data.problemsetQuestions.questions.map(q => ({
+          frontendId: q.frontendId,
+          displayTitle: q.titleCn,
+          titleSlug: q.titleSlug
+        })),
+      userSlug: res => res.data.userStatus.userSlug,
+      acceptedCounts: res => res.data.userProfileUserQuestionProgress.numAcceptedQuestions
+    };
+
+    const SITE_COM = {
+      key: 'com',
+      origin: 'https://leetcode.com',
+      graphql: 'https://leetcode.com/graphql/',
+      // leetcode.com has no noj-go endpoint
+      nojgo: null,
+      searchEndpoint: 'https://leetcode.com/graphql/',
+      contestIdField: 'ContestID_en',
+      contestBase: () => 'https://leetcode.com/contest/',
+      // leetcode.com has no global /search/ page
+      hasSearchPage: false,
+      hiddenMenu: ['switchsearch'],
+      // A user's solved set differs between the two sites, so the status cache is stored per site
+      pbstatusKey: 'pbstatus_com',
+      problemPrefixes: ['https://leetcode.com/problems/'],
+      sendCsrf: true,
+      applyThemeLocally: true,
+      countLimit: 1,
+      listOperationName: 'problemsetQuestionList',
+      difficultyText: { easy: 'Easy', medium: 'Medium', hard: 'Hard' },
+      // List pages: minimum width of the difficulty column (fits "Medium" and a 4-digit rating)
+      listDifficultyMinWidth: '56px',
+      dailyLevelShift: null,
+      discussMetaMatches: (text, node) =>
+        /\b(ago|Posted|Created|Edit)\b/i.test(text) || node?.querySelector?.('time') != null,
+      navSearchAnchor: () =>
+        document.querySelector('nav > div > ul') ||
+        document.querySelector('#navbar-root nav ul') ||
+        document.querySelector('nav ul') ||
+        document.querySelector('nav > div'),
+      // Fallback for the problem title: the first problem link whose text starts with "N. "
+      findProblemTitle: () =>
+        Array.from(document.querySelectorAll('a[href^="/problems/"]')).find(a =>
+          /^\d+\.\s/.test(a.textContent || '')
+        ) || null,
+      queries: {
+        problemList: (skip, limit) => ({
+          query: COM_LIST_QUERY,
+          operationName: 'problemsetQuestionList',
+          variables: { categorySlug: 'all-code-essentials', skip: skip, limit: limit, filters: {} }
+        }),
+        navSearch: keyword => ({
+          query: COM_LIST_QUERY,
+          operationName: 'problemsetQuestionList',
+          variables: {
+            categorySlug: 'all-code-essentials',
+            skip: 0,
+            limit: 10,
+            filters: { searchKeywords: keyword }
+          }
+        }),
+        user: () => ({
+          query: 'query globalData { userStatus { isSignedIn username } }',
+          variables: {}
+        }),
+        progress: username => ({
+          query:
+            'query userProgress($username: String!) { matchedUser(username: $username) { submitStatsGlobal { acSubmissionNum { difficulty count } } } }',
+          variables: { username: username }
+        })
+      },
+      problemListTotal: res => res.data.problemsetQuestionList.total,
+      problemListRows: res =>
+        res.data.problemsetQuestionList.questions.map(q => ({
+          titleSlug: q.titleSlug,
+          id: q.questionFrontendId,
+          status: COM_STATUS_MAP[q.status] || 'TO_DO',
+          title: q.title,
+          titleCn: q.title,
+          difficulty: q.difficulty,
+          paidOnly: q.isPaidOnly
+        })),
+      navSearchRows: res =>
+        res.data.problemsetQuestionList.questions.map(q => ({
+          frontendId: q.questionFrontendId,
+          displayTitle: q.title,
+          titleSlug: q.titleSlug
+        })),
+      userSlug: res => (res.data.userStatus.isSignedIn ? res.data.userStatus.username : null),
+      acceptedCounts: res =>
+        res.data.matchedUser.submitStatsGlobal.acSubmissionNum
+          .filter(d => d.difficulty !== 'All')
+          .map(d => ({ difficulty: d.difficulty.toUpperCase(), count: d.count }))
+    };
+
+    const SITE = IS_COM ? SITE_COM : SITE_CN;
+    Object.assign(SITE, difficultyMaps(SITE.difficultyText));
+
     let pbstatusVersion = 'version24';
     let t2rateVersion = 'Version15';
     let levelVersion = 'Version29';
@@ -50,25 +244,25 @@
       `<link href="https://unpkg.com/leetcoderatingjs@1.0.7/index.min.css" rel="stylesheet">`
     );
 
-    // 页面相关url
-    const allUrl = 'https://leetcode.cn/problemset/.*';
-    const pblistUrl = 'https://leetcode.cn/problem-list/.*';
+    // 页面相关url (derived from the current site)
+    const allUrl = SITE.origin + '/problemset/.*';
+    const pblistUrl = SITE.origin + '/problem-list/.*';
+    // Problem links are matched on both hosts: these patterns are used to filter links on a page
     const pbUrl = 'https://leetcode.{2,7}/problems/.*';
     // 限定pbstatus使用, 不匹配题解链接
     const pbSolutionUrl = 'https://leetcode.{2,7}/problems/.*/solution.*';
     const pbSubmissionsUrl = 'https://leetcode.{2,7}/problems/.*/submissions.*';
-    const checkUrl = 'https://leetcode.cn/submissions/detail/[0-9]*/v2/check/.*';
+    // Submission polling: leetcode.cn uses /v2/check/, leetcode.com uses /check/
+    const checkUrl = 'https://leetcode.(cn|com)/submissions/detail/[0-9]*/(v2/)?check/.*';
 
-    const searchUrl = 'https://leetcode.cn/search/.*';
-    const studyUrl = 'https://leetcode.cn/studyplan/.*';
-    const problemUrl = 'https://leetcode.cn/problemset';
-    const discussUrl = 'https://leetcode.cn/discuss/.*';
+    const searchUrl = SITE.origin + '/search/.*';
+    const studyUrl = SITE.origin + '/studyplan/.*';
+    const problemUrl = SITE.origin + '/problemset';
+    const discussUrl = SITE.origin + '/discuss/.*';
 
     // req相关url
-    const lcnojgo = 'https://leetcode.cn/graphql/noj-go/';
-    const lcgraphql = 'https://leetcode.cn/graphql/';
-    const chContestUrl = 'https://leetcode.cn/contest/';
-    const zhContestUrl = 'https://leetcode.com/contest/';
+    const lcnojgo = SITE.nojgo;
+    const lcgraphql = SITE.graphql;
 
     // 灵茶相关url
     const teaSheetUrl = 'https://docs.qq.com/sheet/DWGFoRGVZRmxNaXFz';
@@ -83,7 +277,7 @@
     // rank 相关数据
     let t2rate = JSON.parse(GM_getValue('t2ratedb', '{}').toString());
     // pbstatus数据
-    let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
+    let pbstatus = JSON.parse(GM_getValue(SITE.pbstatusKey, '{}').toString());
     // 题目名称-id ContestID_zh-ID
     // 中文
     let pbName2Id = JSON.parse(GM_getValue('pbName2Id', '{}').toString());
@@ -370,7 +564,12 @@
     })();
 
     // 监听相关, 监听之后提出变化并且重启插件
-    let debounceTimer = null;
+    // The list container is watched for changes made by the site (rows added by infinite scroll, a
+    // re-sorted or filtered list). The restart waits until the changes settle, so every batch gets
+    // processed. The previous "ignore everything for 5 s after a restart" lockout dropped batches
+    // that arrived after the page interval had already stopped, leaving rows without level / alignment
+    // until the next change.
+    let restartTimer = null;
     let isSelfChanging = false;
     const observedElements = new WeakMap();
 
@@ -378,14 +577,15 @@
       if (!target || !(target instanceof Node)) return;
       if (observedElements.has(target)) return;
 
-      const observer = new MutationObserver(mutationsList => {
+      const observer = new MutationObserver(() => {
+        // Changes made by this script are ignored (the flag is cleared only after this callback ran)
         if (isSelfChanging) return;
-        if (debounceTimer) return;
-        console.log('内容变化，执行 clearAndStart');
-        clearAndStart(location.href, 500, false);
-        debounceTimer = setTimeout(() => {
-          debounceTimer = null;
-        }, 5000); // 连续变化时只触发一次
+        if (restartTimer) clearTimeout(restartTimer);
+        restartTimer = setTimeout(() => {
+          restartTimer = null;
+          console.log('内容变化，执行 clearAndStart');
+          clearAndStart(location.href, 500, false);
+        }, 300);
       });
 
       observer.observe(target, {
@@ -395,6 +595,23 @@
       });
 
       observedElements.set(target, observer);
+    }
+
+    // Clears the self-change flag after the pending MutationObserver callbacks have run: they are
+    // delivered as microtasks, so a microtask queued afterwards runs once our own changes were seen.
+    // Clearing the flag synchronously (as before) never hid the script's own changes.
+    function endSelfChange() {
+      Promise.resolve().then(() => {
+        isSelfChanging = false;
+      });
+    }
+
+    // Signature of a list container: row count plus the leading text of the first and last rows, so
+    // that a re-sorted or filtered list with the same row count is still detected as a change
+    function listSignature(arr) {
+      const head = (arr.firstElementChild?.textContent || '').slice(0, 40);
+      const tail = (arr.lastElementChild?.textContent || '').slice(0, 40);
+      return arr.childNodes.length + '|' + head + '|' + tail;
     }
 
     function getPbNameId(pbName) {
@@ -458,6 +675,14 @@
       waitForKeyElements.controlObj = controlObj;
     }
 
+    // Adds the Django CSRF token header on leetcode.com; leetcode.cn requests are left untouched
+    function withCsrf(headers) {
+      if (!SITE.sendCsrf) return headers;
+      const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+      if (!match) return headers;
+      return Object.assign({ 'x-csrftoken': match[1] }, headers || {});
+    }
+
     const ajaxReq = (type, reqUrl, headers, data, successFuc, asyn = false) => {
       return $.ajax({
         // 请求方式
@@ -473,7 +698,7 @@
         xhrFields: {
           withCredentials: true
         },
-        headers: headers,
+        headers: withCsrf(headers),
         // 请求成功
         success: function (result) {
           successFuc(result);
@@ -492,9 +717,9 @@
     initUrlChange()();
 
     // 常量数据
-    const regDiss = '.*//leetcode.cn/problems/.*/discussion/.*';
-    const regSovle = '.*//leetcode.cn/problems/.*/solutions/.*';
-    const regPbSubmission = '.*//leetcode.cn/problems/.*/submissions/.*';
+    const regDiss = '.*//leetcode.(cn|com)/problems/.*/discussion/.*';
+    const regSovle = '.*//leetcode.(cn|com)/problems/.*/solutions/.*';
+    const regPbSubmission = '.*//leetcode.(cn|com)/problems/.*/submissions/.*';
 
     // 监听urlchange事件定义
     function initUrlChange() {
@@ -608,12 +833,24 @@
         ],
         menu_ID = [],
         menu_ID_Content = [];
+      if (IS_COM) {
+        // leetcode.com only: a button on the problem page linking to the same problem on leetcode.cn
+        menu_ALL.push([
+          'switchcnlink',
+          'cn link function',
+          '题目页显示跳转中文站按钮(仅国际站)',
+          true,
+          true
+        ]);
+      }
       for (const element of menu_ALL) {
         // 如果读取到的值为 null 就写入默认值
         if (GM_getValue(element[0]) == null) {
           GM_setValue(element[0], element[3]);
         }
       }
+      // Drop the entries that do not apply to the current site (e.g. the search page on leetcode.com)
+      menu_ALL = menu_ALL.filter(element => !SITE.hiddenMenu.includes(element[0]));
       registerMenuCommand();
 
       // 注册脚本菜单
@@ -716,6 +953,8 @@
     }
 
     let lcTheme = mode => {
+      // leetcode.com has no noj-go endpoint; its theme is applied client-side in applyThemeLocally
+      if (!lcnojgo) return;
       let headers = {
         accept: '*/*',
         'accept-language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
@@ -732,17 +971,22 @@
       ajaxReq('POST', lcnojgo, headers, body, () => {});
     };
 
+    // leetcode.com keeps the theme in localStorage and toggles the html class on the client
+    const applyThemeLocally = mode => {
+      if (!SITE.applyThemeLocally) return;
+      const root = document.documentElement;
+      root.classList.remove('light', 'dark');
+      root.classList.add(mode);
+      root.style.colorScheme = mode;
+    };
+
     if (GM_getValue('switchdark')) {
       let h = new Date().getHours();
-      if (h >= 8 && h < 20) {
-        lcTheme('light');
-        localStorage.setItem('lc-dark-side', 'light');
-        console.log('修改至light mode...');
-      } else {
-        lcTheme('dark');
-        localStorage.setItem('lc-dark-side', 'dark');
-        console.log('修改至dark mode...');
-      }
+      let mode = h >= 8 && h < 20 ? 'light' : 'dark';
+      lcTheme(mode);
+      localStorage.setItem('lc-dark-side', mode);
+      applyThemeLocally(mode);
+      console.log('修改至' + mode + ' mode...');
     }
 
     function allPbPostData(skip, limit) {
@@ -809,25 +1053,25 @@
       let headers = {
         'Content-Type': 'application/json'
       };
-      ajaxReq('POST', lcgraphql, headers, allPbPostData(0, 0), res => {
-        total = res.data.problemsetQuestionListV2.totalLength;
+      ajaxReq('POST', lcgraphql, headers, SITE.queries.problemList(0, SITE.countLimit), res => {
+        total = SITE.problemListTotal(res);
       });
       return total;
     }
 
     // 从题目链接提取slug
     // 在这之前需要匹配出所有符合条件的a标签链接
+    // Only links of the current site are recognised; cross-site links return null
     function getSlug(problemUrl) {
-      let preUrl = 'https://leetcode-cn.com/problems/';
-      let nowurl = 'https://leetcode.cn/problems/';
-      if (problemUrl.startsWith(preUrl)) return problemUrl.replace(preUrl, '').split('/')[0];
-      else if (problemUrl.startsWith(nowurl)) return problemUrl.replace(nowurl, '').split('/')[0];
+      for (const prefix of SITE.problemPrefixes) {
+        if (problemUrl.startsWith(prefix)) return problemUrl.replace(prefix, '').split('/')[0];
+      }
       return null;
     }
 
     // 获取题目相关内容
     function getpbRelation(pburl) {
-      let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
+      let pbstatus = JSON.parse(GM_getValue(SITE.pbstatusKey, '{}').toString());
       let titleSlug = getSlug(pburl);
       if (!titleSlug) return [null, null, null];
       let status = pbstatus[titleSlug] == null ? 'TO_DO' : pbstatus[titleSlug]['status'];
@@ -961,13 +1205,15 @@
         layuiload1();
       }
       new ElementGetter().each('.flex-wrap.items-center', document, userinfo => {
-        if (userinfo?.lastChild?.textContent?.includes('发布于')) {
+        // The post meta row (author / posted time) is recognised per site
+        if (SITE.discussMetaMatches(userinfo?.lastChild?.textContent || '', userinfo)) {
           // console.log(userinfo)
-          span.setAttribute('class', userinfo.lastChild.getAttribute('class'));
+          const metaClass = userinfo.lastElementChild?.getAttribute('class') || '';
+          span.setAttribute('class', metaClass);
           span.setAttribute('class', span.getAttribute('class') + ' hover:text-blue-s');
           span.setAttribute('style', 'cursor:pointer');
 
-          span1.setAttribute('class', userinfo.lastChild.getAttribute('class'));
+          span1.setAttribute('class', metaClass);
           span1.setAttribute('class', span1.getAttribute('class') + ' hover:text-blue-s');
           span1.setAttribute('style', 'cursor:pointer');
           if (!span.getAttribute('hidden')) userinfo.appendChild(span);
@@ -1093,14 +1339,14 @@
               let resp = JSON.parse(bodyText);
               console.log('响应数据：', resp);
               if (resp?.status_msg?.includes('Accepted')) {
-                let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
+                let pbstatus = JSON.parse(GM_getValue(SITE.pbstatusKey, '{}').toString());
                 let slug = getSlug(location.href);
                 if (!pbstatus[slug]) pbstatus[slug] = {};
                 pbstatus[slug]['status'] = 'SOLVED';
-                GM_setValue('pbstatus', JSON.stringify(pbstatus));
+                GM_setValue(SITE.pbstatusKey, JSON.stringify(pbstatus));
                 console.log('提交成功，当前题目状态已更新');
               } else if (resp?.status_msg && !resp.status_msg.includes('Accepted')) {
-                let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
+                let pbstatus = JSON.parse(GM_getValue(SITE.pbstatusKey, '{}').toString());
                 let slug = getSlug(location.href);
                 // 同步一下之前的记录是什么状态
                 let query =
@@ -1124,13 +1370,13 @@
                 if (status && status == 'ac') {
                   if (!pbstatus[slug]) pbstatus[slug] = {};
                   pbstatus[slug]['status'] = 'SOLVED';
-                  GM_setValue('pbstatus', JSON.stringify(pbstatus));
+                  GM_setValue(SITE.pbstatusKey, JSON.stringify(pbstatus));
                   console.log('提交失败,但是之前已经ac过该题，所以状态为ac');
                 } else {
                   // 之前没有提交过或者提交过但是没有ac的状态，那么仍然更新为提交失败状态
                   if (!pbstatus[slug]) pbstatus[slug] = {};
                   pbstatus[slug]['status'] = 'ATTEMPTED';
-                  GM_setValue('pbstatus', JSON.stringify(pbstatus));
+                  GM_setValue(SITE.pbstatusKey, JSON.stringify(pbstatus));
                   console.log('提交失败, 当前题目状态已更新');
                 }
               }
@@ -1144,6 +1390,19 @@
     // 获取数字
     function getcontestNumber(url) {
       return parseInt(url.substr(15));
+    }
+
+    // Contest name and links of a problem id, resolved for the current site
+    function contestInfo(id) {
+      const entry = t2rate[id];
+      if (entry == null) return null;
+      const base = SITE.contestBase(getcontestNumber(entry['ContestSlug']));
+      return {
+        name: entry[SITE.contestIdField],
+        index: entry['ProblemIndex'],
+        contestHref: base + entry['ContestSlug'],
+        problemHref: base + entry['ContestSlug'] + '/problems/' + entry['TitleSlug']
+      };
     }
 
     // 获取时间
@@ -1305,7 +1564,7 @@
       observeIfNeeded(arr);
       isSelfChanging = true;
       try {
-        if (pbSetCnt && pbSetCnt == arr.childNodes.length) {
+        if (pbSetCnt && pbSetCnt == listSignature(arr)) {
           console.log('第' + lcCnt + '次刷新插件...');
           // 到达次数之后删除定时防止卡顿
           if (lcCnt == shortCnt) {
@@ -1362,23 +1621,10 @@
               continue;
             }
             // 因为lc请求是有缓存的，所以多次刷新的时候同一个位置会是不同的题目，这时候需要还原
-            if (t2rate[id] != null) {
-              let ndScore = t2rate[id]['Rating'];
-              difficulty.text(ndScore);
-              // 修改尺寸使得数字分数和文字比如(困难)保持在同一行
-              passRate.removeClass('w-[70px]');
-              passRate.addClass('w-[55px]');
-            } else {
-              let nd2ch = {
-                'mx-0 text-[14px] text-sd-easy lc-xl:mx-4': '简单',
-                'mx-0 text-[14px] text-sd-medium lc-xl:mx-4': '中等',
-                'mx-0 text-[14px] text-sd-hard lc-xl:mx-4': '困难'
-              };
-              difficulty.text(nd2ch[difficulty.attr('class')]);
-              // 恢复原有大小尺寸
-              passRate.removeClass('w-[55px]');
-              passRate.addClass('w-[70px]');
-            }
+            // renderRating writes the rating when one exists, otherwise restores the site's difficulty text
+            renderRating(difficulty[0], t2rate[id]?.['Rating'], SITE.sdDiffMap, {});
+            // Keep the level / pass-rate / difficulty columns aligned across rows
+            alignListColumns(difficulty, passRate);
 
             // 增加算术评级插入操作
             if (switchlevel) {
@@ -1405,9 +1651,9 @@
                 $level
                   .removeClass('w-[70px] w-[55px] text-sd-muted-foreground')
                   .addClass('min-w-[100px]');
-                // 如果插入的为每日一题位置，需要修改尺寸，左移8px
-                if (idx == everydatpbidx) {
-                  $level.css('transform', 'translateX(-8px)');
+                // 如果插入的为每日一题位置，需要修改尺寸，左移8px (leetcode.cn only)
+                if (idx == everydatpbidx && SITE.dailyLevelShift) {
+                  $level.css('transform', SITE.dailyLevelShift);
                 }
                 // 插入到通过率前面
                 passRate.before($level);
@@ -1416,9 +1662,9 @@
           }
           console.log('has refreshed problemlist...');
         }
-        pbSetCnt = arr.childNodes.length;
+        pbSetCnt = listSignature(arr);
       } finally {
-        isSelfChanging = false;
+        endSelfChange();
       }
     }
 
@@ -1441,7 +1687,7 @@
         // console.log(arr)
         // console.log(pbListpbCnt)
         // console.log(arr.childNodes.length)
-        if (pbListpbCnt && pbListpbCnt == arr.childNodes.length) {
+        if (pbListpbCnt && pbListpbCnt == listSignature(arr)) {
           console.log('第' + pbListCnt + '次刷新插件...');
           // 到达次数之后删除定时防止卡顿
           if (pbListCnt == shortCnt) {
@@ -1484,23 +1730,10 @@
           }
 
           // 插入竞赛分数
-          if (t2rate[id] != null) {
-            let ndScore = t2rate[id]['Rating'];
-            difficulty.text(ndScore);
-            // 修改尺寸使得数字分数和文字比如(困难)保持在同一行
-            passRate.removeClass('w-[70px]');
-            passRate.addClass('w-[55px]');
-          } else {
-            let nd2ch = {
-              'mx-0 text-[14px] text-sd-easy lc-xl:mx-4': '简单',
-              'mx-0 text-[14px] text-sd-medium lc-xl:mx-4': '中等',
-              'mx-0 text-[14px] text-sd-hard lc-xl:mx-4': '困难'
-            };
-            difficulty.text(nd2ch[difficulty.attr('class')]);
-            // 恢复原有大小尺寸
-            passRate.removeClass('w-[55px]');
-            passRate.addClass('w-[70px]');
-          }
+          // renderRating writes the rating when one exists, otherwise restores the site's difficulty text
+          renderRating(difficulty[0], t2rate[id]?.['Rating'], SITE.sdDiffMap, {});
+          // Keep the level / pass-rate / difficulty columns aligned across rows
+          alignListColumns(difficulty, passRate);
 
           // 增加算术评级插入操作
           if (switchlevel) {
@@ -1533,9 +1766,9 @@
           }
         }
         console.log('has refreshed...');
-        pbListpbCnt = arr.childNodes.length;
+        pbListpbCnt = listSignature(arr);
       } finally {
-        isSelfChanging = false;
+        endSelfChange();
       }
     }
 
@@ -1557,7 +1790,7 @@
           nd = t2rate[id]['Rating'];
           v.childNodes[0].childNodes[0].childNodes[1].childNodes[2].textContent = nd;
         } else {
-          let nd2ch = { 'text-sd-easy': '简单', 'text-sd-medium': '中等', 'text-sd-hard': '困难' };
+          let nd2ch = SITE.sdDiffMap;
           let clr = v.childNodes[0].childNodes[0].childNodes[1].childNodes[2].getAttribute('class');
           // 遍历所有key，判断class是否包含这个key
           for (const key in nd2ch) {
@@ -1584,18 +1817,31 @@
       if (clr.length === 0) return false;
       for (const [className, text] of Object.entries({ ...lightn2c, ...darkn2c })) {
         if (clr.contains(className)) {
+          const current = (nd.textContent || '').trim();
+          const showsRating = /^\d+$/.test(current);
           // 如果难度分存在，则替换分数
           if (ndRate) {
+            // Remember the site's own label (e.g. "Med." / "中等") so it can be restored when the
+            // site reuses this node for another problem without re-rendering its text
+            if (!showsRating && current) nd.dataset.lcrLabel = current;
             nd.textContent = ndRate;
             return true;
           }
-          // 如果难度分不存在，则恢复本身
-          nd.innerText = text;
+          // 如果难度分不存在，则恢复本身 (only needed when a rating was written earlier)
+          if (showsRating) nd.innerText = nd.dataset.lcrLabel || text;
           return false;
         }
       }
 
       return false;
+    }
+
+    // List pages: give the difficulty label a fixed minimum width so that the level / pass-rate
+    // columns line up across rows whatever the label is ("1234", "Medium", "困难"); the pass-rate
+    // box keeps its native width
+    function alignListColumns(difficulty, passRate) {
+      difficulty.css({ minWidth: SITE.listDifficultyMinWidth, textAlign: 'right' });
+      passRate.removeClass('w-[55px]').addClass('w-[70px]');
     }
 
     /**
@@ -1689,19 +1935,8 @@
           let id = getPbNameId(pbName);
           // console.log(pbName, level)
 
-          let darkn2c = {
-            'text-lc-green-60': '简单',
-            'text-lc-yellow-60': '中等',
-            'text-lc-red-60': '困难'
-          };
-          let lightn2c = {
-            'text-lc-green-60': '简单',
-            'text-lc-yellow-60': '中等',
-            'text-lc-red-60': '困难'
-          };
-
-          // render rating
-          let hit = renderRating(nd, t2rate?.[id]?.Rating, lightn2c, darkn2c);
+          // render rating (difficulty text restored in the site's language)
+          let hit = renderRating(nd, t2rate?.[id]?.Rating, SITE.lcDiffMap, {});
 
           // render level
           renderLevel(nd, levelData[levelId]?.Level?.toString(), pbhtml.classList, hit, 130);
@@ -1759,19 +1994,8 @@
           let data = pbName.split('.');
           let id = data[0];
 
-          let darkn2c = {
-            'text-lc-green-60': '简单',
-            'text-lc-yellow-60': '中等',
-            'text-lc-red-60': '困难'
-          };
-          let lightn2c = {
-            'text-lc-green-60': '简单',
-            'text-lc-yellow-60': '中等',
-            'text-lc-red-60': '困难'
-          };
-
-          // render rating
-          let hit = renderRating(nd, t2rate?.[id]?.Rating, lightn2c, darkn2c);
+          // render rating (difficulty text restored in the site's language)
+          let hit = renderRating(nd, t2rate?.[id]?.Rating, SITE.lcDiffMap, {});
 
           // render level
           renderLevel(nd, levelData[id]?.Level?.toString(), pbhtml.classList, hit);
@@ -1851,19 +2075,8 @@
             let data = pbName.split('.');
             let id = data[0];
 
-            let darkn2c = {
-              'text-sd-easy': '简单',
-              'text-sd-medium': '中等',
-              'text-sd-hard': '困难'
-            };
-            let lightn2c = {
-              'text-sd-easy': '简单',
-              'text-sd-medium': '中等',
-              'text-sd-hard': '困难'
-            };
-
-            // render rating
-            let hit = renderRating(nd, t2rate?.[id]?.Rating, lightn2c, darkn2c);
+            // render rating (difficulty text restored in the site's language)
+            let hit = renderRating(nd, t2rate?.[id]?.Rating, SITE.sdDiffMap, {});
 
             // render level
             renderLevel(nd, levelData[id]?.Level?.toString(), pbhtml.classList, hit);
@@ -1885,7 +2098,7 @@
         // 适配黑色主题
         div.classList.add('leetcodeRating-search');
         div.innerHTML += `<input name="" placeholder="请输入题号或关键字" class="lcr layui-input" id="id-dropdown">`;
-        const logo = document.querySelector('nav > div > ul');
+        const logo = SITE.navSearchAnchor();
         if (logo == null) return;
         logo.insertAdjacentElement('afterend', div);
         // else navbar.appendChild(div);
@@ -1931,41 +2144,21 @@
             return getsearch(value);
           }
           function getsearch(search) {
-            let queryT = `
-                          query problemsetQuestions($in: ProblemsetQuestionsInput!) {
-                              problemsetQuestions(in: $in) {
-                              hasMore
-                              questions {
-                                  titleCn
-                                  titleSlug
-                                  title
-                                  frontendId
-                                  acRate
-                                  solutionNum
-                                  difficulty
-                                  userQuestionStatus
-                              }
-                              }
-                          }
-                      `;
-            let list = {
-              query: queryT,
-              operationName: 'problemsetQuestions',
-              variables: { in: { query: search, limit: 10, offset: 0 } }
-            };
             let resLst = [];
+            // The search query and endpoint differ per site (noj-go on leetcode.cn, graphql on leetcode.com)
             $.ajax({
               type: 'POST',
-              url: lcnojgo,
-              data: JSON.stringify(list),
+              url: SITE.searchEndpoint,
+              data: JSON.stringify(SITE.queries.navSearch(search)),
+              headers: withCsrf(null),
               success: function (res) {
-                let data = res.data.problemsetQuestions.questions;
+                let data = SITE.navSearchRows(res);
                 for (let idx = 0; idx < data.length; idx++) {
                   let resp = data[idx];
                   let item = {};
                   item.id = idx;
-                  item.title = resp.frontendId + '.' + resp.titleCn;
-                  item.href = 'https://leetcode.cn/problems/' + resp.titleSlug;
+                  item.title = resp.frontendId + '.' + resp.displayTitle;
+                  item.href = SITE.origin + '/problems/' + resp.titleSlug;
                   item.target = '_self';
                   resLst.push(item);
                 }
@@ -1980,12 +2173,218 @@
       }
     }
 
+    // leetcode.com only: a small chip next to the difficulty label linking to the same problem on leetcode.cn
+    const CN_LINK_ID = 'leetcode-rating-chinese-link';
+    const CN_LINK_ICON =
+      '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3.5 w-3.5"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg>';
+    const CN_LINK_FALLBACK_CLASS =
+      'relative inline-flex items-center justify-center text-caption px-2 py-1 gap-1 rounded-full bg-fill-secondary cursor-pointer transition-colors hover:bg-fill-primary hover:text-text-primary text-sd-secondary-foreground hover:opacity-80';
+    function syncCnLink() {
+      const existing = document.getElementById(CN_LINK_ID);
+      if (!IS_COM || !GM_getValue('switchcnlink') || !location.href.match(pbUrl)) {
+        if (existing) existing.remove();
+        return;
+      }
+      const difficultyLabel = document.querySelector(
+        '[class*="text-difficulty-easy"], [class*="text-difficulty-medium"], [class*="text-difficulty-hard"]'
+      );
+      const row = difficultyLabel && difficultyLabel.parentElement;
+      if (!row) return;
+      const cnUrl = new URL(location.href);
+      cnUrl.protocol = 'https:';
+      cnUrl.hostname = 'leetcode.cn';
+      const chips = Array.from(row.children);
+      // Copy the look of a native chip (topics / companies / hint), never the difficulty label itself
+      const nativeChip = chips.find(
+        el => el !== existing && el !== difficultyLabel && el.classList.contains('cursor-pointer')
+      );
+      const link = existing || document.createElement('a');
+      link.id = CN_LINK_ID;
+      // Marked so the status icon logic (handleLink) leaves this link alone
+      link.setAttribute('linkId', 'leetcodeRating');
+      link.href = cnUrl.toString();
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.title = '在力扣中文站打开此题';
+      link.className = (nativeChip ? nativeChip.className : CN_LINK_FALLBACK_CLASS).replace(
+        /\btext-difficulty-\w+\b/g,
+        ''
+      );
+      link.style.textDecoration = 'none';
+      if (!existing) link.innerHTML = CN_LINK_ICON + '<span>中文站</span>';
+      // The chip goes after the native chips and before the plugin's own tool chips
+      const tools = document.getElementById(PB_TOOLS_ID);
+      const before = tools && tools.parentElement === row ? tools : null;
+      const placed =
+        link.parentElement === row &&
+        (before ? link.nextElementSibling === before : link === row.lastElementChild);
+      if (!placed) row.insertBefore(link, before);
+    }
+
+    // Problem page tool chips (level, contest, contest problem index, sync button) appended to the
+    // native chip row after the difficulty / topics / companies / hint / 中文站 chips
+    const PB_TOOLS_ID = 'lcr-pb-tools';
+    const LEVEL_ICON =
+      '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-3.5 w-3.5"><path d="M5 20v-6"></path><path d="M12 20V8"></path><path d="M19 20V4"></path></svg>';
+    const CONTEST_ICON =
+      '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 6h3v2a3 3 0 0 1-3 3"></path><path d="M7 6H4v2a3 3 0 0 0 3 3"></path></svg>';
+    const SYNC_ICON =
+      '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>';
+    GM_addStyle(`
+          #${PB_TOOLS_ID} .lcr-chip svg {
+              flex-shrink: 0;
+          }
+          #${PB_TOOLS_ID} .lcr-sync-btn {
+              color: #2cbb5d;
+              background: rgba(44, 187, 93, 0.1);
+              border: 1px solid rgba(44, 187, 93, 0.55);
+          }
+          #${PB_TOOLS_ID} .lcr-sync-btn:hover {
+              color: #2cbb5d;
+              background: rgba(44, 187, 93, 0.22);
+          }
+      `);
+
+    // Class string of a native chip of the row (never the difficulty label or a plugin chip)
+    function chipClassFrom(row, difficultyLabel) {
+      const nativeChip = Array.from(row.children).find(
+        el =>
+          el !== difficultyLabel &&
+          el.id !== CN_LINK_ID &&
+          el.id !== PB_TOOLS_ID &&
+          el.classList.contains('cursor-pointer')
+      );
+      return (nativeChip ? nativeChip.className : CN_LINK_FALLBACK_CLASS).replace(
+        /\btext-difficulty-\w+\b/g,
+        ''
+      );
+    }
+
+    function openLevelHelp() {
+      layer.open({
+        type: 1, // Page 层类型
+        area: ['700px', '450px'],
+        title: '算术评级说明',
+        shade: 0.6, // 遮罩透明度
+        maxmin: true, // 允许全屏最小化
+        anim: 5, // 0-6的动画形式，-1不开启
+        content: `<p class="containerlingtea" style="padding:10px;color:#000;">${levelContent}</p>`
+      });
+    }
+
+    // Plugin chips keep their place at the end of the row (中文站, then the tool chips with the sync
+    // button last) even when something else appends chips later, e.g. another userscript adding
+    // its own chip to the same row. Returns true when a node was moved.
+    function keepPluginChipsLast(row) {
+      const tools = document.getElementById(PB_TOOLS_ID);
+      if (!tools || tools.parentElement !== row) return false;
+      let moved = false;
+      const cn = document.getElementById(CN_LINK_ID);
+      if (cn && cn.parentElement === row && cn.nextElementSibling !== tools) {
+        row.insertBefore(cn, tools);
+        moved = true;
+      }
+      if (tools !== row.lastElementChild) {
+        row.appendChild(tools);
+        moved = true;
+      }
+      return moved;
+    }
+
+    const observedChipRows = new WeakSet();
+    function observeChipRow(row) {
+      if (observedChipRows.has(row)) return;
+      observedChipRows.add(row);
+      // Our own moves trigger the observer again, but then nothing is left to move. If another
+      // script insists on the last position as well, a burst of mutual re-orders would loop
+      // forever, so after a few moves in a short window we stop enforcing the order.
+      let moves = 0;
+      let windowStart = 0;
+      const observer = new MutationObserver(() => {
+        if (!keepPluginChipsLast(row)) return;
+        const now = Date.now();
+        if (now - windowStart > 2000) {
+          windowStart = now;
+          moves = 0;
+        }
+        moves += 1;
+        if (moves > 8) {
+          observer.disconnect();
+          console.log('另一个脚本持续调整标签顺序，停止保持插件标签在末尾');
+        }
+      });
+      observer.observe(row, { childList: true });
+    }
+
+    function renderProblemTools(row, difficultyLabel, id, contest, switchrealoj) {
+      let tools = document.getElementById(PB_TOOLS_ID);
+      if (!tools) {
+        tools = document.createElement('div');
+        tools.id = PB_TOOLS_ID;
+        tools.setAttribute('plugin', 'leetcodeRating');
+        // display: contents keeps the chips as direct flex items of the native row
+        tools.style.display = 'contents';
+        // linkId marks the links so the status icon logic (handleLink) leaves them alone
+        tools.innerHTML =
+          `<a id="lcr-level" class="lcr-chip" href="#" linkId="leetcodeRating" title="点击查看算术评级说明">${LEVEL_ICON}<span></span></a>` +
+          `<a id="lcr-contest" class="lcr-chip" linkId="leetcodeRating" target="_blank" rel="noopener noreferrer">${CONTEST_ICON}<span></span></a>` +
+          `<a id="lcr-contest-index" class="lcr-chip" linkId="leetcodeRating" target="_blank" rel="noopener noreferrer"><span></span></a>` +
+          `<span id="lcr-sync" class="lcr-chip lcr-sync-btn" role="button" title="重新同步所有题目的完成状态">${SYNC_ICON}<span>同步题目状态</span></span>`;
+        tools.querySelector('#lcr-level').onclick = e => {
+          e.preventDefault();
+          openLevelHelp();
+        };
+        tools.querySelector('#lcr-sync').onclick = open_layer_sync;
+        // 使用layui的渲染 (binds the sync dialog button)
+        layuiload();
+      }
+      // The native row may be too narrow for the extra chips
+      row.style.flexWrap = 'wrap';
+      if (tools.parentElement !== row || tools !== row.lastElementChild) row.appendChild(tools);
+      // The chips copy the look of the native chips so they follow the site theme
+      const chipClass = chipClassFrom(row, difficultyLabel);
+      for (const chip of tools.querySelectorAll('.lcr-chip')) {
+        chip.className = chipClass + ' lcr-chip' + (chip.id === 'lcr-sync' ? ' lcr-sync-btn' : '');
+        chip.style.textDecoration = 'none';
+      }
+      // hidden/visible through inline display (the chip class sets display: inline-flex)
+      const show = (el, visible) => {
+        el.style.display = visible ? '' : 'none';
+      };
+
+      levelData = JSON.parse(GM_getValue('levelData', '{}').toString());
+      const level = levelData[id];
+      const levelChip = tools.querySelector('#lcr-level');
+      levelChip.querySelector('span').textContent =
+        level != null ? '算术评级: ' + level['Level'].toString() : '未知评级';
+      show(levelChip, level != null);
+
+      const contestChip = tools.querySelector('#lcr-contest');
+      const indexChip = tools.querySelector('#lcr-contest-index');
+      if (contest != null) {
+        contestChip.querySelector('span').textContent = contest.name;
+        contestChip.setAttribute('href', contest.contestHref);
+        indexChip.querySelector('span').textContent = contest.index;
+        indexChip.setAttribute('href', contest.problemHref);
+      } else {
+        contestChip.querySelector('span').textContent = '对应周赛未知';
+        indexChip.querySelector('span').textContent = '未知';
+      }
+      show(contestChip, contest != null);
+      show(indexChip, contest != null && !switchrealoj);
+
+      show(tools.querySelector('#lcr-sync'), !!GM_getValue('switchpbstatusBtn'));
+
+      keepPluginChipsLast(row);
+      observeChipRow(row);
+    }
+
     async function layuiload() {
       // 使用layui的渲染
       layui.use(function () {
         let element = layui.element;
         let util = layui.util;
-        let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
+        let pbstatus = JSON.parse(GM_getValue(SITE.pbstatusKey, '{}').toString());
         // 普通事件
         util.on('lay-on', {
           // loading
@@ -1996,7 +2395,7 @@
             const cnt = Math.ceil(getpbCnt() / 100);
             const headers = {
               'Content-Type': 'application/json',
-              'x-operation-name': 'problemsetQuestionListV2'
+              'x-operation-name': SITE.listOperationName
             };
             let loaded = 0;
             const promises = [];
@@ -2006,19 +2405,11 @@
                   'POST',
                   lcgraphql,
                   headers,
-                  allPbPostData(i * 100, 100),
+                  SITE.queries.problemList(i * 100, 100),
                   async res => {
-                    const questions = res.data.problemsetQuestionListV2.questions;
-                    for (const pb of questions) {
-                      pbstatus[pb.titleSlug] = {
-                        titleSlug: pb.titleSlug,
-                        id: pb.questionFrontendId,
-                        status: pb.status,
-                        title: pb.title,
-                        titleCn: pb.translatedTitle,
-                        difficulty: pb.difficulty,
-                        paidOnly: pb.paidOnly
-                      };
+                    // Rows are normalised per site (status is always SOLVED / ATTEMPTED / TO_DO)
+                    for (const row of SITE.problemListRows(res)) {
+                      pbstatus[row.titleSlug] = row;
                     }
                     loaded += 1;
                     const showval = Math.trunc((loaded / cnt) * 100);
@@ -2031,7 +2422,7 @@
 
             Promise.all(promises).then(async () => {
               pbstatus[pbstatusVersion] = {};
-              GM_setValue('pbstatus', JSON.stringify(pbstatus));
+              GM_setValue(SITE.pbstatusKey, JSON.stringify(pbstatus));
               console.log(JSON.stringify(pbstatus));
               layer.msg('同步所有题目状态完成!');
               await sleep(1000);
@@ -2050,7 +2441,7 @@
       layui.use(function () {
         let element = layui.element;
         let util = layui.util;
-        let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
+        let pbstatus = JSON.parse(GM_getValue(SITE.pbstatusKey, '{}').toString());
         // 普通事件
         util.on('lay-on', {
           // loading
@@ -2101,7 +2492,7 @@
               element.progress('demo-filter-progress1', `${showval}%`);
             }
             pbstatus[pbstatusVersion] = {};
-            GM_setValue('pbstatus', JSON.stringify(pbstatus));
+            GM_setValue(SITE.pbstatusKey, JSON.stringify(pbstatus));
             layer.msg('重置题目状态完成!');
             await sleep(1000);
             layer.closeAll();
@@ -2135,7 +2526,7 @@
       // 流动布局逻辑
       if (isDynamic) {
         // pb其他页面时刷新多次后也直接关闭
-        let t = document.querySelector('.text-title-large');
+        let t = document.querySelector('.text-title-large') || SITE.findProblemTitle();
         if (t == null) {
           t1 = 'unknown';
           pbCnt = 0;
@@ -2144,8 +2535,12 @@
           return;
         }
 
+        // leetcode.com only: keep the "open on leetcode.cn" chip in sync on every tick
+        syncCnLink();
         // console.log(t1, t.textContent)
-        if (t1 != null && t1 == t.textContent) {
+        // Re-process when the site re-rendered the chip row and the plugin chips disappeared
+        const toolsPresent = switchrealoj || document.getElementById(PB_TOOLS_ID) != null;
+        if (t1 != null && t1 == t.textContent && toolsPresent) {
           // des清除定时
           if (pbCnt == shortCnt) clearId('pb');
           pbCnt += 1;
@@ -2165,214 +2560,23 @@
           return;
         }
         // 统计难度分数并且修改
-        let nd = colorSpan.getAttribute('class');
-        let nd2ch = {
-          'text-difficulty-easy': '简单',
-          'text-difficulty-medium': '中等',
-          'text-difficulty-hard': '困难'
-        };
-        if (switchrealoj || (t2rate[id] != null && GM_getValue('switchpbscore'))) {
-          if (switchrealoj) colorSpan.remove();
-          else if (t2rate[id] != null) colorSpan.innerHTML = t2rate[id]['Rating'];
+        if (switchrealoj) {
+          colorSpan.remove();
         } else {
-          for (let item in nd2ch) {
-            if (nd.toString().includes(item)) {
-              colorSpan.innerHTML = nd2ch[item];
-              break;
-            }
-          }
+          // The rating replaces the difficulty chip text; without a rating the site's own label is kept / restored
+          renderRating(
+            colorSpan,
+            GM_getValue('switchpbscore') ? t2rate[id]?.['Rating'] : undefined,
+            SITE.pbDiffMap,
+            {}
+          );
         }
         // 逻辑，准备做周赛链接,如果已经不存在组件就执行操作
-        let url = chContestUrl;
-        let zhUrl = zhContestUrl;
+        // Level / contest / sync chips live in the native chip row; contest name and links are
+        // resolved per site (ContestID_zh / ContestID_en)
         let tips = colorSpan?.parentNode;
         if (tips == null) return;
-        let tipsPa = tips?.parentNode;
-        // tips 一栏的父亲节点第一子元素的位置, 插入后变成竞赛信息位置
-        let tipsChildone = tipsPa.childNodes[1];
-        // 题目内容, 插入后变成原tips栏目
-        // let pbDescription = tipsPa.childNodes[2];
-        if (tipsChildone?.getAttribute('plugin') == null) {
-          let divTips = document.createElement('div');
-          divTips.setAttribute('class', 'flex gap-1');
-          divTips.setAttribute('plugin', 'leetcodeRating');
-          let abody = document.createElement('a');
-          abody.setAttribute('data-small-spacing', 'true');
-          abody.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
-          let abody2 = document.createElement('a');
-          abody2.setAttribute('data-small-spacing', 'true');
-          abody2.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
-
-          let abody3 = document.createElement('a');
-          abody3.setAttribute('data-small-spacing', 'true');
-          abody3.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
-
-          let abody4 = document.createElement('p');
-          abody4.setAttribute('data-small-spacing', 'true');
-          abody4.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
-
-          let span = document.createElement('span');
-          let span2 = document.createElement('span');
-          let span3 = document.createElement('span');
-          let span4 = document.createElement('span');
-          // 判断同步按钮
-          if (GM_getValue('switchpbstatusBtn')) {
-            // console.log(levelData[id])
-            span4.innerHTML = `<i style="font-size:12px" class="layui-icon layui-icon-refresh"></i>&nbsp;同步题目状态`;
-            span4.onclick = open_layer_sync;
-            span4.setAttribute('style', 'cursor:pointer;');
-            // 使用layui的渲染
-            layuiload();
-            abody4.removeAttribute('hidden');
-          } else {
-            span4.innerText = '未知按钮';
-            abody4.setAttribute('hidden', 'true');
-          }
-          abody4.setAttribute('style', 'padding-left: 10px;');
-
-          levelData = JSON.parse(GM_getValue('levelData', '{}').toString());
-          if (levelData[id] != null) {
-            // console.log(levelData[id])
-            let des = '算术评级: ' + levelData[id]['Level'].toString();
-            span3.innerText = des;
-            span3.onclick = function (e) {
-              e.preventDefault();
-              layer.open({
-                type: 1, // Page 层类型
-                area: ['700px', '450px'],
-                title: '算术评级说明',
-                shade: 0.6, // 遮罩透明度
-                maxmin: true, // 允许全屏最小化
-                anim: 5, // 0-6的动画形式，-1不开启
-                content: `<p class="containerlingtea" style="padding:10px;color:#000;">${levelContent}</p>`
-              });
-            };
-            abody3.removeAttribute('hidden');
-          } else {
-            span3.innerText = '未知评级';
-            abody3.setAttribute('hidden', 'true');
-          }
-          abody3.setAttribute('href', '/xxx');
-          abody3.setAttribute('style', 'padding-right: 10px;');
-          abody3.setAttribute('target', '_blank');
-
-          if (t2rate[id] != null) {
-            let contestUrl;
-            let num = getcontestNumber(t2rate[id]['ContestSlug']);
-            if (num < 83) {
-              contestUrl = zhUrl;
-            } else {
-              contestUrl = url;
-            }
-            span.innerText = t2rate[id]['ContestID_zh'];
-            span2.innerText = t2rate[id]['ProblemIndex'];
-            abody.setAttribute('href', contestUrl + t2rate[id]['ContestSlug']);
-            abody.setAttribute('target', '_blank');
-            abody.removeAttribute('hidden');
-            abody2.setAttribute(
-              'href',
-              contestUrl + t2rate[id]['ContestSlug'] + '/problems/' + t2rate[id]['TitleSlug']
-            );
-            abody2.setAttribute('target', '_blank');
-            if (switchrealoj) abody2.setAttribute('hidden', true);
-            else abody2.removeAttribute('hidden');
-          } else {
-            span.innerText = '对应周赛未知';
-            abody.setAttribute('href', '/xxx');
-            abody.setAttribute('target', '_self');
-            abody.setAttribute('hidden', 'true');
-            span2.innerText = '未知';
-            abody2.setAttribute('href', '/xxx');
-            abody2.setAttribute('target', '_self');
-            abody2.setAttribute('hidden', 'true');
-          }
-          abody.setAttribute('style', 'padding-right: 10px;');
-          // abody2.setAttribute("style", "padding-top: 1.5px;")
-          abody.appendChild(span);
-          abody2.appendChild(span2);
-          abody3.appendChild(span3);
-          abody4.appendChild(span4);
-          divTips.appendChild(abody3);
-          divTips.appendChild(abody);
-          divTips.appendChild(abody2);
-          divTips.appendChild(abody4);
-          tipsPa.insertBefore(divTips, tips);
-        } else if (
-          tipsChildone.childNodes != null &&
-          tipsChildone.childNodes.length >= 2 &&
-          (tipsChildone.childNodes[2].textContent.includes('Q') ||
-            tipsChildone.childNodes[2].textContent.includes('未知'))
-        ) {
-          let pa = tipsChildone;
-          let le = pa.childNodes.length;
-
-          // 判断同步按钮
-          if (GM_getValue('switchpbstatusBtn')) {
-            // 使用layui的渲染, 前面已经添加渲染按钮，所以这里不用重新添加
-            pa.childNodes[le - 1].removeAttribute('hidden');
-          } else {
-            pa.childNodes[le - 1].childNodes[0].innerText = '未知按钮';
-            pa.childNodes[le - 1].setAttribute('hidden', 'true');
-          }
-
-          // 存在就直接替换
-          let levelData = JSON.parse(GM_getValue('levelData', '{}').toString());
-          if (levelData[id] != null) {
-            let des = '算术评级: ' + levelData[id]['Level'].toString();
-            pa.childNodes[le - 4].childNodes[0].innerText = des;
-            pa.childNodes[le - 4].childNodes[0].onclick = function (e) {
-              e.preventDefault();
-              layer.open({
-                type: 1, // Page 层类型
-                area: ['700px', '450px'],
-                title: '算术评级说明',
-                shade: 0.6, // 遮罩透明度
-                maxmin: true, // 允许全屏最小化
-                anim: 5, // 0-6的动画形式，-1不开启
-                content: `<p class="containerlingtea" style="padding:10px;color:#000;">${levelContent}</p>`
-              });
-            };
-            pa.childNodes[le - 4].removeAttribute('hidden');
-          } else {
-            pa.childNodes[le - 4].childNodes[0].innerText = '未知评级';
-            pa.childNodes[le - 4].setAttribute('hidden', 'true');
-            pa.childNodes[le - 4].setAttribute('href', '/xxx');
-          }
-          // ContestID_zh  ContestSlug
-          if (t2rate[id] != null) {
-            let contestUrl;
-            let num = getcontestNumber(t2rate[id]['ContestSlug']);
-            if (num < 83) {
-              contestUrl = zhUrl;
-            } else {
-              contestUrl = url;
-            }
-            pa.childNodes[le - 3].childNodes[0].innerText = t2rate[id]['ContestID_zh'];
-            pa.childNodes[le - 3].setAttribute('href', contestUrl + t2rate[id]['ContestSlug']);
-            pa.childNodes[le - 3].setAttribute('target', '_blank');
-            pa.childNodes[le - 3].removeAttribute('hidden');
-
-            pa.childNodes[le - 2].childNodes[0].innerText = t2rate[id]['ProblemIndex'];
-            pa.childNodes[le - 2].setAttribute(
-              'href',
-              contestUrl + t2rate[id]['ContestSlug'] + '/problems/' + t2rate[id]['TitleSlug']
-            );
-            pa.childNodes[le - 2].setAttribute('target', '_blank');
-            if (switchrealoj) pa.childNodes[le - 2].setAttribute('hidden', 'true');
-            else pa.childNodes[le - 2].removeAttribute('hidden');
-          } else {
-            pa.childNodes[le - 3].childNodes[0].innerText = '对应周赛未知';
-            // 不填写的话默认为当前url
-            pa.childNodes[le - 3].setAttribute('href', '/xxx');
-            pa.childNodes[le - 3].setAttribute('target', '_self');
-            pa.childNodes[le - 3].setAttribute('hidden', 'true');
-
-            pa.childNodes[le - 2].childNodes[0].innerText = '未知';
-            pa.childNodes[le - 2].setAttribute('href', '/xxx');
-            pa.childNodes[le - 2].setAttribute('target', '_self');
-            pa.childNodes[le - 2].setAttribute('hidden', 'true');
-          }
-        }
+        renderProblemTools(tips, colorSpan, id, contestInfo(id), switchrealoj);
         t1 = t.textContent;
       }
     }
@@ -2426,9 +2630,15 @@
       initfunction();
       let start = '';
       let targetIdx = -1;
-      let pageLst = ['all', 'pb', 'pblist', 'search', 'study'];
-      let urlLst = [allUrl, pbUrl, pblistUrl, searchUrl, studyUrl];
-      let funcLst = [getData, getpb, getPblistData, getSearch, getStudyData];
+      let pageLst = ['all', 'pb', 'pblist', 'study'];
+      let urlLst = [allUrl, pbUrl, pblistUrl, studyUrl];
+      let funcLst = [getData, getpb, getPblistData, getStudyData];
+      if (SITE.hasSearchPage) {
+        // leetcode.cn only: the global search page
+        pageLst.push('search');
+        urlLst.push(searchUrl);
+        funcLst.push(getSearch);
+      }
       for (let index = 0; index < urlLst.length; index++) {
         const element = urlLst[index];
         if (url.match(element)) {
@@ -2635,7 +2845,7 @@
     // 如果pbstatus数据开关已打开且需要更新
     if (GM_getValue('switchpbstatus')) {
       (function () {
-        let pbstatus = JSON.parse(GM_getValue('pbstatus', '{}').toString());
+        let pbstatus = JSON.parse(GM_getValue(SITE.pbstatusKey, '{}').toString());
         if (pbstatus[pbstatusVersion]) {
           console.log('已经同步过初始题目状态数据...');
           return;
@@ -2676,10 +2886,7 @@
       let userTag = null;
       let level = 0;
       let score = 0;
-      const queryProcess =
-        '\n    query userQuestionProgress($userSlug: String!) {\n  userProfileUserQuestionProgress(userSlug: $userSlug) {\n    numAcceptedQuestions {\n      difficulty\n      count\n    }\n    numFailedQuestions {\n      difficulty\n      count\n    }\n    numUntouchedQuestions {\n      difficulty\n      count\n    }\n  }\n}\n    ';
-      const queryUser =
-        '\n    query globalData {\n  userStatus {\n    isSignedIn\n    isPremium\n    username\n    realName\n    avatar\n    userSlug\n    isAdmin\n    checkedInToday\n    useTranslation\n    premiumExpiredAt\n    isTranslator\n    isSuperuser\n    isPhoneVerified\n    isVerified\n  }\n  jobsMyCompany {\n    nameSlug\n  }\n  commonNojPermissionTypes\n}\n    ';
+      // The user / progress queries live in SITE.queries (they differ between the two sites)
       GM_addStyle(`
           :root {
               --mumu-img: url(${papermanpic});
@@ -2763,13 +2970,14 @@
       });
 
       function getscore(userTag) {
-        let list = { query: queryProcess, variables: { userSlug: userTag } };
         $.ajax({
           type: 'POST',
           url: lcgraphql,
-          data: JSON.stringify(list),
+          data: JSON.stringify(SITE.queries.progress(userTag)),
+          headers: withCsrf(null),
           success: function (res) {
-            let levelData = res.data.userProfileUserQuestionProgress.numAcceptedQuestions;
+            // Accepted counts per difficulty (EASY / MEDIUM / HARD), normalised per site
+            let levelData = SITE.acceptedCounts(res);
             levelData.forEach(e => {
               if (e.difficulty == 'EASY') score += e.count * 10;
               else if (e.difficulty == 'MEDIUM') score += e.count * 20;
@@ -2788,9 +2996,10 @@
       $.ajax({
         type: 'POST',
         url: lcgraphql,
-        data: JSON.stringify({ query: queryUser, variables: {} }),
+        data: JSON.stringify(SITE.queries.user()),
+        headers: withCsrf(null),
         success: function (res) {
-          userTag = res.data.userStatus.userSlug;
+          userTag = SITE.userSlug(res);
           // console.log(userTag)
         },
         async: false,
