@@ -93,6 +93,10 @@
       countLimit: 0,
       listOperationName: 'problemsetQuestionListV2',
       difficultyText: { easy: '简单', medium: '中等', hard: '困难' },
+      // List pages: minimum width of the difficulty column (fits "困难" and a 4-digit rating)
+      listDifficultyMinWidth: '36px',
+      // List pages: the daily question row needs the level column shifted to line up
+      dailyLevelShift: 'translateX(-8px)',
       // Post meta row of a discuss page (author / posted time), where the sync buttons are appended
       discussMetaMatches: text => text.includes('发布于'),
       navSearchAnchor: () => document.querySelector('nav > div > ul'),
@@ -157,6 +161,9 @@
       countLimit: 1,
       listOperationName: 'problemsetQuestionList',
       difficultyText: { easy: 'Easy', medium: 'Medium', hard: 'Hard' },
+      // List pages: minimum width of the difficulty column (fits "Medium" and a 4-digit rating)
+      listDifficultyMinWidth: '56px',
+      dailyLevelShift: null,
       discussMetaMatches: (text, node) =>
         /\b(ago|Posted|Created|Edit)\b/i.test(text) || node?.querySelector?.('time') != null,
       navSearchAnchor: () =>
@@ -1592,15 +1599,9 @@
             }
             // 因为lc请求是有缓存的，所以多次刷新的时候同一个位置会是不同的题目，这时候需要还原
             // renderRating writes the rating when one exists, otherwise restores the site's difficulty text
-            if (renderRating(difficulty[0], t2rate[id]?.['Rating'], SITE.sdDiffMap, {})) {
-              // 修改尺寸使得数字分数和文字比如(困难)保持在同一行
-              passRate.removeClass('w-[70px]');
-              passRate.addClass('w-[55px]');
-            } else {
-              // 恢复原有大小尺寸
-              passRate.removeClass('w-[55px]');
-              passRate.addClass('w-[70px]');
-            }
+            renderRating(difficulty[0], t2rate[id]?.['Rating'], SITE.sdDiffMap, {});
+            // Keep the level / pass-rate / difficulty columns aligned across rows
+            alignListColumns(difficulty, passRate);
 
             // 增加算术评级插入操作
             if (switchlevel) {
@@ -1627,9 +1628,9 @@
                 $level
                   .removeClass('w-[70px] w-[55px] text-sd-muted-foreground')
                   .addClass('min-w-[100px]');
-                // 如果插入的为每日一题位置，需要修改尺寸，左移8px
-                if (idx == everydatpbidx) {
-                  $level.css('transform', 'translateX(-8px)');
+                // 如果插入的为每日一题位置，需要修改尺寸，左移8px (leetcode.cn only)
+                if (idx == everydatpbidx && SITE.dailyLevelShift) {
+                  $level.css('transform', SITE.dailyLevelShift);
                 }
                 // 插入到通过率前面
                 passRate.before($level);
@@ -1707,15 +1708,9 @@
 
           // 插入竞赛分数
           // renderRating writes the rating when one exists, otherwise restores the site's difficulty text
-          if (renderRating(difficulty[0], t2rate[id]?.['Rating'], SITE.sdDiffMap, {})) {
-            // 修改尺寸使得数字分数和文字比如(困难)保持在同一行
-            passRate.removeClass('w-[70px]');
-            passRate.addClass('w-[55px]');
-          } else {
-            // 恢复原有大小尺寸
-            passRate.removeClass('w-[55px]');
-            passRate.addClass('w-[70px]');
-          }
+          renderRating(difficulty[0], t2rate[id]?.['Rating'], SITE.sdDiffMap, {});
+          // Keep the level / pass-rate / difficulty columns aligned across rows
+          alignListColumns(difficulty, passRate);
 
           // 增加算术评级插入操作
           if (switchlevel) {
@@ -1799,18 +1794,31 @@
       if (clr.length === 0) return false;
       for (const [className, text] of Object.entries({ ...lightn2c, ...darkn2c })) {
         if (clr.contains(className)) {
+          const current = (nd.textContent || '').trim();
+          const showsRating = /^\d+$/.test(current);
           // 如果难度分存在，则替换分数
           if (ndRate) {
+            // Remember the site's own label (e.g. "Med." / "中等") so it can be restored when the
+            // site reuses this node for another problem without re-rendering its text
+            if (!showsRating && current) nd.dataset.lcrLabel = current;
             nd.textContent = ndRate;
             return true;
           }
-          // 如果难度分不存在，则恢复本身
-          nd.innerText = text;
+          // 如果难度分不存在，则恢复本身 (only needed when a rating was written earlier)
+          if (showsRating) nd.innerText = nd.dataset.lcrLabel || text;
           return false;
         }
       }
 
       return false;
+    }
+
+    // List pages: give the difficulty label a fixed minimum width so that the level / pass-rate
+    // columns line up across rows whatever the label is ("1234", "Medium", "困难"); the pass-rate
+    // box keeps its native width
+    function alignListColumns(difficulty, passRate) {
+      difficulty.css({ minWidth: SITE.listDifficultyMinWidth, textAlign: 'right' });
+      passRate.removeClass('w-[55px]').addClass('w-[70px]');
     }
 
     /**
@@ -2167,9 +2175,6 @@
       const nativeChip = chips.find(
         el => el !== existing && el !== difficultyLabel && el.classList.contains('cursor-pointer')
       );
-      const hintChip = chips.find(
-        el => el !== existing && (el.textContent || '').trim() === 'Hint'
-      );
       const link = existing || document.createElement('a');
       link.id = CN_LINK_ID;
       // Marked so the status icon logic (handleLink) leaves this link alone
@@ -2184,11 +2189,124 @@
       );
       link.style.textDecoration = 'none';
       if (!existing) link.innerHTML = CN_LINK_ICON + '<span>中文站</span>';
-      if (hintChip && link.previousElementSibling !== hintChip) {
-        hintChip.insertAdjacentElement('afterend', link);
-      } else if (!hintChip && (link.parentElement !== row || link !== row.lastElementChild)) {
-        row.append(link);
+      // The chip goes after the native chips and before the plugin's own tool chips
+      const tools = document.getElementById(PB_TOOLS_ID);
+      const before = tools && tools.parentElement === row ? tools : null;
+      const placed =
+        link.parentElement === row &&
+        (before ? link.nextElementSibling === before : link === row.lastElementChild);
+      if (!placed) row.insertBefore(link, before);
+    }
+
+    // Problem page tool chips (level, contest, contest problem index, sync button) appended to the
+    // native chip row after the difficulty / topics / companies / hint / 中文站 chips
+    const PB_TOOLS_ID = 'lcr-pb-tools';
+    const LEVEL_ICON =
+      '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-3.5 w-3.5"><path d="M5 20v-6"></path><path d="M12 20V8"></path><path d="M19 20V4"></path></svg>';
+    const CONTEST_ICON =
+      '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 6h3v2a3 3 0 0 1-3 3"></path><path d="M7 6H4v2a3 3 0 0 0 3 3"></path></svg>';
+    const SYNC_ICON =
+      '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>';
+    GM_addStyle(`
+          #${PB_TOOLS_ID} .lcr-chip svg {
+              flex-shrink: 0;
+          }
+          #${PB_TOOLS_ID} .lcr-sync-btn {
+              color: #2cbb5d;
+              background: rgba(44, 187, 93, 0.1);
+              border: 1px solid rgba(44, 187, 93, 0.55);
+          }
+          #${PB_TOOLS_ID} .lcr-sync-btn:hover {
+              color: #2cbb5d;
+              background: rgba(44, 187, 93, 0.22);
+          }
+      `);
+
+    // Class string of a native chip of the row (never the difficulty label or a plugin chip)
+    function chipClassFrom(row, difficultyLabel) {
+      const nativeChip = Array.from(row.children).find(
+        el =>
+          el !== difficultyLabel &&
+          el.id !== CN_LINK_ID &&
+          el.id !== PB_TOOLS_ID &&
+          el.classList.contains('cursor-pointer')
+      );
+      return (nativeChip ? nativeChip.className : CN_LINK_FALLBACK_CLASS).replace(
+        /\btext-difficulty-\w+\b/g,
+        ''
+      );
+    }
+
+    function openLevelHelp() {
+      layer.open({
+        type: 1, // Page 层类型
+        area: ['700px', '450px'],
+        title: '算术评级说明',
+        shade: 0.6, // 遮罩透明度
+        maxmin: true, // 允许全屏最小化
+        anim: 5, // 0-6的动画形式，-1不开启
+        content: `<p class="containerlingtea" style="padding:10px;color:#000;">${levelContent}</p>`
+      });
+    }
+
+    function renderProblemTools(row, difficultyLabel, id, contest, switchrealoj) {
+      let tools = document.getElementById(PB_TOOLS_ID);
+      if (!tools) {
+        tools = document.createElement('div');
+        tools.id = PB_TOOLS_ID;
+        tools.setAttribute('plugin', 'leetcodeRating');
+        // display: contents keeps the chips as direct flex items of the native row
+        tools.style.display = 'contents';
+        // linkId marks the links so the status icon logic (handleLink) leaves them alone
+        tools.innerHTML =
+          `<a id="lcr-level" class="lcr-chip" href="#" linkId="leetcodeRating" title="点击查看算术评级说明">${LEVEL_ICON}<span></span></a>` +
+          `<a id="lcr-contest" class="lcr-chip" linkId="leetcodeRating" target="_blank" rel="noopener noreferrer">${CONTEST_ICON}<span></span></a>` +
+          `<a id="lcr-contest-index" class="lcr-chip" linkId="leetcodeRating" target="_blank" rel="noopener noreferrer"><span></span></a>` +
+          `<span id="lcr-sync" class="lcr-chip lcr-sync-btn" role="button" title="重新同步所有题目的完成状态">${SYNC_ICON}<span>同步题目状态</span></span>`;
+        tools.querySelector('#lcr-level').onclick = e => {
+          e.preventDefault();
+          openLevelHelp();
+        };
+        tools.querySelector('#lcr-sync').onclick = open_layer_sync;
+        // 使用layui的渲染 (binds the sync dialog button)
+        layuiload();
       }
+      // The native row may be too narrow for the extra chips
+      row.style.flexWrap = 'wrap';
+      if (tools.parentElement !== row || tools !== row.lastElementChild) row.appendChild(tools);
+      // The chips copy the look of the native chips so they follow the site theme
+      const chipClass = chipClassFrom(row, difficultyLabel);
+      for (const chip of tools.querySelectorAll('.lcr-chip')) {
+        chip.className = chipClass + ' lcr-chip' + (chip.id === 'lcr-sync' ? ' lcr-sync-btn' : '');
+        chip.style.textDecoration = 'none';
+      }
+      // hidden/visible through inline display (the chip class sets display: inline-flex)
+      const show = (el, visible) => {
+        el.style.display = visible ? '' : 'none';
+      };
+
+      levelData = JSON.parse(GM_getValue('levelData', '{}').toString());
+      const level = levelData[id];
+      const levelChip = tools.querySelector('#lcr-level');
+      levelChip.querySelector('span').textContent =
+        level != null ? '算术评级: ' + level['Level'].toString() : '未知评级';
+      show(levelChip, level != null);
+
+      const contestChip = tools.querySelector('#lcr-contest');
+      const indexChip = tools.querySelector('#lcr-contest-index');
+      if (contest != null) {
+        contestChip.querySelector('span').textContent = contest.name;
+        contestChip.setAttribute('href', contest.contestHref);
+        indexChip.querySelector('span').textContent = contest.index;
+        indexChip.setAttribute('href', contest.problemHref);
+      } else {
+        contestChip.querySelector('span').textContent = '对应周赛未知';
+        indexChip.querySelector('span').textContent = '未知';
+      }
+      show(contestChip, contest != null);
+      show(indexChip, contest != null && !switchrealoj);
+
+      show(tools.querySelector('#lcr-sync'), !!GM_getValue('switchpbstatusBtn'));
     }
 
     async function layuiload() {
@@ -2350,7 +2468,9 @@
         // leetcode.com only: keep the "open on leetcode.cn" chip in sync on every tick
         syncCnLink();
         // console.log(t1, t.textContent)
-        if (t1 != null && t1 == t.textContent) {
+        // Re-process when the site re-rendered the chip row and the plugin chips disappeared
+        const toolsPresent = switchrealoj || document.getElementById(PB_TOOLS_ID) != null;
+        if (t1 != null && t1 == t.textContent && toolsPresent) {
           // des清除定时
           if (pbCnt == shortCnt) clearId('pb');
           pbCnt += 1;
@@ -2370,190 +2490,23 @@
           return;
         }
         // 统计难度分数并且修改
-        let nd = colorSpan.getAttribute('class');
-        let nd2ch = SITE.pbDiffMap;
-        if (switchrealoj || (t2rate[id] != null && GM_getValue('switchpbscore'))) {
-          if (switchrealoj) colorSpan.remove();
-          else if (t2rate[id] != null) colorSpan.innerHTML = t2rate[id]['Rating'];
+        if (switchrealoj) {
+          colorSpan.remove();
         } else {
-          for (let item in nd2ch) {
-            if (nd.toString().includes(item)) {
-              colorSpan.innerHTML = nd2ch[item];
-              break;
-            }
-          }
+          // The rating replaces the difficulty chip text; without a rating the site's own label is kept / restored
+          renderRating(
+            colorSpan,
+            GM_getValue('switchpbscore') ? t2rate[id]?.['Rating'] : undefined,
+            SITE.pbDiffMap,
+            {}
+          );
         }
         // 逻辑，准备做周赛链接,如果已经不存在组件就执行操作
-        // Contest name and links are resolved per site (ContestID_zh / ContestID_en)
-        let contest = contestInfo(id);
+        // Level / contest / sync chips live in the native chip row; contest name and links are
+        // resolved per site (ContestID_zh / ContestID_en)
         let tips = colorSpan?.parentNode;
         if (tips == null) return;
-        let tipsPa = tips?.parentNode;
-        // tips 一栏的父亲节点第一子元素的位置, 插入后变成竞赛信息位置
-        let tipsChildone = tipsPa.childNodes[1];
-        // 题目内容, 插入后变成原tips栏目
-        // let pbDescription = tipsPa.childNodes[2];
-        if (tipsChildone?.getAttribute('plugin') == null) {
-          let divTips = document.createElement('div');
-          divTips.setAttribute('class', 'flex gap-1');
-          divTips.setAttribute('plugin', 'leetcodeRating');
-          let abody = document.createElement('a');
-          abody.setAttribute('data-small-spacing', 'true');
-          abody.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
-          let abody2 = document.createElement('a');
-          abody2.setAttribute('data-small-spacing', 'true');
-          abody2.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
-
-          let abody3 = document.createElement('a');
-          abody3.setAttribute('data-small-spacing', 'true');
-          abody3.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
-
-          let abody4 = document.createElement('p');
-          abody4.setAttribute('data-small-spacing', 'true');
-          abody4.setAttribute('class', 'css-nabodd-Button e167268t1 hover:text-blue-s');
-
-          let span = document.createElement('span');
-          let span2 = document.createElement('span');
-          let span3 = document.createElement('span');
-          let span4 = document.createElement('span');
-          // 判断同步按钮
-          if (GM_getValue('switchpbstatusBtn')) {
-            // console.log(levelData[id])
-            span4.innerHTML = `<i style="font-size:12px" class="layui-icon layui-icon-refresh"></i>&nbsp;同步题目状态`;
-            span4.onclick = open_layer_sync;
-            span4.setAttribute('style', 'cursor:pointer;');
-            // 使用layui的渲染
-            layuiload();
-            abody4.removeAttribute('hidden');
-          } else {
-            span4.innerText = '未知按钮';
-            abody4.setAttribute('hidden', 'true');
-          }
-          abody4.setAttribute('style', 'padding-left: 10px;');
-
-          levelData = JSON.parse(GM_getValue('levelData', '{}').toString());
-          if (levelData[id] != null) {
-            // console.log(levelData[id])
-            let des = '算术评级: ' + levelData[id]['Level'].toString();
-            span3.innerText = des;
-            span3.onclick = function (e) {
-              e.preventDefault();
-              layer.open({
-                type: 1, // Page 层类型
-                area: ['700px', '450px'],
-                title: '算术评级说明',
-                shade: 0.6, // 遮罩透明度
-                maxmin: true, // 允许全屏最小化
-                anim: 5, // 0-6的动画形式，-1不开启
-                content: `<p class="containerlingtea" style="padding:10px;color:#000;">${levelContent}</p>`
-              });
-            };
-            abody3.removeAttribute('hidden');
-          } else {
-            span3.innerText = '未知评级';
-            abody3.setAttribute('hidden', 'true');
-          }
-          abody3.setAttribute('href', '/xxx');
-          abody3.setAttribute('style', 'padding-right: 10px;');
-          abody3.setAttribute('target', '_blank');
-
-          if (contest != null) {
-            span.innerText = contest.name;
-            span2.innerText = contest.index;
-            abody.setAttribute('href', contest.contestHref);
-            abody.setAttribute('target', '_blank');
-            abody.removeAttribute('hidden');
-            abody2.setAttribute('href', contest.problemHref);
-            abody2.setAttribute('target', '_blank');
-            if (switchrealoj) abody2.setAttribute('hidden', true);
-            else abody2.removeAttribute('hidden');
-          } else {
-            span.innerText = '对应周赛未知';
-            abody.setAttribute('href', '/xxx');
-            abody.setAttribute('target', '_self');
-            abody.setAttribute('hidden', 'true');
-            span2.innerText = '未知';
-            abody2.setAttribute('href', '/xxx');
-            abody2.setAttribute('target', '_self');
-            abody2.setAttribute('hidden', 'true');
-          }
-          abody.setAttribute('style', 'padding-right: 10px;');
-          // abody2.setAttribute("style", "padding-top: 1.5px;")
-          abody.appendChild(span);
-          abody2.appendChild(span2);
-          abody3.appendChild(span3);
-          abody4.appendChild(span4);
-          divTips.appendChild(abody3);
-          divTips.appendChild(abody);
-          divTips.appendChild(abody2);
-          divTips.appendChild(abody4);
-          tipsPa.insertBefore(divTips, tips);
-        } else if (
-          tipsChildone.childNodes != null &&
-          tipsChildone.childNodes.length >= 2 &&
-          (tipsChildone.childNodes[2].textContent.includes('Q') ||
-            tipsChildone.childNodes[2].textContent.includes('未知'))
-        ) {
-          let pa = tipsChildone;
-          let le = pa.childNodes.length;
-
-          // 判断同步按钮
-          if (GM_getValue('switchpbstatusBtn')) {
-            // 使用layui的渲染, 前面已经添加渲染按钮，所以这里不用重新添加
-            pa.childNodes[le - 1].removeAttribute('hidden');
-          } else {
-            pa.childNodes[le - 1].childNodes[0].innerText = '未知按钮';
-            pa.childNodes[le - 1].setAttribute('hidden', 'true');
-          }
-
-          // 存在就直接替换
-          let levelData = JSON.parse(GM_getValue('levelData', '{}').toString());
-          if (levelData[id] != null) {
-            let des = '算术评级: ' + levelData[id]['Level'].toString();
-            pa.childNodes[le - 4].childNodes[0].innerText = des;
-            pa.childNodes[le - 4].childNodes[0].onclick = function (e) {
-              e.preventDefault();
-              layer.open({
-                type: 1, // Page 层类型
-                area: ['700px', '450px'],
-                title: '算术评级说明',
-                shade: 0.6, // 遮罩透明度
-                maxmin: true, // 允许全屏最小化
-                anim: 5, // 0-6的动画形式，-1不开启
-                content: `<p class="containerlingtea" style="padding:10px;color:#000;">${levelContent}</p>`
-              });
-            };
-            pa.childNodes[le - 4].removeAttribute('hidden');
-          } else {
-            pa.childNodes[le - 4].childNodes[0].innerText = '未知评级';
-            pa.childNodes[le - 4].setAttribute('hidden', 'true');
-            pa.childNodes[le - 4].setAttribute('href', '/xxx');
-          }
-          // ContestID_zh / ContestID_en + ContestSlug
-          if (contest != null) {
-            pa.childNodes[le - 3].childNodes[0].innerText = contest.name;
-            pa.childNodes[le - 3].setAttribute('href', contest.contestHref);
-            pa.childNodes[le - 3].setAttribute('target', '_blank');
-            pa.childNodes[le - 3].removeAttribute('hidden');
-
-            pa.childNodes[le - 2].childNodes[0].innerText = contest.index;
-            pa.childNodes[le - 2].setAttribute('href', contest.problemHref);
-            pa.childNodes[le - 2].setAttribute('target', '_blank');
-            if (switchrealoj) pa.childNodes[le - 2].setAttribute('hidden', 'true');
-            else pa.childNodes[le - 2].removeAttribute('hidden');
-          } else {
-            pa.childNodes[le - 3].childNodes[0].innerText = '对应周赛未知';
-            // 不填写的话默认为当前url
-            pa.childNodes[le - 3].setAttribute('href', '/xxx');
-            pa.childNodes[le - 3].setAttribute('target', '_self');
-            pa.childNodes[le - 3].setAttribute('hidden', 'true');
-
-            pa.childNodes[le - 2].childNodes[0].innerText = '未知';
-            pa.childNodes[le - 2].setAttribute('href', '/xxx');
-            pa.childNodes[le - 2].setAttribute('target', '_self');
-            pa.childNodes[le - 2].setAttribute('hidden', 'true');
-          }
-        }
+        renderProblemTools(tips, colorSpan, id, contestInfo(id), switchrealoj);
         t1 = t.textContent;
       }
     }
