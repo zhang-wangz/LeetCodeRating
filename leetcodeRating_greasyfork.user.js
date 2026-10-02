@@ -2249,6 +2249,50 @@
       });
     }
 
+    // Plugin chips keep their place at the end of the row (中文站, then the tool chips with the sync
+    // button last) even when something else appends chips later, e.g. another userscript adding
+    // its own chip to the same row. Returns true when a node was moved.
+    function keepPluginChipsLast(row) {
+      const tools = document.getElementById(PB_TOOLS_ID);
+      if (!tools || tools.parentElement !== row) return false;
+      let moved = false;
+      const cn = document.getElementById(CN_LINK_ID);
+      if (cn && cn.parentElement === row && cn.nextElementSibling !== tools) {
+        row.insertBefore(cn, tools);
+        moved = true;
+      }
+      if (tools !== row.lastElementChild) {
+        row.appendChild(tools);
+        moved = true;
+      }
+      return moved;
+    }
+
+    const observedChipRows = new WeakSet();
+    function observeChipRow(row) {
+      if (observedChipRows.has(row)) return;
+      observedChipRows.add(row);
+      // Our own moves trigger the observer again, but then nothing is left to move. If another
+      // script insists on the last position as well, a burst of mutual re-orders would loop
+      // forever, so after a few moves in a short window we stop enforcing the order.
+      let moves = 0;
+      let windowStart = 0;
+      const observer = new MutationObserver(() => {
+        if (!keepPluginChipsLast(row)) return;
+        const now = Date.now();
+        if (now - windowStart > 2000) {
+          windowStart = now;
+          moves = 0;
+        }
+        moves += 1;
+        if (moves > 8) {
+          observer.disconnect();
+          console.log('另一个脚本持续调整标签顺序，停止保持插件标签在末尾');
+        }
+      });
+      observer.observe(row, { childList: true });
+    }
+
     function renderProblemTools(row, difficultyLabel, id, contest, switchrealoj) {
       let tools = document.getElementById(PB_TOOLS_ID);
       if (!tools) {
@@ -2307,6 +2351,9 @@
       show(indexChip, contest != null && !switchrealoj);
 
       show(tools.querySelector('#lcr-sync'), !!GM_getValue('switchpbstatusBtn'));
+
+      keepPluginChipsLast(row);
+      observeChipRow(row);
     }
 
     async function layuiload() {
