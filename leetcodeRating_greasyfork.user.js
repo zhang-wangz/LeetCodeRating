@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LeetCodeRating｜English
 // @namespace    https://github.com/zhang-wangz
-// @version      2.0.3
+// @version      2.0.4
 // @license      MIT
 // @description  LeetCodeRating The score of the weekly competition is displayed, and currently supports the tag page, question bank page, problem_list page and question page
 // @author       小东是个阳光蛋(Leetcode Nickname of chinese site
@@ -27,6 +27,7 @@
 // @grant        unsafeWindow
 // @noframes
 // @run-at       document-end
+// @note         2026-09-27 2.0.4 fix copying code from the Monaco editor in Chrome
 // @note         2022-12-29 1.1.0 add english site support
 // @note         2022-12-29 1.1.1 fix when the dark mode is turned on, the prompt display is abnormal
 // @note         2023-01-05 1.1.2 modify the cdn access address
@@ -42,7 +43,7 @@
 (function () {
   "use strict"
   let t2rate = {}
-  const version = "2.0.3"
+  const version = "2.0.4"
   const DEBUG_MODE = false
   const chineseLinkId = "leetcode-rating-chinese-link"
   const chineseLinkEnabledKey = "chineseProblemLinkEnabled"
@@ -457,7 +458,6 @@
   // ==================== 其他初始化 ====================
 
   registerChineseLinkMenu()
-  document.addEventListener('copy', e => e.stopPropagation(), true)
 
   // 版本更新机制 (仅在主页检查)
   if (window.location.href.startsWith(allProblemsUrl)) {
