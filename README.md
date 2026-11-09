@@ -14,21 +14,20 @@
   <br>
   LeetCodeRating，一款显示题目对应周赛难度分的浏览器插件。
   <br>
-  支持中文和英文双站点，安装英文版本切换请切换github tag为english 
+  3.2.0 起同一脚本同时支持中文站 leetcode.cn 与国际站 leetcode.com，无需切换分支
 </p>
 
-- [点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
+- [旧版独立英文脚本 (english 分支，仅题库/题单/题目页评分)](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
 - 企鹅群号: 654726006
 - 答案是: LeetCodeRating
 - [文档 docs](https://lc.slowme.cn/)
 ### :iphone: 兼容性&安装
 
-请注意： 英文版只有题库页面，tag页面和题目页面展示周赛分，并且不支持其余中文站功能
-安装英文版本请切换github tag为english
-英文版自2024年开始由[@wwwld1](https://github.com/wwwld1)进行维护，感谢贡献🙏
+请注意： 3.2.0 起主脚本已直接支持国际站 leetcode.com，题库/题单/学习计划/题目页评分、题目完成状态同步、讨论区状态图标、搜索框、纸片人等功能均可在国际站使用；题目完成状态按站点分别保存，国际站没有搜索页，对应周赛链接指向 leetcode.com
+旧版独立英文脚本仍保留在 english 分支，自2024年开始由[@wwwld1](https://github.com/wwwld1)进行维护，感谢贡献🙏
 
-Note: The English version only shows the difficulty rating of the question on the gallary page (problemset), the tag page and the question page, and does not support other functions in CN site. The English version will be temporarily suspended from 2023, and suitable maintainers are being recruited~
-[Click here to switch|点我直接切换](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
+Note: Since 3.2.0 the main script supports leetcode.com directly. Every feature (ratings on the problemset, problem list, study plan and problem pages, problem status sync, discuss status icons, the navbar search box, the paper man, ...) works on both sites; the problem status cache is stored per site, leetcode.com has no search page, and contest links point to leetcode.com there. The legacy standalone English script is kept on the english branch.
+[Legacy English script|旧版英文脚本](https://github.com/zhang-wangz/LeetCodeRating/tree/english)
 
 LeetCodeRating｜一款显示题目对应周赛难度分的浏览器插件。 
 
